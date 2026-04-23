@@ -5,6 +5,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import org.tracker.ubus.ubus.Components.User.Entity.User;
 import org.tracker.ubus.ubus.Components.User.Enum.UserRole;
+import org.tracker.ubus.ubus.Components.User.Enum.UserStatus;
 import org.tracker.ubus.ubus.Components.User.Repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -26,6 +27,7 @@ public class UserDataLoader implements CommandLineRunner {
             student.setEmail("student@test.com");
             student.setPassword(passwordEncoder.encode("student123"));
             student.setRole(UserRole.STUDENT);
+            student.setStatus(UserStatus.EMAIL_APPROVAL_PENDING);
 
             User admin = new User();
             admin.setFirstname("firstname");
@@ -33,12 +35,14 @@ public class UserDataLoader implements CommandLineRunner {
             admin.setRole(UserRole.ADMIN);
             admin.setEmail("admin@test.com");
             admin.setPassword(passwordEncoder.encode("admin123"));
+            admin.setStatus(UserStatus.ACTIVE);
             admin.setRole(UserRole.ADMIN);
 
             User driver = new User();
             driver.setFirstname("firstname");
             driver.setLastname("lastname");
             driver.setEmail("driver@test.com");
+            driver.setStatus(UserStatus.ACTIVE);
             driver.setPassword(passwordEncoder.encode("driver123"));
             driver.setRole(UserRole.DRIVER);
 
@@ -46,6 +50,7 @@ public class UserDataLoader implements CommandLineRunner {
             staff.setFirstname("firstname");
             staff.setLastname("lastname");
             staff.setEmail("staff@test.com");
+            staff.setStatus(UserStatus.ACTIVE);
             staff.setPassword(passwordEncoder.encode("staff123"));
             staff.setRole(UserRole.STAFF);
 

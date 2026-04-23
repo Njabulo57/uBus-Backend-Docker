@@ -6,22 +6,23 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.tracker.ubus.ubus.Components.User.Entity.User;
+import org.tracker.ubus.ubus.Components.User.Enum.UserStatus;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+
 
 
 public class UserPrincipal implements UserDetails {
 
     // this reference is kept to avoid having to recreate the user from a db sql call again
     private final User user;
-    private boolean isIssued;
+    private int issuedCount;
     private final Collection<GrantedAuthority> authorities =new ArrayList<>();
 
     public UserPrincipal(User user) {
         this.user = user;
-        this.isIssued = false;
+        this.issuedCount = 0;
         addAuthorities();//adding the role of the user and their permissions
     }
 
@@ -34,10 +35,10 @@ public class UserPrincipal implements UserDetails {
      * @throws IllegalStateException throws the exception if the user is used more than once
      */
     public User getUser() throws IllegalStateException{
-        if(isIssued)
+        if(issuedCount == 0)
             return user;
 
-        isIssued = true;
+        issuedCount = -1;
         throw new IllegalStateException("User Already Issued");
     }
 
@@ -67,9 +68,14 @@ public class UserPrincipal implements UserDetails {
         return UserDetails.super.isAccountNonExpired();
     }
 
+    /**
+     * if the user's email isn't approved in the system
+     * then they are not allowed in the system
+     * @return if the account is still locked or not
+     */
     @Override
     public boolean isAccountNonLocked() {
-        return UserDetails.super.isAccountNonLocked();
+        return user.getStatus() == UserStatus.ACTIVE;
     }
 
     @Override

@@ -5,9 +5,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.tracker.ubus.ubus.Components.Auth.DTOs.Responses.LockedAccountResponse;
+import org.tracker.ubus.ubus.Components.Auth.Exception.AccountLockedException;
+import org.tracker.ubus.ubus.Components.Auth.Exception.BaseAuthenticationException;
 import org.tracker.ubus.ubus.Global.Exceptions.ErrorResponse.ErrorResponse;
 import java.time.LocalDateTime;
 
@@ -16,20 +19,19 @@ import java.time.LocalDateTime;
 public class AuthExceptionHandler {
 
 
-    @ExceptionHandler(UsernameNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleUsernameNotFoundException(UsernameNotFoundException ex) {
-
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateEmailException(BaseAuthenticationException ex) {
         String className = ex.getClass().getSimpleName();
         String errorMessage = ex.getMessage();
 
-        log.error("Caught {}: {}", className, errorMessage);
+        log.error("Caught {}\n.Error:{} \n Trace:", className, errorMessage, ex);
 
 
-        final HttpStatus unauthorized = HttpStatus.UNAUTHORIZED;
+        final HttpStatus status = ex.getStatus();
 
-        String message = "Invalid Credentials.Try Again";
-        String statusCodePhrase = unauthorized.getReasonPhrase();
-        int statusCode = unauthorized.value();
+        String message = ex.getMessage();
+        String statusCodePhrase = status.getReasonPhrase();
+        int statusCode = status.value();
         final LocalDateTime now = LocalDateTime.now();
 
         final ErrorResponse response = ErrorResponse.builder()
@@ -39,37 +41,36 @@ public class AuthExceptionHandler {
                 .timestamp(now)
                 .build();
 
-        return ResponseEntity.status(unauthorized)
+        return ResponseEntity.status(status)
                 .body(response);
-
     }
 
 
-
-    @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ErrorResponse> handleUserNotFoundException(BadCredentialsException ex) {
-
+    @ExceptionHandler(AccountLockedException.class)
+    public  ResponseEntity<LockedAccountResponse> handleAccountLockedException(AccountLockedException ex) {
         String className = ex.getClass().getSimpleName();
-        String  errorMessage = ex.getMessage();
-        log.error("Caught {}: {}", className, errorMessage);
+        String errorMessage = ex.getMessage();
+
+        log.error("Caught {}\n.Error:{} \n Trace:", className, errorMessage, ex);
 
 
-        final HttpStatus unauthorized = HttpStatus.UNAUTHORIZED;
+        final HttpStatus status = ex.getStatus();
 
-        String message = "Invalid Credentials.Try Again";
-        String statusCodePhrase = unauthorized.getReasonPhrase();
-        int statusCode = unauthorized.value();
+        String message = ex.getMessage();
+        String statusCodePhrase = status.getReasonPhrase();
+        int statusCode = status.value();
         final LocalDateTime now = LocalDateTime.now();
 
-        final ErrorResponse response = ErrorResponse.builder()
+        LockedAccountResponse lockedAccountResponse = LockedAccountResponse.builder()
                 .message(message)
                 .statusCodePhrase(statusCodePhrase)
                 .statusCode(statusCode)
                 .timestamp(now)
+                .userId(ex.getUserId())
                 .build();
 
-        return ResponseEntity.status(unauthorized)
-                .body(response);
-
+        return ResponseEntity.status(status)
+                .body(lockedAccountResponse);
     }
+
 }

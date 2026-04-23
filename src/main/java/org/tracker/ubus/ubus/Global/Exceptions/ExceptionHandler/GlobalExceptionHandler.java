@@ -51,7 +51,10 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorResponse> handleRuntimeException(Exception e) {
-        log.error("Caught RuntimeException: {}", e.toString());
+
+        String className = e.getClass().getSimpleName();
+        String errorMessage = e.getMessage();
+        log.error("Caught {}\n.Error:{} \n Trace:", className, errorMessage, e);
 
 
         final HttpStatus internalServerError = HttpStatus.INTERNAL_SERVER_ERROR;
