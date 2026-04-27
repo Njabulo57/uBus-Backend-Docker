@@ -29,7 +29,7 @@ class OneTimePasswordController {
     @PostMapping("/generate-otp/{userId}")
     @ResponseStatus(HttpStatus.CREATED)
     public OtpCreatedResponse generateOTP(@PathVariable final UUID userId) {
-        String otp = this.oneTimePasswordService.generateOTP(userId);
-        return new  OtpCreatedResponse(otp) ;
+        var otpCarrier = this.oneTimePasswordService.generateOTP(userId);
+        return new  OtpCreatedResponse(otpCarrier.opt()) ;
     }
 }

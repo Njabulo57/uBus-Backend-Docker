@@ -25,6 +25,14 @@ public interface OneTimePasswordRepository extends JpaRepository<OneTimePassword
     @Query("""
         SELECT otp FROM OneTimePassword otp
         LEFT JOIN FETCH otp.user
+        WHERE otp.user.email = :email
+    """)
+    Optional<OneTimePassword> findByUser(@Param("email") String email);
+
+
+    @Query("""
+        SELECT otp FROM OneTimePassword otp
+        LEFT JOIN FETCH otp.user
         WHERE otp.user = :user
     """)
     Optional<OneTimePassword> findByUser(@Param("user") User user);

@@ -10,7 +10,6 @@ import org.tracker.ubus.ubus.Components.User.Enum.UserRole;
 import org.tracker.ubus.ubus.Components.User.Enum.UserStatus;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Component
 public final class AuthMapper {
@@ -25,24 +24,23 @@ public final class AuthMapper {
                 .build();
     }
 
-    public RegisterSuccessfulResponse toDTO(String message, UUID userId) {
+    public RegisterSuccessfulResponse toRegisterDTO(String message, String  email) {
 
         final LocalDateTime nowed = LocalDateTime.now();
         return RegisterSuccessfulResponse.builder()
                 .otpMessage(message)
-                .userId(userId)
+                .email(email)
                 .createdAt(nowed)
                 .build();
 
     }
 
 
-    public User toEntity(RegisterRequest registerRequest) {
-        UserRole userRole = UserRole.fromLabel(registerRequest.role());
+    public User toEntity(RegisterRequest registerRequest, String studentNumber, UserRole userRole) {
         return User.builder()
                 .firstname(registerRequest.firstName())
                 .lastname(registerRequest.lastName())
-                .studentNumber(registerRequest.studentNumber())
+                .studentNumber(studentNumber)
                 .email(registerRequest.email())
                 .role(userRole)
                 .status(UserStatus.EMAIL_APPROVAL_PENDING)

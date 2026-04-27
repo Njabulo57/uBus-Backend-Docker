@@ -24,8 +24,7 @@ public class OptEmailVerificationListener {
         log.info("Received Otp Email Verification Event");
 
         var savedUser = otpEmailVerificationEvent.getUser();
-        var generatedStringOTP = otpEmailVerificationEvent.getOtpCode();
-        var header =  otpEmailVerificationEvent.getHeader();
+        var header = otpEmailVerificationEvent.getHeader();
         var body = otpEmailVerificationEvent.getBody();
 
         log.debug("About to commence the email sending process");

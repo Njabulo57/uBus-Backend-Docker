@@ -13,6 +13,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
 import org.tracker.ubus.ubus.Components.Jwt.Filter.JwtFilter;
 import org.tracker.ubus.ubus.Components.User.Enum.UserRole;
 import org.tracker.ubus.ubus.Components.User.Enum.UserStatus;
@@ -24,18 +26,24 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.tracker.ubus.ubus.Components.User.Enum.UserRole.*;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtFilter jwtFilter) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                   JwtFilter jwtFilter,
+                                                   CorsConfigurationSource configurationSource)
+            throws Exception {
 
         http = configureEndpointSecurity(http);
         http = configureCsrf(http);
         http = configureSessionManagement(http);
         http = configureJwtFilter(http, jwtFilter);
+        http = configureCors(http, configurationSource);
         return http.build();
     }
 
@@ -47,20 +55,21 @@ public class SecurityConfig {
 
     private HttpSecurity configureEndpointSecurity(HttpSecurity http) throws Exception{
 
-        Map<UserRole, String> roles = Stream.of(UserRole.values())
-                        .collect(Collectors.toMap( role -> role,
-                                UserRole::getLabel
-                        ));
-        //stores them as ADMIN -> Admin
         http.authorizeHttpRequests(authz ->
                 authz
                     .requestMatchers("/auth/**").permitAll()
                     .requestMatchers("/one-time-password/**").permitAll()
 
                     .requestMatchers("/users/**")
-                        .hasAnyRole(roles.get(UserRole.ADMIN), roles.get(UserRole.DRIVER),
-                            roles.get(UserRole.STAFF), roles.get(UserRole.STUDENT)
+                        .hasAnyRole(ADMIN.getLabel(), DRIVER.getLabel(),
+                            STAFF.getLabel(), STUDENT.getLabel()
                         )
+
+                    .requestMatchers("/busses/register")
+                        .hasRole(ADMIN.getLabel())
+
+                    .requestMatchers("/busses/**")
+                        .hasRole(ADMIN.getLabel())
 
                     .anyRequest().authenticated()
         );
@@ -79,19 +88,10 @@ public class SecurityConfig {
         return http;
     }
 
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(12);
+    private HttpSecurity configureCors(HttpSecurity http, CorsConfigurationSource configuration) {
+        return http.cors(cors ->
+                cors.configurationSource(configuration));
     }
 
-    @Bean
-    public UserDetailsService userDetailsService(UserRepository userRepository)
-            throws UsernameNotFoundException {
 
-        return username -> userRepository.findByEmail(username)
-                .map(UserPrincipal::new)
-                .orElseThrow(() -> new UsernameNotFoundException("No active user with email " + username + " Found")
-                );
-    }
 }

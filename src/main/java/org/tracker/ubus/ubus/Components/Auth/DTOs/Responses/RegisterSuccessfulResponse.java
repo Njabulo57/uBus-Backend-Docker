@@ -8,7 +8,7 @@ import java.util.UUID;
 
 @Builder
 public record RegisterSuccessfulResponse(
-        UUID userId,
+        String email,
         String otpMessage,
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
         LocalDateTime createdAt) {

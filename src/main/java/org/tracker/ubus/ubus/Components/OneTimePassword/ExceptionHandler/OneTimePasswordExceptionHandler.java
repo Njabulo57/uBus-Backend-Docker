@@ -6,7 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Exceptions.OneTimePasswordExpiredException;
-import org.tracker.ubus.ubus.Components.OneTimePassword.Exceptions.OneTimePasswordMismatchException;
+import org.tracker.ubus.ubus.Components.OneTimePassword.Exceptions.OneTimePasswordExistsException;
 import org.tracker.ubus.ubus.Global.Exceptions.ErrorResponse.ErrorResponse;
 
 import java.time.LocalDateTime;
@@ -17,8 +17,8 @@ import java.time.LocalDateTime;
 public class OneTimePasswordExceptionHandler {
 
 
-    @ExceptionHandler(OneTimePasswordMismatchException.class)
-    public ResponseEntity<ErrorResponse> handleOtpMisMatchException(OneTimePasswordMismatchException e) {
+    @ExceptionHandler(OneTimePasswordExistsException.class)
+    public ResponseEntity<ErrorResponse> handleOtpMisMatchException(OneTimePasswordExistsException e) {
 
         String className = e.getClass().getSimpleName();
         String message = e.getMessage();
