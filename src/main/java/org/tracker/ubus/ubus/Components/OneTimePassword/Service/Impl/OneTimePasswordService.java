@@ -47,13 +47,13 @@ public class OneTimePasswordService implements IOneTimePasswordService {
         if (exists) {
             OneTimePassword oneTimePassword = this.oneTimePasswordRepository.findByUserOrThrow(userId);
 
-            if(oneTimePassword.isExpired()) {
+            if(!oneTimePassword.isExpired()) {
                 //get the time between now and the expiration time in minutes
                 long expiresIn = Duration.between(LocalDateTime.now(), oneTimePassword.getExpiresAt()).toMinutes();
                 throw new OneTimePasswordExistsException("Valid OPT already exists.Please Use It Before It Expires", expiresIn);
-            }else {
+            }else
                 this.oneTimePasswordRepository.delete(oneTimePassword); //delete the expired one
-            }
+
         }
 
         var user = this.userRepository.findByIdOrThrow(userId);//getting the user from the db
@@ -84,10 +84,10 @@ public class OneTimePasswordService implements IOneTimePasswordService {
             throws OneTimePasswordExpiredException, OneTimePasswordExistsException {
 
         // Find OTP by user ID
-        var oneTimePassword = this.oneTimePasswordRepository.findByUserOrThrow(otpValidationRequest.userId());
+        var oneTimePassword = this.oneTimePasswordRepository.findByUserOrThrow(otpValidationRequest.email());
 
         if(oneTimePassword.isExpired())
-            throw new OneTimePasswordExpiredException("OTP has expired.Please Request for a new one-time password");
+            throw new OneTimePasswordExpiredException("OTP has expired.Please Request for a new one time password");
 
         // Check if OTP matches
         String dbOPT = oneTimePassword.getOtp();
@@ -104,8 +104,6 @@ public class OneTimePasswordService implements IOneTimePasswordService {
 
         // Delete the used OTP
         this.oneTimePasswordRepository.delete(oneTimePassword);
-
-
 
         return true;
     }

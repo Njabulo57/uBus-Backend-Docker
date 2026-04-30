@@ -22,6 +22,7 @@ public interface OneTimePasswordRepository extends JpaRepository<OneTimePassword
     boolean existsByUser(@Param("userId") UUID userId);
 
 
+
     @Query("""
         SELECT otp FROM OneTimePassword otp
         LEFT JOIN FETCH otp.user
@@ -67,6 +68,13 @@ public interface OneTimePasswordRepository extends JpaRepository<OneTimePassword
     Optional<OneTimePassword> findByUser(UUID userId);
 
 
+    @Query("""
+        SELECT otp FROM OneTimePassword otp
+        LEFT JOIN otp.user
+        WHERE otp.user.email = :email
+    """)
+    Optional<OneTimePassword> findByUserEmail(@Param("email") String email);
+
 
 
     default OneTimePassword findByUserAndNotExpiredOrThrow(UUID userId) {
@@ -88,6 +96,13 @@ public interface OneTimePasswordRepository extends JpaRepository<OneTimePassword
     default OneTimePassword findByUserOrThrow(User user) {
         return this.findByUser(user)
                 .orElseThrow(() -> new OneTimePasswordNotFoundException("OTP Doesn't Exist"));
+    }
+
+    default OneTimePassword findByUserOrThrow(String email)
+            throws OneTimePasswordNotFoundException {
+        return this.findByUser(email)
+                .orElseThrow(() -> new OneTimePasswordNotFoundException("OTP Doesn't Exist"));
+
     }
 
     default OneTimePassword findByUserOrThrow(UUID userId) {

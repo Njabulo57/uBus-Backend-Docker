@@ -4,5 +4,5 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 public record EmailOtpResponse(
-        String message, UUID userId, LocalDateTime createdAt) {
+        String message,LocalDateTime createdAt) {
 }

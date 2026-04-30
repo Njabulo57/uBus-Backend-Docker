@@ -3,6 +3,7 @@ package org.tracker.ubus.ubus.Components.Auth.Listener;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
@@ -21,7 +22,25 @@ public class OptEmailVerificationListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleOtpEmailVerificationEvent(OtpEmailVerificationEvent otpEmailVerificationEvent) {
 
-        log.info("Received Otp Email Verification Event");
+        log.info("Received Transactional Otp Email Verification Event");
+
+        var savedUser = otpEmailVerificationEvent.getUser();
+        var header = otpEmailVerificationEvent.getHeader();
+        var body = otpEmailVerificationEvent.getBody();
+
+        log.debug("About to commence the email sending process");
+        this.emailService.sendHtmlEmail(savedUser.getEmail(), header, body);
+
+        log.debug("Sent Otp Email Verification Event");
+    }
+
+
+
+    @Async
+    @EventListener
+    public void handleOtpEmailVerificationEventNoTransaction(OtpEmailVerificationEvent otpEmailVerificationEvent) {
+
+        log.info("Received Normal Otp Email Verification Event");
 
         var savedUser = otpEmailVerificationEvent.getUser();
         var header = otpEmailVerificationEvent.getHeader();

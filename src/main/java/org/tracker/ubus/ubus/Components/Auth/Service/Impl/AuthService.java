@@ -17,6 +17,7 @@ import org.tracker.ubus.ubus.Components.Auth.Mapper.AuthMapper;
 import org.tracker.ubus.ubus.Components.Auth.Service.Interface.IAuthService;
 import org.tracker.ubus.ubus.Components.EventHandler.Publisher.MultiEvenPublisher;
 import org.tracker.ubus.ubus.Components.Jwt.JwtService.JwtService;
+import org.tracker.ubus.ubus.Components.OneTimePassword.DTOs.Internal.OtpInternalCarrier;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Exceptions.OneTimePasswordExistsException;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Reposirtory.OneTimePasswordRepository;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Service.Impl.OneTimePasswordService;
@@ -95,23 +96,24 @@ public class AuthService implements IAuthService {
     @Override
     public EmailOtpResponse requestOtp(EmailOtpRequest emailOtpRequest) {
 
+
+
         User user = this.userRepository.findByEmail(emailOtpRequest.email())
                 .orElseThrow(() -> new AccountNotFoundException("Account Doesn't Exist"));
 
+
         LocalDateTime now = LocalDateTime.now();
+        OtpInternalCarrier generatedOTPCarrier;
         try {
             // This will either generate a new OTP or throw exception if valid one exists
-            var generatedOTPCarrier = this.oneTimePasswordService.generateOTP(user.getId());
-
-            // Only reaches here if a new OTP was generated since there was either one or the existing expired
-            //we then send that otp code to the user again via email
-            publisher.publish(() -> new OtpEmailVerificationEvent(this, user, generatedOTPCarrier));
-
-            return new EmailOtpResponse("OTP generated and sent to your email", user.getId(),now);
+            generatedOTPCarrier = this.oneTimePasswordService.generateOTP(user.getId());
         } catch (OneTimePasswordExistsException e) {
             //if we reach this point then the otp exists and has not expired
-            return new EmailOtpResponse(e.getMessage(), user.getId(),now);
+            return new EmailOtpResponse(e.getMessage(),now);
         }
+        //we then send that otp code to the user again via email
+        publisher.publish(new OtpEmailVerificationEvent(this, user, generatedOTPCarrier));
+        return new EmailOtpResponse("OTP generated and sent to your email" + generatedOTPCarrier , now);
     }
 
     private String validateIfStudent(String email) throws InvalidStudentInformationException {
