@@ -113,7 +113,7 @@ public class AuthService implements IAuthService {
         }
         //we then send that otp code to the user again via email
         publisher.publish(new OtpEmailVerificationEvent(this, user, generatedOTPCarrier));
-        return new EmailOtpResponse("OTP generated and sent to your email" + generatedOTPCarrier , now);
+        return new EmailOtpResponse("OTP generated and sent to your email", now);
     }
 
     private String validateIfStudent(String email) throws InvalidStudentInformationException {
