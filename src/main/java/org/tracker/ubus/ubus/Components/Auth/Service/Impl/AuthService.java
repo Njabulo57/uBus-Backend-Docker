@@ -99,8 +99,12 @@ public class AuthService implements IAuthService {
 
 
 
+
         User user = this.userRepository.findByEmail(emailOtpRequest.email())
                 .orElseThrow(() -> new AccountNotFoundException("Account Doesn't Exist"));
+
+        if(user.getStatus() != UserStatus.EMAIL_APPROVAL_PENDING)
+            throw new RuntimeException("User Is Already approved");
 
 
         LocalDateTime now = LocalDateTime.now();
