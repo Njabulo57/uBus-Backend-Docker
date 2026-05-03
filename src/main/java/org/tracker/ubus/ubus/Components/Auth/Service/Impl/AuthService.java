@@ -94,6 +94,7 @@ public class AuthService implements IAuthService {
 
 
     @Override
+    @Transactional
     public EmailOtpResponse requestOtp(EmailOtpRequest emailOtpRequest) {
 
 

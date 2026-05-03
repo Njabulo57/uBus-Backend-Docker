@@ -34,21 +34,4 @@ public class OptEmailVerificationListener {
         log.debug("Sent Otp Email Verification Event");
     }
 
-
-
-    @Async
-    @EventListener
-    public void handleOtpEmailVerificationEventNoTransaction(OtpEmailVerificationEvent otpEmailVerificationEvent) {
-
-        log.info("Received Normal Otp Email Verification Event");
-
-        var savedUser = otpEmailVerificationEvent.getUser();
-        var header = otpEmailVerificationEvent.getHeader();
-        var body = otpEmailVerificationEvent.getBody();
-
-        log.debug("About to commence the email sending process");
-        this.emailService.sendHtmlEmail(savedUser.getEmail(), header, body);
-
-        log.debug("Sent Otp Email Verification Event");
-    }
 }
