@@ -44,7 +44,9 @@ public class AuthService implements IAuthService {
     public LoginSuccessfulResponse login(LoginRequest loginRequest) {
 
         String email = loginRequest.email();
-        var user = this.userRepository.findByEmailOrThrow(email);
+        var userOptional = this.userRepository.findByEmail(email);
+        var user = userOptional.orElseThrow(() ->
+                new InvalidCredentialsException("Invalid Credentials"));
 
         if(user.getStatus() == UserStatus.EMAIL_APPROVAL_PENDING)
             throw new AccountLockedException("Account is locked. Please Verify using OTP", user.getId());
@@ -85,7 +87,8 @@ public class AuthService implements IAuthService {
         var generatedOTPCarrier = this.oneTimePasswordService.generateOTP(savedUser.getId());
 
         //publish this event to run else where
-        publisher.publish(() -> new OtpEmailVerificationEvent(this, savedUser, generatedOTPCarrier ));
+        publisher.publish(() ->
+                new OtpEmailVerificationEvent(this, savedUser, generatedOTPCarrier ));
 
 
         var registeredMessage = "Register Successful.OTP sent for verification ";
@@ -147,14 +150,12 @@ public class AuthService implements IAuthService {
         // Role and email compatibility validation
         if(studentRole == UserRole.STUDENT && !isStudentEmail)
             throw new InvalidStudentInformationException(
-                    "Students must register with a valid @student.uj.ac.za email address"
-            );
+                    "Students must register with a valid @student.uj.ac.za email address");
 
 
         if(studentRole != UserRole.STUDENT && isStudentEmail)
             throw new InvalidStudentInformationException(
-                    "Only STUDENT role can register with a @student.uj.ac.za email address"
-            );
+                    "Only students role can register with a @student.uj.ac.za email address");
     }
 
 }

@@ -8,6 +8,7 @@ import org.tracker.ubus.ubus.Components.OneTimePassword.Entity.OneTimePassword;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Exceptions.OneTimePasswordNotFoundException;
 import org.tracker.ubus.ubus.Components.User.Entity.User;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -20,8 +21,6 @@ public interface OneTimePasswordRepository extends JpaRepository<OneTimePassword
         WHERE otp.user.id = :userId
     """)
     boolean existsByUser(@Param("userId") UUID userId);
-
-
 
     @Query("""
         SELECT otp FROM OneTimePassword otp
@@ -83,6 +82,12 @@ public interface OneTimePasswordRepository extends JpaRepository<OneTimePassword
     """)
     Optional<OneTimePassword> findByOtp(@Param("otp") String otp);
 
+
+    @Query("""
+        SELECT otp FROM OneTimePassword otp
+        LEFT JOIN otp.user
+    """)
+    List<OneTimePassword> findAllOTPs();
 
     default OneTimePassword findByOtpOrThrow(String otp) {
         return this.findByOtp(otp)

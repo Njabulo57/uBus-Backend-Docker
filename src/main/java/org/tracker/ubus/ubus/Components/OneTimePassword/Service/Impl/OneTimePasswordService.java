@@ -1,7 +1,9 @@
 package org.tracker.ubus.ubus.Components.OneTimePassword.Service.Impl;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,9 +20,11 @@ import org.tracker.ubus.ubus.Components.User.Enum.UserStatus;
 import org.tracker.ubus.ubus.Components.User.Repository.UserRepository;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OneTimePasswordService implements IOneTimePasswordService {
@@ -85,7 +89,10 @@ public class OneTimePasswordService implements IOneTimePasswordService {
             throws OneTimePasswordExpiredException, OneTimePasswordExistsException {
 
 
-        var oneTimePassword = this.oneTimePasswordRepository.findByOtpOrThrow(otpValidationRequest.otp());
+        var oneTimePasswordOptional = this.oneTimePasswordRepository.findByOtp(otpValidationRequest.otp());
+        var oneTimePassword = oneTimePasswordOptional
+                .orElseThrow(() -> new OneTimePasswordMismatchException("Invalid Otp"));
+
         if(oneTimePassword.isExpired())
             throw new OneTimePasswordExpiredException("OTP has expired.Please Request for a new one time password");
 
@@ -105,6 +112,28 @@ public class OneTimePasswordService implements IOneTimePasswordService {
     }
 
 
+
+    @Scheduled(cron = "0 0 */5 * * *")
+    protected void removeUnusedOTPs() {
+        var unusedOTPs = this.oneTimePasswordRepository.findAllOTPs();
+
+        List<OneTimePassword> expiredOTPs = unusedOTPs.stream()
+                .filter(OneTimePassword::isExpired)
+                .toList();
+
+        List<OneTimePassword> nonExpiredOTPs = unusedOTPs.stream()
+                .filter(oneTimePassword -> !oneTimePassword.isExpired())
+                .toList();
+
+        if (!expiredOTPs.isEmpty()) {
+            this.oneTimePasswordRepository.deleteAll(expiredOTPs);
+            log.info("Deleted {} expired OTPs", expiredOTPs.size());
+        }else
+            log.info("No expired OTPs detected. Found {} valid OTPs", nonExpiredOTPs.size());
+
+    }
+
+
     private String validateIfOtpUnique(String generatedOtp) {
 
         String otp = generatedOtp;
@@ -115,7 +144,7 @@ public class OneTimePasswordService implements IOneTimePasswordService {
                     .findAll()
                     .stream()
                     .anyMatch(existingOtp ->
-                                    existingOtp.getOtp().equals(finalOtp));
+                            existingOtp.getOtp().equals(finalOtp));
             if(!exists)
                 break;
 
@@ -124,5 +153,6 @@ public class OneTimePasswordService implements IOneTimePasswordService {
 
         return otp;
     }
+
 
 }
