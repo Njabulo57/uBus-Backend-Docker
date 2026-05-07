@@ -10,6 +10,7 @@ import org.tracker.ubus.ubus.Components.OneTimePassword.DTOs.Requests.OtpValidat
 import org.tracker.ubus.ubus.Components.OneTimePassword.Entity.OneTimePassword;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Exceptions.OneTimePasswordExpiredException;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Exceptions.OneTimePasswordExistsException;
+import org.tracker.ubus.ubus.Components.OneTimePassword.Exceptions.OneTimePasswordMismatchException;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Generator.OneTimePasswordGenerator;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Reposirtory.OneTimePasswordRepository;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Service.Interface.IOneTimePasswordService;
@@ -17,6 +18,7 @@ import org.tracker.ubus.ubus.Components.User.Enum.UserStatus;
 import org.tracker.ubus.ubus.Components.User.Repository.UserRepository;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -26,7 +28,6 @@ public class OneTimePasswordService implements IOneTimePasswordService {
     @Value("${otp.durationDurationMinutes}")
     private int expiryDuration;
     private final UserRepository userRepository;
-    private final PasswordEncoder bcryptEncoder;
     private final OneTimePasswordGenerator oneTimePasswordGenerator;
     private final OneTimePasswordRepository oneTimePasswordRepository;
 
@@ -57,13 +58,13 @@ public class OneTimePasswordService implements IOneTimePasswordService {
         }
 
         var user = this.userRepository.findByIdOrThrow(userId);//getting the user from the db
+        var generateOTP = oneTimePasswordGenerator.generateOTP(); // generating the otp
 
-        final var generateOTP = oneTimePasswordGenerator.generateOTP(); // generating the otp
-        final var hashedOPT = bcryptEncoder.encode(generateOTP); //hash the password
+        generateOTP = this.validateIfOtpUnique(generateOTP);
         LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(expiryDuration);
 
         var otp = OneTimePassword.builder()
-                .otp(hashedOPT)
+                .otp(generateOTP)
                 .expiresAt(expiresAt)
                 .user(user)
                 .build();
@@ -83,29 +84,45 @@ public class OneTimePasswordService implements IOneTimePasswordService {
     public boolean validateOTP(OtpValidationRequest otpValidationRequest)
             throws OneTimePasswordExpiredException, OneTimePasswordExistsException {
 
-        // Find OTP by user ID
-        var oneTimePassword = this.oneTimePasswordRepository.findByUserOrThrow(otpValidationRequest.email());
 
+        var oneTimePassword = this.oneTimePasswordRepository.findByOtpOrThrow(otpValidationRequest.otp());
         if(oneTimePassword.isExpired())
             throw new OneTimePasswordExpiredException("OTP has expired.Please Request for a new one time password");
 
-        // Check if OTP matches
-        String dbOPT = oneTimePassword.getOtp();
 
-        if (!bcryptEncoder.matches(otpValidationRequest.otp(), dbOPT)) //check the opts against each other's hashes
-            throw new OneTimePasswordExistsException("Invalid One time password");
-
+        if(!Objects.equals(oneTimePassword.getOtp(), otpValidationRequest.otp()))
+            throw new OneTimePasswordMismatchException("Invalid Opt");
 
         var user = oneTimePassword.getUser();
         // Update user status to ACTIVE
         user.setStatus(UserStatus.ACTIVE);
         userRepository.save(user);
 
-
         // Delete the used OTP
         this.oneTimePasswordRepository.delete(oneTimePassword);
 
         return true;
+    }
+
+
+    private String validateIfOtpUnique(String generatedOtp) {
+
+        String otp = generatedOtp;
+        String finalOtp = otp;
+
+        while(true) {
+            boolean exists = this.oneTimePasswordRepository
+                    .findAll()
+                    .stream()
+                    .anyMatch(existingOtp ->
+                                    existingOtp.getOtp().equals(finalOtp));
+            if(!exists)
+                break;
+
+            otp = this.oneTimePasswordGenerator.generateOTP();
+        }
+
+        return otp;
     }
 
 }

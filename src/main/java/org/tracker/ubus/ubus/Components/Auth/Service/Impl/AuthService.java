@@ -124,9 +124,8 @@ public class AuthService implements IAuthService {
     private String validateIfStudent(String email) throws InvalidStudentInformationException {
 
         // Check if it's a student email domain
-        if (!email.contains("@student.uj.ac.za"))
+        if (!email.endsWith("@student.uj.ac.za"))
             return null;
-
 
         // Extract student number
         String studentNumberPart = email.split("@student.uj.ac.za")[0];

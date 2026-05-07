@@ -76,6 +76,19 @@ public interface OneTimePasswordRepository extends JpaRepository<OneTimePassword
     Optional<OneTimePassword> findByUserEmail(@Param("email") String email);
 
 
+    @Query("""
+        SELECT otp FROM OneTimePassword otp
+        LEFT JOIN otp.user
+        WHERE otp.otp = :otp
+    """)
+    Optional<OneTimePassword> findByOtp(@Param("otp") String otp);
+
+
+    default OneTimePassword findByOtpOrThrow(String otp) {
+        return this.findByOtp(otp)
+                .orElseThrow(() ->
+                        new OneTimePasswordNotFoundException("One Time Password Not Found for Provided Otp"));
+    }
 
     default OneTimePassword findByUserAndNotExpiredOrThrow(UUID userId) {
         return findByUserAndNotExpired(userId)

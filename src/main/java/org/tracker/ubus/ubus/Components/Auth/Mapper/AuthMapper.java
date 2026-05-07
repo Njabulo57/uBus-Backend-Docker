@@ -29,7 +29,6 @@ public final class AuthMapper {
         final LocalDateTime nowed = LocalDateTime.now();
         return RegisterSuccessfulResponse.builder()
                 .otpMessage(message)
-                .email(email)
                 .createdAt(nowed)
                 .build();
 
