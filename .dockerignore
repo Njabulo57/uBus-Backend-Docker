@@ -1,0 +1,19 @@
+# Ignore the local build and wrapper cache
+build/
+.gradle/
+bin/
+out/
+
+# Ignore IDE-specific files
+.idea/
+.vscode/
+*.iml
+
+# Ignore git history and local environment secrets
+.git/
+.gitignore
+.env
+
+# Ignore Docker-related files themselves
+Dockerfile
+.dockerignore
