@@ -1,4 +1,4 @@
-package org.tracker.ubus.ubus.Global.Exceptions.ErrorResponse;
+package org.tracker.ubus.ubus.GlobalExceptionHandler.ErrorResponse;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Builder;

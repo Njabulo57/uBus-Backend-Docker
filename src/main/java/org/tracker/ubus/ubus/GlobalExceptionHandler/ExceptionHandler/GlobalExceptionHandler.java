@@ -1,4 +1,4 @@
-package org.tracker.ubus.ubus.Global.Exceptions.ExceptionHandler;
+package org.tracker.ubus.ubus.GlobalExceptionHandler.ExceptionHandler;
 
 
 import lombok.extern.slf4j.Slf4j;
@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.tracker.ubus.ubus.Global.Exceptions.ErrorResponse.ErrorResponse;
+import org.tracker.ubus.ubus.GlobalExceptionHandler.ErrorResponse.ErrorResponse;
 
 import java.time.LocalDateTime;
 
