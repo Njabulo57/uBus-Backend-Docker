@@ -8,10 +8,9 @@ import java.util.UUID;
 @Getter
 public class AccountLockedException extends BaseAuthenticationException {
 
-    private final UUID userId;
-    public AccountLockedException(String message, UUID userId) {
+
+    public AccountLockedException(String message) {
 
       super(message, HttpStatus.UNAUTHORIZED);
-      this.userId = userId;
     }
 }

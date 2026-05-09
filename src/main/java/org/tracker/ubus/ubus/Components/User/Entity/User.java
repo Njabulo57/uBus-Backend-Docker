@@ -9,12 +9,14 @@ import org.tracker.ubus.ubus.Components.User.Enum.UserStatus;
 import java.util.UUID;
 
 @Entity
-@Builder
 @Setter
 @Getter
-@Table(name = "users")
-@AllArgsConstructor
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
+@Table(name = "users", indexes = {
+        @Index(name = "idx_value_email", columnList= "email")
+})
 public class User extends TimeAuditableEntity {
 
     @Id @GeneratedValue(strategy = GenerationType.UUID)

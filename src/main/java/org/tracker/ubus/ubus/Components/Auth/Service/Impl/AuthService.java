@@ -49,15 +49,14 @@ public class AuthService implements IAuthService {
                 new InvalidCredentialsException("Invalid Credentials"));
 
         if(user.getStatus() == UserStatus.EMAIL_APPROVAL_PENDING)
-            throw new AccountLockedException("Account is locked. Please Verify using OTP", user.getId());
-
+            throw new AccountLockedException("Account is locked. Please Verify using OTP");
 
         if(!passwordEncoder.matches(loginRequest.password(), user.getPassword()))
             throw new InvalidCredentialsException("Invalid Credentials");
 
         //user found from this point
         String role = user.getRole().getLabel();
-        String token = this.jwtService.generateToken(user);
+        String token = this.jwtService.generateToken(user, role);
 
         return authMapper.toDTO(token, role);
     }
@@ -99,8 +98,6 @@ public class AuthService implements IAuthService {
     @Override
     @Transactional
     public EmailOtpResponse requestOtp(EmailOtpRequest emailOtpRequest) {
-
-
 
 
         User user = this.userRepository.findByEmail(emailOtpRequest.email())

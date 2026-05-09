@@ -136,23 +136,10 @@ public class OneTimePasswordService implements IOneTimePasswordService {
 
     private String validateIfOtpUnique(String generatedOtp) {
 
-        String otp = generatedOtp;
-        String finalOtp = otp;
+        while(this.oneTimePasswordRepository.existsByOtp(generatedOtp))
+            generatedOtp = this.oneTimePasswordGenerator.generateOTP();
 
-        while(true) {
-            boolean exists = this.oneTimePasswordRepository
-                    .findAll()
-                    .stream()
-                    .anyMatch(existingOtp ->
-                            existingOtp.getOtp().equals(finalOtp));
-            if(!exists)
-                break;
-
-            otp = this.oneTimePasswordGenerator.generateOTP();
-        }
-
-        return otp;
+        return generatedOtp;
     }
-
 
 }

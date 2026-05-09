@@ -66,7 +66,7 @@ public class AuthExceptionHandler {
                 .statusCodePhrase(statusCodePhrase)
                 .statusCode(statusCode)
                 .timestamp(now)
-                .userId(ex.getUserId())
+                .userId(null)
                 .build();
 
         return ResponseEntity.status(status)
