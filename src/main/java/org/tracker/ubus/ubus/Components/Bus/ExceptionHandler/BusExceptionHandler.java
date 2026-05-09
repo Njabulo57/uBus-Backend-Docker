@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.tracker.ubus.ubus.Components.Bus.Exceptions.BusAlreadyExistsException;
 import org.tracker.ubus.ubus.Components.Bus.Exceptions.BusInformationMismatchException;
-import org.tracker.ubus.ubus.Global.Exceptions.ErrorResponse.ErrorResponse;
+import org.tracker.ubus.ubus.GlobalExceptionHandler.ErrorResponse.ErrorResponse;
 
 import java.time.LocalDateTime;
 

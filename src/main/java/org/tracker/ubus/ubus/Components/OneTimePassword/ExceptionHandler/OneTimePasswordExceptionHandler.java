@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Exceptions.OneTimePasswordExpiredException;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Exceptions.OneTimePasswordExistsException;
-import org.tracker.ubus.ubus.Global.Exceptions.ErrorResponse.ErrorResponse;
+import org.tracker.ubus.ubus.GlobalExceptionHandler.ErrorResponse.ErrorResponse;
 
 import java.time.LocalDateTime;
 
