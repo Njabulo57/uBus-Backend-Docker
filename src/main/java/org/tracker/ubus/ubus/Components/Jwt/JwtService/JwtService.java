@@ -45,10 +45,10 @@ public class JwtService {
     }
 
 
-    public String generateToken(User user) {
+    public String generateToken(User user, String role) {
 
         Map<String, Object> claims = new HashMap<>();
-        claims.put("role", user.getRole().toString());
+        claims.put("role", role);
 
         SecretKey secretKeyObject = getSecretKey();
 

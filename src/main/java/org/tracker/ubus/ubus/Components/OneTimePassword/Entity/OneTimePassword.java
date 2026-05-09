@@ -14,13 +14,16 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Table( indexes = {
+        @Index(name = "idx_otp_value", columnList = "otp")
+})
 public class OneTimePassword {
 
     @Id @GeneratedValue(strategy = GenerationType.UUID)
     @Column(nullable = false, updatable = false, unique = true)
     private UUID id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String otp;
 
     @Column(nullable = false)
