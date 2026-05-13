@@ -30,14 +30,19 @@ public class AuthController {
     }
 
     @PostMapping("/email-otp")
-    public EmailOtpResponse requestOtp(@RequestBody @Valid final EmailOtpRequest emailOtpRequest) {
-        return authService.requestOtp(emailOtpRequest);
+    public EmailOtpResponse requestEmailAuthentication(@RequestBody @Valid final EmailOtpRequest emailOtpRequest) {
+        return authService.requestEmailVerification(emailOtpRequest);
     }
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public RegisterSuccessfulResponse register(@RequestBody @Valid final RegisterRequest registerRequest) {
         return authService.register(registerRequest);
+    }
+
+    @PostMapping("/verify-email-token")
+    public boolean verifyEmailToken(@RequestParam String token) {
+        return this.authService.verifyEmailToken(token);
     }
 
 }

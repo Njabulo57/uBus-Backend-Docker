@@ -14,5 +14,7 @@ public interface IAuthService {
 
     RegisterSuccessfulResponse register(RegisterRequest registerRequest);
 
-    EmailOtpResponse requestOtp(EmailOtpRequest emailOtpRequest);
+    EmailOtpResponse requestEmailVerification(EmailOtpRequest emailOtpRequest);
+
+    boolean verifyEmailToken(String token);
 }

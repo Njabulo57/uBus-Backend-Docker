@@ -1,6 +1,8 @@
 package org.tracker.ubus.ubus.Components.OneTimePassword.Exceptions;
 
-public final class OneTimePasswordNotFoundException extends IllegalArgumentException {
+import org.tracker.ubus.ubus.GlobalExceptionHandler.Exeption.InternalSystemException;
+
+public final class OneTimePasswordNotFoundException extends InternalSystemException {
     public OneTimePasswordNotFoundException(String message) {
         super(message);
     }

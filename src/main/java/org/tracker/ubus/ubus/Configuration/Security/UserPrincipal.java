@@ -1,6 +1,7 @@
 package org.tracker.ubus.ubus.Configuration.Security;
 
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -59,7 +60,7 @@ public class UserPrincipal implements UserDetails {
     }
 
     @Override
-    public String getUsername() {
+    public @NonNull String getUsername() {
         return user.getEmail();
     }
 

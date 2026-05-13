@@ -24,8 +24,9 @@ public final class AuthMapper {
                 .build();
     }
 
-    public RegisterSuccessfulResponse toRegisterDTO(String message, String  email) {
+    public RegisterSuccessfulResponse toRegisterDTO() {
 
+        var message = "Register Successful.OTP sent for verification";
         final LocalDateTime nowed = LocalDateTime.now();
         return RegisterSuccessfulResponse.builder()
                 .otpMessage(message)
@@ -35,14 +36,26 @@ public final class AuthMapper {
     }
 
 
-    public User toEntity(RegisterRequest registerRequest, String studentNumber, UserRole userRole) {
+    public User toEntity(RegisterRequest registerRequest,  UserRole userRole) {
         return User.builder()
                 .firstname(registerRequest.firstName())
                 .lastname(registerRequest.lastName())
-                .studentNumber(studentNumber)
+                .password(registerRequest.password())
                 .email(registerRequest.email())
                 .role(userRole)
                 .status(UserStatus.EMAIL_APPROVAL_PENDING)
+                .build();
+    }
+
+
+    public User toEntity(RegisterRequest registerRequest,  UserRole userRole, UserStatus userStatus) {
+        return User.builder()
+                .firstname(registerRequest.firstName())
+                .lastname(registerRequest.lastName())
+                .password(registerRequest.password())
+                .email(registerRequest.email())
+                .role(userRole)
+                .status(userStatus)
                 .build();
     }
 

@@ -9,8 +9,10 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.tracker.ubus.ubus.GlobalExceptionHandler.ErrorResponse.ErrorResponse;
-
+import org.tracker.ubus.ubus.GlobalExceptionHandler.Exeption.BaseException;
+import org.tracker.ubus.ubus.GlobalExceptionHandler.Exeption.InternalSystemException;
 import java.time.LocalDateTime;
+
 
 @Slf4j
 @RestControllerAdvice
@@ -45,27 +47,32 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * handles any unspecified exceptions in the application
-     * @param e the exception that was thrown
+     * handles any system exceptions in the application.
+     * these are system generated and user generated
+     * @param e the type of exception that was thrown
      * @return a ResponseEntity containing an ErrorResponse with the status code and message
      */
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ErrorResponse> handleRuntimeException(Exception e) {
+    @ExceptionHandler(BaseException.class)
+    public ResponseEntity<ErrorResponse> handleInternalSystemErrorException(BaseException e) {
 
         String className = e.getClass().getSimpleName();
         String errorMessage = e.getMessage();
         log.error("Caught {}\n.Error:{} \n Trace:", className, errorMessage, e);
 
 
-        final HttpStatus internalServerError = HttpStatus.INTERNAL_SERVER_ERROR;
-        final int statusCode = internalServerError.value();
-        final String  statusCodePhrase = internalServerError.getReasonPhrase();
-
+        var httpStatus = e.getHttpStatus();
+        var statusCode = httpStatus.value();
+        var statusCodePhrase = httpStatus.getReasonPhrase();
 
 
         //error message fields
         LocalDateTime now = LocalDateTime.now();
-        String message = "There was an Error in the server, please try again later.";
+        String message;
+
+        if(e instanceof InternalSystemException)
+            message = "There was an Error in the server, please try again later.";
+        else
+            message = e.getMessage();
 
 
         final ErrorResponse errorResponse = ErrorResponse.builder()
@@ -75,9 +82,43 @@ public class GlobalExceptionHandler {
                 .statusCodePhrase(statusCodePhrase)
                 .build();
 
-        return ResponseEntity.status(internalServerError)
+        return ResponseEntity.status(httpStatus)
                 .body(errorResponse);
+    }
 
+
+    /**
+     *  handles any system exceptions not labeled as business or internal
+     *  as a fallback
+     * @return a ResponseEntity containing an ErrorResponse with the status code and message
+     */
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ErrorResponse> handleInternalFallBackExceptions(RuntimeException e) {
+
+
+        var errorMessage = e.getMessage();
+        log.error("Caught RuntimeException\n.Error:{} \n Trace:", errorMessage, e);
+
+
+        var httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+        var statusCode = httpStatus.value();
+        var statusCodePhrase = httpStatus.getReasonPhrase();
+
+
+        //error message fields
+        LocalDateTime now = LocalDateTime.now();
+        var message = "There was an Error in the server, please try again later.";
+
+
+        final ErrorResponse errorResponse = ErrorResponse.builder()
+                .statusCode(statusCode)
+                .message(message)
+                .timestamp(now)
+                .statusCodePhrase(statusCodePhrase)
+                .build();
+
+        return ResponseEntity.status(httpStatus)
+                .body(errorResponse);
     }
 
 

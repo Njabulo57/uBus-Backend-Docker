@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.tracker.ubus.ubus.Components.OneTimePassword.DTOs.Internal.OtpInternalCarrier;
@@ -39,7 +38,7 @@ public class OneTimePasswordService implements IOneTimePasswordService {
 
     /**
      * generates a one time password for a user
-     * @param userId user to give a opt
+     * @param userId user to give an otp
      * @return returns the generated otp
      * @throws OneTimePasswordExistsException if the otp already exists and is still valid
      */
@@ -86,7 +85,7 @@ public class OneTimePasswordService implements IOneTimePasswordService {
      */
     @Transactional
     public boolean validateOTP(OtpValidationRequest otpValidationRequest)
-            throws OneTimePasswordExpiredException, OneTimePasswordExistsException {
+            throws OneTimePasswordExpiredException, OneTimePasswordMismatchException {
 
 
         var oneTimePasswordOptional = this.oneTimePasswordRepository.findByOtp(otpValidationRequest.otp());

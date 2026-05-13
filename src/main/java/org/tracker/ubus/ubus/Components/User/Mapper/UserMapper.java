@@ -19,7 +19,7 @@ public class UserMapper {
         if(userBusPreference != null)
             stringPreference = userBusPreference.getLabel();
 
-        String studentNumber = user.getStudentNumber() == null ? "" : user.getStudentNumber();
+        String studentNumber = "";
         String phoneNumber = user.getPhoneNumber() == null ? "" : user.getPhoneNumber();
 
         return UserProfileResponse.builder()

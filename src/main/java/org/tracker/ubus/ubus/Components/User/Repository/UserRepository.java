@@ -2,11 +2,13 @@ package org.tracker.ubus.ubus.Components.User.Repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import org.tracker.ubus.ubus.Components.Auth.Exception.UserNotFoundException;
+import org.tracker.ubus.ubus.Components.Auth.Exception.Internal.UserNotFoundException;
 import org.tracker.ubus.ubus.Components.User.Entity.User;
+import org.tracker.ubus.ubus.Components.User.Enum.UserRole;
 import org.tracker.ubus.ubus.Components.User.Enum.UserStatus;
 
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -17,9 +19,11 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     Optional<User> findByEmail(String email);
 
-
     Optional<User> findByEmailAndStatus(String email, UserStatus status);
 
+
+    List<User> findByStatusAndRole(UserStatus status, UserRole role);
+    List<User> findByStatus(UserStatus status);
 
     default User findByEmailOrThrow(String email) throws UserNotFoundException {
         return this.findByEmail(email)

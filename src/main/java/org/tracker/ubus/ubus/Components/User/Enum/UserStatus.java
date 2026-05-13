@@ -4,6 +4,7 @@ public enum UserStatus {
 
     ACTIVE,
     INACTIVE,
+    ADMIN_APPROVAL_PENDING,
     EMAIL_APPROVAL_PENDING;
 
     UserStatus() {
