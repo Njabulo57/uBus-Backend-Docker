@@ -24,11 +24,12 @@ public final class AuthMapper {
                 .build();
     }
 
-    public RegisterSuccessfulResponse toRegisterDTO() {
+    public RegisterSuccessfulResponse toRegisterDTO(UserRole userRole) {
 
         var message = "Register Successful.OTP sent for verification";
         final LocalDateTime nowed = LocalDateTime.now();
         return RegisterSuccessfulResponse.builder()
+                .role(userRole.getLabel())
                 .otpMessage(message)
                 .createdAt(nowed)
                 .build();

@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.tracker.ubus.ubus.Components.Auth.DTOs.Requests.EmailOtpRequest;
 import org.tracker.ubus.ubus.Components.Auth.DTOs.Requests.LoginRequest;
 import org.tracker.ubus.ubus.Components.Auth.DTOs.Requests.RegisterRequest;
-import org.tracker.ubus.ubus.Components.Auth.DTOs.Responses.EmailOtpResponse;
+import org.tracker.ubus.ubus.Components.Auth.DTOs.Responses.EmailAuthenticationResponse;
 import org.tracker.ubus.ubus.Components.Auth.DTOs.Responses.LoginSuccessfulResponse;
 import org.tracker.ubus.ubus.Components.Auth.DTOs.Responses.RegisterSuccessfulResponse;
 import org.tracker.ubus.ubus.Components.Auth.Exception.External.*;
@@ -50,8 +50,17 @@ public class AuthService implements IAuthService {
 
         if(user.getStatus() == EMAIL_APPROVAL_PENDING ||
                 user.getStatus() == ADMIN_APPROVAL_PENDING ||
-                user.getStatus() == INACTIVE)
-            throw new AccountLockedException("Account is locked. Please Verify");
+                user.getStatus() == INACTIVE) {
+
+            String message = "Account Locked.";
+            var advice = switch (user.getRole()) {
+                case DRIVER -> "Please Await Approval";
+                default -> "Please Verify";
+            };
+
+
+            throw new AccountLockedException(message + advice);
+        }
 
         if(!passwordEncoder.matches(loginRequest.password(), user.getPassword()))
             throw new InvalidCredentialsException("Invalid Credentials");
@@ -100,13 +109,13 @@ public class AuthService implements IAuthService {
 
         //send the user a verification method according to their type
         this.verificationDispatcher.dispatch(savedUser);
-        return this.authMapper.toRegisterDTO();
+        return this.authMapper.toRegisterDTO(savedUser.getRole());
     }
 
 
     @Override
     @Transactional
-    public EmailOtpResponse requestEmailVerification(EmailOtpRequest emailOtpRequest) {
+    public EmailAuthenticationResponse requestEmailVerification(EmailOtpRequest emailOtpRequest) {
 
         User user = this.userRepository.findByEmail(emailOtpRequest.email())
                 .orElseThrow(() -> new AccountNotFoundException("Account Doesn't Exist"));
@@ -118,7 +127,7 @@ public class AuthService implements IAuthService {
         }
 
         var now = LocalDateTime.now();
-        return new EmailOtpResponse("OTP generated and sent to your email", now);
+        return new EmailAuthenticationResponse("OTP generated and sent to your email", now);
     }
 
 

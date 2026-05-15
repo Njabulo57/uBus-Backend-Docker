@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import org.tracker.ubus.ubus.Components.Auth.DTOs.Requests.EmailOtpRequest;
 import org.tracker.ubus.ubus.Components.Auth.DTOs.Requests.LoginRequest;
 import org.tracker.ubus.ubus.Components.Auth.DTOs.Requests.RegisterRequest;
-import org.tracker.ubus.ubus.Components.Auth.DTOs.Responses.EmailOtpResponse;
+import org.tracker.ubus.ubus.Components.Auth.DTOs.Responses.EmailAuthenticationResponse;
 import org.tracker.ubus.ubus.Components.Auth.DTOs.Responses.LoginSuccessfulResponse;
 import org.tracker.ubus.ubus.Components.Auth.DTOs.Responses.RegisterSuccessfulResponse;
 import org.tracker.ubus.ubus.Components.Auth.Service.Interface.IAuthService;
@@ -29,8 +29,8 @@ public class AuthController {
         return authService.login(loginRequest);
     }
 
-    @PostMapping("/email-otp")
-    public EmailOtpResponse requestEmailAuthentication(@RequestBody @Valid final EmailOtpRequest emailOtpRequest) {
+    @PostMapping("/email-authentication")
+    public EmailAuthenticationResponse requestEmailAuthentication(@RequestBody @Valid final EmailOtpRequest emailOtpRequest) {
         return authService.requestEmailVerification(emailOtpRequest);
     }
 
