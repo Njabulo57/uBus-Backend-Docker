@@ -3,6 +3,7 @@ package org.tracker.ubus.ubus.Components.Admin.Controller;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.web.bind.annotation.*;
+import org.tracker.ubus.ubus.Components.Admin.DTO.Response.DriverActiveResponseDTO;
 import org.tracker.ubus.ubus.Components.Admin.DTO.Response.DriverPendingResponseDTO;
 import org.tracker.ubus.ubus.Components.Admin.Service.Interface.IAdminService;
 
@@ -19,10 +20,15 @@ public class AdminController {
 
 
     @GetMapping("/get-pending-drivers")
-    public Collection<DriverPendingResponseDTO> findPendingAdmins() {
+    public Collection<DriverPendingResponseDTO> findPendingDrivers() {
         return adminService.getPendingDrivers();
     }
 
+
+    @GetMapping("/get-active-drivers")
+    public Collection<DriverActiveResponseDTO> findActiveDrivers() {
+        return adminService.getActiveDrivers();
+    }
 
     @PostMapping("/approve-driver/{driverId}")
     public boolean approveDriver(@PathVariable UUID driverId) {

@@ -8,6 +8,9 @@ import org.tracker.ubus.ubus.Components.OneTimePassword.Exceptions.OneTimePasswo
 import org.tracker.ubus.ubus.Components.OneTimePassword.Service.Impl.OneTimePasswordService;
 import org.tracker.ubus.ubus.Components.TokenGenerators.EmailVerificationToken.EmailVerificationTokenService.EmailVerificationTokenService;
 import org.tracker.ubus.ubus.Components.User.Entity.User;
+import org.tracker.ubus.ubus.Components.User.Enum.UserRole;
+
+import java.util.Objects;
 
 @Component
 @RequiredArgsConstructor
@@ -18,9 +21,8 @@ public class VerificationDispatcher {
     private final EmailVerificationTokenService emailVerificationTokenService;
 
     public void dispatch(User user) throws OneTimePasswordExistsException {
-        switch(user.getRole()) {
-            case STUDENT -> sendOtp(user);
-            default -> throw new IllegalStateException(user.getRole() + " has no Supported Dispatch");
+        if (Objects.requireNonNull(user.getRole()) == UserRole.STUDENT) {
+            sendOtp(user);
         }
     }
 

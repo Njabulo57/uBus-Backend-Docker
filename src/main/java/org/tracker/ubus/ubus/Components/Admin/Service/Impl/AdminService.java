@@ -6,20 +6,17 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.tracker.ubus.ubus.Components.Admin.DTO.Response.DriverActiveResponseDTO;
 import org.tracker.ubus.ubus.Components.Admin.DTO.Response.DriverPendingResponseDTO;
 import org.tracker.ubus.ubus.Components.Admin.Events.DriverApprovedAuditEvent;
-import org.tracker.ubus.ubus.Components.Admin.Events.DriverApprovedEmailEvent;
 import org.tracker.ubus.ubus.Components.Admin.Mapper.AdminMapper;
 import org.tracker.ubus.ubus.Components.Admin.Service.Interface.IAdminService;
-import org.tracker.ubus.ubus.Components.Audit.Entity.Audit;
 import org.tracker.ubus.ubus.Components.Audit.Repository.AuditRepository;
 import org.tracker.ubus.ubus.Components.EventHandler.Publisher.MultiEvenPublisher;
-import org.tracker.ubus.ubus.Components.User.Mapper.UserMapper;
 import org.tracker.ubus.ubus.Components.User.Repository.UserRepository;
 import org.tracker.ubus.ubus.Configuration.Security.UserPrincipal;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.UUID;
 
 import static org.tracker.ubus.ubus.Components.User.Enum.UserRole.DRIVER;
@@ -45,6 +42,13 @@ public class AdminService implements IAdminService {
 
 
         return this.adminMapper.toPendingDrivers(pendingDrivers);
+    }
+
+    @Override
+    public Collection<DriverActiveResponseDTO> getActiveDrivers() {
+
+        var activeAdmins = this.userRepository.findByStatusAndRole(ACTIVE, DRIVER);
+        return this.adminMapper.toActiveDrivers(activeAdmins);
     }
 
     @Override
