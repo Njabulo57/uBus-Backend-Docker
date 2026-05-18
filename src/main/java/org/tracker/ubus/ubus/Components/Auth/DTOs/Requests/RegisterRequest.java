@@ -1,5 +1,6 @@
 package org.tracker.ubus.ubus.Components.Auth.DTOs.Requests;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -25,6 +26,9 @@ public record RegisterRequest(
         @Pattern(regexp = "^(?i)(STUDENT|DRIVER|STAFF|ADMIN)$",
                 message = "Invalid Role")
         String role,
+
+        @Nullable
+        String phoneNumber,
 
         @NotBlank(message = "Email is required")
         @Email(message = "Invalid email format")

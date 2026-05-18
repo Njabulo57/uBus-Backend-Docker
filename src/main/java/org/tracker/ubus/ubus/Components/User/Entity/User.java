@@ -2,6 +2,7 @@ package org.tracker.ubus.ubus.Components.User.Entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.tracker.ubus.ubus.Components.Auth.Exception.Internal.UserNotStudentException;
 import org.tracker.ubus.ubus.Components.Shared.Entities.TimeAuditableEntity;
 import org.tracker.ubus.ubus.Components.User.Enum.UserRole;
 import org.tracker.ubus.ubus.Components.User.Enum.UserStatus;
@@ -35,8 +36,6 @@ public class User extends TimeAuditableEntity {
     @Column(nullable = false)
     private String password;
 
-    private String studentNumber;
-
     private String phoneNumber;
 
     @Column(nullable = false)
@@ -46,5 +45,16 @@ public class User extends TimeAuditableEntity {
     @Column(nullable = false)
     @Enumerated(value = EnumType.STRING)
     private UserStatus status;
+
+
+
+    public String getStudentNumber()
+            throws UserNotStudentException {
+        if(UserRole.STUDENT.equals(this.role))
+            return this.email.substring(0, 9);
+
+        throw new UserNotStudentException("User is not a student: they have role: " + this.role);
+    }
+
 
 }

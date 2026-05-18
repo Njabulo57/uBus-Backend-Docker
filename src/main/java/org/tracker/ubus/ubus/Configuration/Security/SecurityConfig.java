@@ -6,25 +6,10 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFilter;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
-import org.tracker.ubus.ubus.Components.Jwt.Filter.JwtFilter;
-import org.tracker.ubus.ubus.Components.User.Enum.UserRole;
-import org.tracker.ubus.ubus.Components.User.Enum.UserStatus;
-import org.tracker.ubus.ubus.Components.User.Repository.UserRepository;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import org.tracker.ubus.ubus.Components.TokenGenerators.Jwt.Filter.JwtFilter;
 
 import static org.tracker.ubus.ubus.Components.User.Enum.UserRole.*;
 
@@ -53,7 +38,7 @@ public class SecurityConfig {
         return http.addFilterBefore(jwtFilter, AuthenticationFilter.class);
     }
 
-    private HttpSecurity configureEndpointSecurity(HttpSecurity http) throws Exception{
+    private HttpSecurity configureEndpointSecurity(HttpSecurity http) throws Exception {
 
         http.authorizeHttpRequests(authz ->
                 authz
@@ -70,6 +55,10 @@ public class SecurityConfig {
 
                     .requestMatchers("/busses/**")
                         .hasRole(ADMIN.getLabel())
+
+                    .requestMatchers("/admins/**")
+                        .hasRole(ADMIN.getLabel())
+
 
                     .anyRequest().authenticated()
         );

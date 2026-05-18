@@ -1,7 +1,11 @@
 package org.tracker.ubus.ubus.Components.OneTimePassword.Exceptions;
 
-public final class OneTimePasswordExpiredException extends IllegalStateException {
+
+import org.springframework.http.HttpStatus;
+import org.tracker.ubus.ubus.GlobalExceptionHandler.Exeption.ExternalBusinessException;
+
+public final class OneTimePasswordExpiredException extends ExternalBusinessException {
     public OneTimePasswordExpiredException(String message) {
-        super(message);
+        super(message, HttpStatus.CONFLICT);
     }
 }

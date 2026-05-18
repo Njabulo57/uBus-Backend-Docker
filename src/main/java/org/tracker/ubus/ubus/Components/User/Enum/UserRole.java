@@ -2,6 +2,7 @@ package org.tracker.ubus.ubus.Components.User.Enum;
 
 
 import lombok.Getter;
+import org.tracker.ubus.ubus.Components.Auth.Exception.Internal.UserRoleNotFoundException;
 
 import java.util.stream.Stream;
 
@@ -33,6 +34,6 @@ public enum UserRole {
         return Stream.of(UserRole.values())
                 .filter(role -> role.getLabel().equalsIgnoreCase(label))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("No UserRole with label " + label));
+                .orElseThrow(() -> new UserRoleNotFoundException("No UserRole with label " + label));
     }
 }

@@ -61,5 +61,17 @@ public class UserDataLoader implements CommandLineRunner {
 
             System.out.println("Test users loaded");
         }
+
+        else if(!userRepository.existsByEmail("student2@test.com")) {
+            User student = new User();
+            student.setFirstname("firstname");
+            student.setLastname("lastname");
+            student.setEmail("student2@test.com");
+            student.setPassword(passwordEncoder.encode("student123"));
+            student.setRole(UserRole.STUDENT);
+            student.setStatus(UserStatus.ACTIVE);
+
+            userRepository.save(student);
+        }
     }
 }
