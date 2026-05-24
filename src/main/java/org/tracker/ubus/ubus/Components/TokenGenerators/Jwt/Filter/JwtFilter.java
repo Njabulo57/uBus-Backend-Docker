@@ -29,6 +29,14 @@ public class JwtFilter extends OncePerRequestFilter {
     private final ObjectMapper objectMapper;
     private final UserDetailsService userDetailsService;
 
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+
+        return path.startsWith("/web-socket") || path.startsWith("/web-socket/");
+    }
+
     @Override
     protected void doFilterInternal(@Nonnull HttpServletRequest request,
                                     @Nonnull HttpServletResponse response,
@@ -36,6 +44,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
         //getting the authorization from the header
         final String authorization = request.getHeader("Authorization");
+
 
         //this means we are dealing with public endpoints so we let them through
         if(authorization == null || !authorization.startsWith("Bearer ")) {

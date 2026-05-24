@@ -6,7 +6,7 @@ import java.util.stream.Stream;
 @Getter
 public enum BusActivityStatus {
 
-    STATIONERY("Stationery"),
+    OFFLINE("Offline"),// when on a trip and network connectivity is lost
     LOADING_PASSENGERS("Loading Passengers"),        // Ready for dispatch/passengers
     ON_TRIP("On Trip"),          // En route with passengers
     BREAK("Break");        // Driver break

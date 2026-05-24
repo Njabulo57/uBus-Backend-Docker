@@ -1,4 +1,4 @@
-package org.tracker.ubus.ubus.Components.Bus.Repository;
+package org.tracker.ubus.ubus.Components.Bus.Repository.DatabaseAccessLayer;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -9,6 +9,7 @@ import org.tracker.ubus.ubus.Components.Bus.Enum.BusActivityStatus;
 import org.tracker.ubus.ubus.Components.Bus.Enum.BusOperationalStatus;
 import org.tracker.ubus.ubus.Components.Bus.Enum.BusType;
 import org.tracker.ubus.ubus.Components.Bus.Exceptions.BusNotFoundException;
+import org.tracker.ubus.ubus.Components.Bus.Repository.Projections.DriverWithOrWithoutAssignmentView;
 
 import java.util.List;
 import java.util.Optional;
@@ -46,6 +47,19 @@ public interface BusRepository extends JpaRepository<Bus, UUID> {
             @Param("opStatus") BusOperationalStatus operationalStatus,
             @Param("actStatus") BusActivityStatus activityStatus
     );
+
+    @Query("""
+        SELECT DISTINCT b as bus, ba.driver as driver
+        FROM Bus b
+        LEFT JOIN FETCH b.busAssignments ba
+        LEFT JOIN FETCH ba.driver
+        WHERE b.isActive = TRUE
+    """)
+    List<DriverWithOrWithoutAssignmentView> findAssignedBusesOrDefault();
+
+
+    @Query("SELECT b FROM Bus b LEFT JOIN FETCH b.busAssignments WHERE b.id = :id")
+    Bus findByIdWithAssignments(@Param("id") UUID id);
 
     default Bus findByIdOrThrow(UUID id) {
         return this.findById(id)

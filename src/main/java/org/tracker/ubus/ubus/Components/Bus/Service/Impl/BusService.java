@@ -2,8 +2,9 @@ package org.tracker.ubus.ubus.Components.Bus.Service.Impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.tracker.ubus.ubus.Components.Bus.DTOs.Requests.BusEditRequest;
 import org.tracker.ubus.ubus.Components.Bus.DTOs.Requests.BusRegisterRequest;
-import org.tracker.ubus.ubus.Components.Bus.DTOs.Responses.BusAdminViewWrapperResponse;
+import org.tracker.ubus.ubus.Components.Bus.DTOs.Responses.BusAdminViewResponse;
 import org.tracker.ubus.ubus.Components.Bus.DTOs.Responses.BusRegisterResponse;
 import org.tracker.ubus.ubus.Components.Bus.Entity.Bus;
 import org.tracker.ubus.ubus.Components.Bus.Enum.BusActivityStatus;
@@ -11,10 +12,14 @@ import org.tracker.ubus.ubus.Components.Bus.Enum.BusOperationalStatus;
 import org.tracker.ubus.ubus.Components.Bus.Exceptions.BusAlreadyExistsException;
 import org.tracker.ubus.ubus.Components.Bus.Exceptions.BusInformationMismatchException;
 import org.tracker.ubus.ubus.Components.Bus.Mapper.BusMapper;
-import org.tracker.ubus.ubus.Components.Bus.Repository.BusRepository;
+import org.tracker.ubus.ubus.Components.Bus.Repository.DatabaseAccessLayer.BusRepository;
 import org.tracker.ubus.ubus.Components.Bus.Service.Interface.IBusService;
+import org.tracker.ubus.ubus.Components.BusAssignment.Repository.BusAssignmentRepository;
+import org.tracker.ubus.ubus.Components.BusRoute.Repository.BusRouteRepository;
+import org.tracker.ubus.ubus.Components.User.Repository.UserRepository;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +27,7 @@ public class BusService implements IBusService {
 
     private final BusMapper busMapper;
     private final BusRepository busRepository;
+
 
 
 
@@ -35,18 +41,24 @@ public class BusService implements IBusService {
 
         boolean existsByName = busRepository.existsByName(bus.getName());
         if (existsByName)
-            throw new BusAlreadyExistsException("Bus with name " + bus.getName() + " already exists.", bus);
+            throw new BusAlreadyExistsException("Bus with name already exists.", bus);
 
         this.busRepository.save(bus);
         return this.busMapper.toDTO(bus);
     }
 
     @Override
-    public BusAdminViewWrapperResponse viewBuses() {
+    public void editBus(BusEditRequest request, UUID busId) {
 
-        List<Bus> buses = this.busRepository.findAllByIsActiveTrue();
+        var bus = this.busRepository.findByIdOrThrow(busId);
+        var editedBus = this.busMapper.editBus(request, bus);
+        this.busRepository.save(editedBus);
+    }
 
-        return this.busMapper.toDTO(buses);
+    @Override
+    public List<BusAdminViewResponse> viewBuses() {
+        var busesAssignedAndNot = this.busRepository.findAssignedBusesOrDefault();
+        return this.busMapper.toDTOs(busesAssignedAndNot);
     }
 
 

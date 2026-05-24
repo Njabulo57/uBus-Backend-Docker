@@ -1,0 +1,22 @@
+package org.tracker.ubus.ubus.Components.BusRoute.Repository;
+
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
+import org.tracker.ubus.ubus.Components.Bus.Entity.Bus;
+import org.tracker.ubus.ubus.Components.BusRoute.Entity.BusRoute;
+import org.tracker.ubus.ubus.Components.User.Enum.Route;
+
+import java.util.List;
+import java.util.UUID;
+
+@Repository
+public interface BusRouteRepository extends JpaRepository<BusRoute, UUID> {
+
+    @Query("""
+        SELECT br FROM BusRoute br
+        LEFT JOIN FETCH  br.bus
+    """)
+    List<BusRoute> findByRoute(Route route);
+}

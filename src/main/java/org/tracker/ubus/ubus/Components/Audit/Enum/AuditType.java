@@ -4,6 +4,7 @@ package org.tracker.ubus.ubus.Components.Audit.Enum;
 import lombok.AllArgsConstructor;
 import org.tracker.ubus.ubus.Components.User.Entity.User;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @AllArgsConstructor
 public enum AuditType {

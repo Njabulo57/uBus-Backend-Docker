@@ -3,10 +3,14 @@ package org.tracker.ubus.ubus.Components.User.Entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.tracker.ubus.ubus.Components.Auth.Exception.Internal.UserNotStudentException;
+import org.tracker.ubus.ubus.Components.BusAssignment.Entity.BusAssignment;
 import org.tracker.ubus.ubus.Components.Shared.Entities.TimeAuditableEntity;
 import org.tracker.ubus.ubus.Components.User.Enum.UserRole;
 import org.tracker.ubus.ubus.Components.User.Enum.UserStatus;
 
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -46,8 +50,6 @@ public class User extends TimeAuditableEntity {
     @Enumerated(value = EnumType.STRING)
     private UserStatus status;
 
-
-
     public String getStudentNumber()
             throws UserNotStudentException {
         if(UserRole.STUDENT.equals(this.role))
@@ -57,4 +59,16 @@ public class User extends TimeAuditableEntity {
     }
 
 
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof User user))
+            return false;
+        return Objects.equals(id, user.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, firstname, lastname,
+                email, password, role);
+    }
 }

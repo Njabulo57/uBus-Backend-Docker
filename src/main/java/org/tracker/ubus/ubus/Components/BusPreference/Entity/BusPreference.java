@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.tracker.ubus.ubus.Components.Shared.Entities.TimeAuditableEntity;
 import org.tracker.ubus.ubus.Components.User.Entity.User;
-import org.tracker.ubus.ubus.Components.User.Enum.UserBusPreference;
+import org.tracker.ubus.ubus.Components.User.Enum.Route;
 
 import java.util.UUID;
 
@@ -27,5 +27,5 @@ public class BusPreference extends TimeAuditableEntity {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private UserBusPreference userBusPreference;
+    private Route route;
 }

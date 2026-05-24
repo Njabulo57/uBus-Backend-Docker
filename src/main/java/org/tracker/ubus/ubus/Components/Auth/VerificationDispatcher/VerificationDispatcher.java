@@ -21,8 +21,8 @@ public class VerificationDispatcher {
     private final EmailVerificationTokenService emailVerificationTokenService;
 
     public void dispatch(User user) throws OneTimePasswordExistsException {
-        if (Objects.requireNonNull(user.getRole()) == UserRole.STUDENT) {
-            sendOtp(user);
+        switch (user.getRole()) {
+            case STAFF, STUDENT: sendOtp(user);
         }
     }
 

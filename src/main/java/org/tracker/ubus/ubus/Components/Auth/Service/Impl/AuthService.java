@@ -21,6 +21,7 @@ import org.tracker.ubus.ubus.Components.TokenGenerators.EmailVerificationToken.E
 import org.tracker.ubus.ubus.Components.TokenGenerators.Jwt.JwtService.JwtService;
 import org.tracker.ubus.ubus.Components.User.Entity.User;
 import org.tracker.ubus.ubus.Components.User.Enum.UserRole;
+import org.tracker.ubus.ubus.Components.User.Enum.UserStatus;
 import org.tracker.ubus.ubus.Components.User.Repository.UserRepository;
 import java.time.LocalDateTime;
 
@@ -37,8 +38,8 @@ public class AuthService implements IAuthService {
     private final AuthMapper authMapper;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final EmailVerificationTokenService emailVerificationTokenService;
     private final VerificationDispatcher verificationDispatcher;
+    private final EmailVerificationTokenService emailVerificationTokenService;
 
     @Override
     public LoginSuccessfulResponse login(LoginRequest loginRequest) {
@@ -50,17 +51,9 @@ public class AuthService implements IAuthService {
 
         if(user.getStatus() == EMAIL_APPROVAL_PENDING ||
                 user.getStatus() == ADMIN_APPROVAL_PENDING ||
-                user.getStatus() == INACTIVE) {
+                user.getStatus() == INACTIVE)
+            throw new AccountLockedException("Account Locked.");
 
-            String message = "Account Locked.";
-            var advice = switch (user.getRole()) {
-                case DRIVER -> "Please Await Approval";
-                default -> "Please Verify";
-            };
-
-
-            throw new AccountLockedException(message + advice);
-        }
 
         if(!passwordEncoder.matches(loginRequest.password(), user.getPassword()))
             throw new InvalidCredentialsException("Invalid Credentials");
@@ -84,23 +77,19 @@ public class AuthService implements IAuthService {
             throw new DuplicateEmailException("Email Already Exists");
 
 
+        UserStatus userStatus = switch (userRole) {
 
-        //this will create the user entity based off of their role
-        var userEntity = switch (userRole) {
-
-            case STUDENT -> {
+            case STUDENT, STAFF -> {
                 this.validateIfStudent(registerRequest.email(), userRole); // validate the student's information
-                yield this.authMapper.toEntity(registerRequest, userRole, EMAIL_APPROVAL_PENDING);
+                yield EMAIL_APPROVAL_PENDING;
             }
 
-            case STAFF -> throw new AccountLockedException("Role Not Supported");
-
-            case DRIVER -> this.authMapper.toEntity(registerRequest, userRole, ADMIN_APPROVAL_PENDING);
+            case DRIVER -> ADMIN_APPROVAL_PENDING;
 
             case ADMIN -> throw new AdminRegistrationNotAllowedException("Admin Registration Not Supported");
         };
 
-
+        var userEntity = this.authMapper.toEntity(registerRequest, userRole, userStatus);
 
 
         final var encodedPassed = this.passwordEncoder.encode(userEntity.getPassword()); //hashed the password

@@ -4,7 +4,7 @@ import org.springframework.stereotype.Component;
 import org.tracker.ubus.ubus.Components.BusPreference.Entity.BusPreference;
 import org.tracker.ubus.ubus.Components.User.DTOs.Responses.UserProfileResponse;
 import org.tracker.ubus.ubus.Components.User.Entity.User;
-import org.tracker.ubus.ubus.Components.User.Enum.UserBusPreference;
+import org.tracker.ubus.ubus.Components.User.Enum.Route;
 
 @Component
 public class UserMapper {
@@ -12,15 +12,15 @@ public class UserMapper {
 
     public UserProfileResponse toDTO(User user, BusPreference busPreference) {
 
-        UserBusPreference userBusPreference = busPreference != null ? busPreference.getUserBusPreference() :
+        Route route = busPreference != null ? busPreference.getRoute() :
                 null;
 
         String stringPreference = "";
-        if(userBusPreference != null)
-            stringPreference = userBusPreference.getLabel();
+        if(route != null)
+            stringPreference = route.getLabel();
 
         String studentNumber = "";
-        String phoneNumber = user.getPhoneNumber() == null ? "" : user.getPhoneNumber();
+        String phoneNumber = user.getPhoneNumber() == null ? "No Phone Number" : user.getPhoneNumber();
 
         return UserProfileResponse.builder()
                 .firstName(user.getFirstname())

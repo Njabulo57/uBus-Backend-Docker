@@ -1,4 +1,4 @@
-package org.tracker.ubus.ubus.Components.Shared.Mail.Templates;
+package org.tracker.ubus.ubus.Components.Shared.Mail.Templates.Auth;
 
 public final class OtpTemplate {
 

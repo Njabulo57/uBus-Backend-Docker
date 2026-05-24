@@ -5,10 +5,14 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.tracker.ubus.ubus.Components.Bus.DTOs.Requests.BusEditRequest;
 import org.tracker.ubus.ubus.Components.Bus.DTOs.Requests.BusRegisterRequest;
-import org.tracker.ubus.ubus.Components.Bus.DTOs.Responses.BusAdminViewWrapperResponse;
+import org.tracker.ubus.ubus.Components.Bus.DTOs.Responses.BusAdminViewResponse;
 import org.tracker.ubus.ubus.Components.Bus.DTOs.Responses.BusRegisterResponse;
 import org.tracker.ubus.ubus.Components.Bus.Service.Interface.IBusService;
+
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -23,11 +27,15 @@ public class BusController {
         return busService.registerBus(busRegisterRequest);
     }
 
-
-    @GetMapping("/view-buses")
-    public BusAdminViewWrapperResponse viewBuses() {
-        return busService.viewBuses();
+    @PutMapping("/edit-bus/{busId}")
+    public void editBus(@RequestBody @Valid BusEditRequest busEditRequest,
+                        @PathVariable UUID busId) {
+        this.busService.editBus(busEditRequest , busId);
     }
 
+    @GetMapping("/view-buses")
+    public List<BusAdminViewResponse> viewBuses() {
+        return busService.viewBuses();
+    }
 
 }

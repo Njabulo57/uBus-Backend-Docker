@@ -56,6 +56,9 @@ public class SecurityConfig {
                     .requestMatchers("/busses/**")
                         .hasRole(ADMIN.getLabel())
 
+                        .requestMatchers("/web-socket/**").permitAll()
+                        .requestMatchers("/web-socket").permitAll()
+
                     .requestMatchers("/admins/**")
                         .hasRole(ADMIN.getLabel())
 

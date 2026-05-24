@@ -3,7 +3,7 @@ package org.tracker.ubus.ubus.Components.User.Enum;
 import lombok.Getter;
 
 @Getter
-public enum UserBusPreference {
+public enum Route {
 
 
     SWC_DFC("Soweto Campus to Doornfontein Campus", "SWC", "DFC"),
@@ -19,7 +19,7 @@ public enum UserBusPreference {
     private final String fromAbbr;
     private final String toAbbr;
 
-    UserBusPreference(String label, String fromAbbr, String toAbbr) {
+    Route(String label, String fromAbbr, String toAbbr) {
         this.label = label;
         this.fromAbbr = fromAbbr;
         this.toAbbr = toAbbr;
