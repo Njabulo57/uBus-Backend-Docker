@@ -5,6 +5,7 @@ import org.tracker.ubus.ubus.Components.BusPreference.Entity.BusPreference;
 import org.tracker.ubus.ubus.Components.User.DTOs.Responses.UserProfileResponse;
 import org.tracker.ubus.ubus.Components.User.Entity.User;
 import org.tracker.ubus.ubus.Components.User.Enum.Route;
+import org.tracker.ubus.ubus.Components.User.Enum.UserRole;
 
 @Component
 public class UserMapper {
@@ -12,15 +13,14 @@ public class UserMapper {
 
     public UserProfileResponse toDTO(User user, BusPreference busPreference) {
 
-        Route route = busPreference != null ? busPreference.getRoute() :
-                null;
-
         String stringPreference = "";
-        if(route != null)
-            stringPreference = route.getLabel();
+        if(busPreference != null)
+            stringPreference = busPreference
+                    .getRoute()
+                    .getLabel();
 
-        String studentNumber = "";
-        String phoneNumber = user.getPhoneNumber() == null ? "No Phone Number" : user.getPhoneNumber();
+        String studentNumber = user.getStudentNumber();
+        String phoneNumber = user.getPhoneNumber();
 
         return UserProfileResponse.builder()
                 .firstName(user.getFirstname())

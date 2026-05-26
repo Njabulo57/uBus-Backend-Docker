@@ -1,6 +1,5 @@
 package org.tracker.ubus.ubus.Components.BusAssignment.Entity;
 
-
 import jakarta.persistence.*;
 import lombok.*;
 import org.tracker.ubus.ubus.Components.Bus.Entity.Bus;
@@ -17,10 +16,16 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(name = "bus_assignment", indexes = {
+        @Index(name = "idx_bus_assignment_bus", columnList = "bus_id"),
+        @Index(name = "idx_bus_assignment_driver", columnList = "driver_id"),
+        @Index(name = "idx_bus_assignment_schedule", columnList = "driver_schedule")
+})
 public class BusAssignment extends TimeAuditableEntity {
 
-    @Id @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(nullable = false, updatable = false,  unique = true)
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(nullable = false, updatable = false, unique = true)
     private UUID id;
 
     @JoinColumn(nullable = false)
@@ -36,13 +41,13 @@ public class BusAssignment extends TimeAuditableEntity {
 
     @Override
     public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || getClass().equals(o.getClass())) return false;
         BusAssignment that = (BusAssignment) o;
-        return Objects.equals(id, that.id) && driverSchedule == that.driverSchedule;
+        return Objects.equals(id, that.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, driverSchedule);
+        return Objects.hash(id);
     }
 }

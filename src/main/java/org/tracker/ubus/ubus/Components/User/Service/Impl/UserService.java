@@ -19,6 +19,7 @@ public class UserService implements IUserService {
 
     private final UserMapper userMapper;
     private final BusPreferenceRepository busPreferenceRepository;
+
     @Override
     public UserProfileResponse viewProfile() {
 

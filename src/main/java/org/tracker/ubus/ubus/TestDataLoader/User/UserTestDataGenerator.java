@@ -3,6 +3,7 @@ package org.tracker.ubus.ubus.TestDataLoader.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.datafaker.Faker;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -14,8 +15,8 @@ import org.tracker.ubus.ubus.Components.User.Repository.UserRepository;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.IntFunction;
 
 import static org.tracker.ubus.ubus.Components.User.Enum.UserRole.*;
 import static org.tracker.ubus.ubus.Components.User.Enum.UserStatus.*;
@@ -26,387 +27,133 @@ import static org.tracker.ubus.ubus.Components.User.Enum.UserStatus.*;
 @RequiredArgsConstructor
 public class UserTestDataGenerator implements CommandLineRunner {
 
+    private static final String[] SA_PREFIXES = {"081", "082", "076", "072", "079", "083"};
+
     private final Faker faker;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+    // Defaults — override via application.properties or CLI args
+    @Value("${seed.users.students:300000}") private int defaultStudents;
+    @Value("${seed.users.admins:70}")    private int defaultAdmins;
+    @Value("${seed.users.staff:120000}")    private int defaultStaff;
+    @Value("${seed.users.drivers:100}")   private int defaultDrivers;
+    @Value("${seed.users.force:false}")  private boolean defaultForce;
+
     @Override
-    public void run(String... args) throws Exception {
-        if (userRepository.count() == 0) {
-            log.info("PARALLEL GENERATION + BATCH DATABASE SAVE");
-            log.info("------------------------------------------------");
-            long startTime = System.currentTimeMillis();
+    public void run(String... args) {
+        Counts c = Counts.from(args, defaultStudents, defaultAdmins, defaultStaff, defaultDrivers, defaultForce);
 
-            List<User> allUsers = generateUsersInParallelWithDetailedLogs();
-
-            int totalSaved = saveInBatches(allUsers);
-
-            long elapsed = System.currentTimeMillis() - startTime;
-            log.info("------------------------------------------------");
-            log.info("COMPLETED! Saved {} users in {} ms ({} seconds)",
-                    totalSaved, elapsed, String.format("%.2f", elapsed / 1000.0));
-            log.info("------------------------------------------------");
-
-        } else {
-            log.info("Users already exist, skipping data generation");
+        if (c.total() == 0) {
+            log.info("Seeder: all counts are 0, nothing to do");
+            return;
         }
-    }
-
-    private List<User> generateUsersInParallelWithDetailedLogs() throws InterruptedException {
-        long genStart = System.currentTimeMillis();
-
-        int totalUsers = 500 + 30 + 400 + 25;
-
-        List<User> studentList = new CopyOnWriteArrayList<>();
-        List<User> adminList = new CopyOnWriteArrayList<>();
-        List<User> staffList = new CopyOnWriteArrayList<>();
-        List<User> driverList = new CopyOnWriteArrayList<>();
-
-        log.info("Generating {} users in PARALLEL using virtual threads...", totalUsers);
-        log.info("");
-
-        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
-
-            // STUDENTS: 10 batches of 50
-            log.info("------------------------------------------------");
-            log.info("STUDENTS - 10 batches of 50");
-            log.info("------------------------------------------------");
-
-            CountDownLatch studentLatch = new CountDownLatch(10);
-            AtomicInteger studentCount = new AtomicInteger(0);
-            int studentBatchSize = 50;
-
-            for (int batch = 0; batch < 10; batch++) {
-                final int batchNumber = batch;
-                final int startIndex = batch * studentBatchSize + 1;
-                final int endIndex = (batch + 1) * studentBatchSize;
-
-                executor.submit(() -> {
-                    try {
-                        long threadStart = System.nanoTime();
-                        List<User> studentBatch = new ArrayList<>();
-
-                        for (int i = startIndex; i <= endIndex; i++) {
-                            studentBatch.add(createStudent(i));
-                        }
-
-                        studentList.addAll(studentBatch);
-
-                        long threadTime = (System.nanoTime() - threadStart) / 1_000_000;
-                        int completed = studentCount.addAndGet(studentBatchSize);
-                        int percent = (completed * 100) / 500;
-
-                        String bar = createProgressBar(percent);
-
-                        log.info("  Batch {}/10 | {} | {}ms | {}/500 ({}%)",
-                                batchNumber + 1,
-                                bar,
-                                threadTime,
-                                completed,
-                                percent
-                        );
-                    } finally {
-                        studentLatch.countDown();
-                    }
-                });
-            }
-
-            // ADMINS: 30 individual threads
-            log.info("");
-            log.info("------------------------------------------------");
-            log.info("ADMINS - 30 individual");
-            log.info("------------------------------------------------");
-
-            CountDownLatch adminLatch = new CountDownLatch(30);
-            AtomicInteger adminCount = new AtomicInteger(0);
-
-            for (int i = 1; i <= 30; i++) {
-                final int adminNumber = i;
-                executor.submit(() -> {
-                    try {
-                        long threadStart = System.nanoTime();
-                        User user = createAdmin(adminNumber);
-                        adminList.add(user);
-                        long threadTime = (System.nanoTime() - threadStart) / 1_000_000;
-
-                        int completed = adminCount.incrementAndGet();
-                        int percent = (completed * 100) / 30;
-
-                        String bar = createProgressBar(percent);
-
-                        log.info("  Admin #{} | {} | {}ms | {}/30 ({}%)",
-                                adminNumber,
-                                bar,
-                                threadTime,
-                                completed,
-                                percent
-                        );
-                    } finally {
-                        adminLatch.countDown();
-                    }
-                });
-            }
-
-            // STAFF: 8 batches of 50
-            log.info("");
-            log.info("------------------------------------------------");
-            log.info("STAFF - 8 batches of 50");
-            log.info("------------------------------------------------");
-
-            CountDownLatch staffLatch = new CountDownLatch(8);
-            AtomicInteger staffCount = new AtomicInteger(0);
-            int staffBatchSize = 50;
-
-            for (int batch = 0; batch < 8; batch++) {
-                final int batchNumber = batch;
-                final int startIndex = batch * staffBatchSize + 1;
-                final int endIndex = (batch + 1) * staffBatchSize;
-
-                executor.submit(() -> {
-                    try {
-                        long threadStart = System.nanoTime();
-                        List<User> staffBatch = new ArrayList<>();
-
-                        for (int i = startIndex; i <= endIndex; i++) {
-                            staffBatch.add(createStaff(i));
-                        }
-
-                        staffList.addAll(staffBatch);
-
-                        long threadTime = (System.nanoTime() - threadStart) / 1_000_000;
-                        int completed = staffCount.addAndGet(staffBatchSize);
-                        int percent = (completed * 100) / 400;
-
-                        String bar = createProgressBar(percent);
-
-                        log.info("  Batch {}/8 | {} | {}ms | {}/400 ({}%)",
-                                batchNumber + 1,
-                                bar,
-                                threadTime,
-                                completed,
-                                percent
-                        );
-                    } finally {
-                        staffLatch.countDown();
-                    }
-                });
-            }
-
-            // DRIVERS: 25 individual threads
-            log.info("");
-            log.info("------------------------------------------------");
-            log.info("DRIVERS - 25 individual");
-            log.info("------------------------------------------------");
-
-            CountDownLatch driverLatch = new CountDownLatch(25);
-            AtomicInteger driverCount = new AtomicInteger(0);
-
-            for (int i = 1; i <= 25; i++) {
-                final int driverNumber = i;
-                executor.submit(() -> {
-                    try {
-                        long threadStart = System.nanoTime();
-                        User user = createDriver(driverNumber);
-                        driverList.add(user);
-                        long threadTime = (System.nanoTime() - threadStart) / 1_000_000;
-
-                        int completed = driverCount.incrementAndGet();
-                        int percent = (completed * 100) / 25;
-
-                        String bar = createProgressBar(percent);
-
-                        log.info("  Driver #{} | {} | {}ms | {}/25 ({}%)",
-                                driverNumber,
-                                bar,
-                                threadTime,
-                                completed,
-                                percent
-                        );
-                    } finally {
-                        driverLatch.countDown();
-                    }
-                });
-            }
-
-            log.info("");
-            log.info("Waiting for all {} generation threads to complete...", totalUsers);
-            log.info("");
-
-            // Wait for ALL generation to complete with progress bars
-            int lastPercent = -1;
-            while (studentLatch.getCount() > 0 || adminLatch.getCount() > 0 ||
-                    staffLatch.getCount() > 0 || driverLatch.getCount() > 0) {
-
-                long remaining = studentLatch.getCount() + adminLatch.getCount() +
-                        staffLatch.getCount() + driverLatch.getCount();
-                long completed = totalUsers - remaining;
-                int percent = (int)((completed * 100) / totalUsers);
-
-                if (percent != lastPercent) {
-                    String bar = createProgressBar(percent);
-                    log.info("  OVERALL PROGRESS | {} | {}% | {}/{}", bar, percent, completed, totalUsers);
-                    lastPercent = percent;
-                }
-
-                Thread.sleep(100);
-            }
-
-            String finalBar = createProgressBar(100);
-            log.info("  OVERALL PROGRESS | {} | 100% | {}/{}", finalBar, totalUsers, totalUsers);
-
-            studentLatch.await();
-            adminLatch.await();
-            staffLatch.await();
-            driverLatch.await();
+        if (!c.force && userRepository.count() > 0) {
+            log.info("Users already exist, skipping. Pass --force=true to seed anyway.");
+            return;
         }
 
-        List<User> allUsers = new ArrayList<>();
-        allUsers.addAll(studentList);
-        allUsers.addAll(adminList);
-        allUsers.addAll(staffList);
-        allUsers.addAll(driverList);
+        log.info("Seeding -> students={}, admins={}, staff={}, drivers={} (total {})",
+                c.students, c.admins, c.staff, c.drivers, c.total());
 
-        long generationTime = System.currentTimeMillis() - genStart;
-        log.info("");
-        log.info("------------------------------------------------");
-        log.info("Parallel generation complete in {} ms", generationTime);
-        log.info("Generated {} users total", allUsers.size());
-        log.info("------------------------------------------------");
-        log.info("");
+        long t0 = System.currentTimeMillis();
 
-        return allUsers;
+        // Encode each password ONCE per role used
+        String studentPwd = c.students > 0 ? passwordEncoder.encode("student@123") : null;
+        String adminPwd   = c.admins   > 0 ? passwordEncoder.encode("admin@123")   : null;
+        String staffPwd   = c.staff    > 0 ? passwordEncoder.encode("staff@123")   : null;
+        String driverPwd  = c.drivers  > 0 ? passwordEncoder.encode("driver@2025") : null;
+
+        List<User> all = new ArrayList<>(c.total());
+        addMany(all, c.students, i -> student(i, studentPwd));
+        addMany(all, c.admins,   i -> admin(i, adminPwd));
+        addMany(all, c.staff,    i -> staff(i, staffPwd));
+        addMany(all, c.drivers,  i -> driver(i, driverPwd));
+
+        userRepository.saveAll(all);
+        userRepository.flush();
+
+        log.info("Seeded {} users in {} ms", all.size(), System.currentTimeMillis() - t0);
     }
 
-    private String createProgressBar(int percent) {
-        int barLength = 30;
-        int filledLength = (barLength * percent) / 100;
-
-        StringBuilder bar = new StringBuilder("[");
-        for (int i = 0; i < barLength; i++) {
-            if (i < filledLength) {
-                bar.append("=");
-            } else {
-                bar.append(" ");
-            }
-        }
-        bar.append("]");
-
-        return bar.toString();
+    private void addMany(List<User> out, int count, IntFunction<User> builder) {
+        for (int i = 1; i <= count; i++) out.add(builder.apply(i));
     }
 
-    private int saveInBatches(List<User> users) {
-        int batchSize = 500;
-        int totalBatches = (int) Math.ceil((double) users.size() / batchSize);
-        int totalSaved = 0;
-
-        log.info("SAVING TO DATABASE (Batch Mode)");
-        log.info("------------------------------------------------");
-        log.info("Total users: {} | Batch size: {} | Total batches: {}",
-                users.size(), batchSize, totalBatches);
-        log.info("------------------------------------------------");
-        log.info("");
-
-        long saveStart = System.currentTimeMillis();
-
-        for (int batchNum = 0; batchNum < totalBatches; batchNum++) {
-            int start = batchNum * batchSize;
-            int end = Math.min(start + batchSize, users.size());
-            List<User> batch = users.subList(start, end);
-
-            long batchStart = System.currentTimeMillis();
-
-            userRepository.saveAll(batch);
-            userRepository.flush();
-
-            long batchTime = System.currentTimeMillis() - batchStart;
-            totalSaved += batch.size();
-
-            int overallPercent = (totalSaved * 100) / users.size();
-
-            String bar = createProgressBar(overallPercent);
-
-            log.info("  Batch {}/{} | {} | {}ms | {}/{} ({}%)",
-                    batchNum + 1,
-                    totalBatches,
-                    bar,
-                    batchTime,
-                    totalSaved,
-                    users.size(),
-                    overallPercent
-            );
-        }
-
-        long saveTime = System.currentTimeMillis() - saveStart;
-        log.info("");
-        log.info("Database save complete in {} ms", saveTime);
-        log.info("");
-
-        return totalSaved;
-    }
-
-    private User createStudent(int studentNumber) {
-        String studentNum = "2024" + String.format("%05d", studentNumber);
-
-        return User.builder()
-                .firstname(faker.name().firstName())
-                .lastname(faker.name().lastName())
-                .email(studentNum + "@student.ubus.ac.za")
-                .password(passwordEncoder.encode("student@123"))
-                .phoneNumber(generateSouthAfricanPhoneNumber())
-                .role(STUDENT)
-                .status(getRandomStatus(STUDENT))
+    private User student(int n, String pwd) {
+        return base(pwd, STUDENT)
+                .email("2024" + String.format("%05d", n) + "@student.ubus.ac.za")
                 .build();
     }
 
-    private User createAdmin(int index) {
-        return User.builder()
-                .firstname(faker.name().firstName())
-                .lastname(faker.name().lastName())
-                .email(String.format("admin%03d@admin.ubus.za", index))
-                .password(passwordEncoder.encode("admin@123"))
-                .phoneNumber(generateSouthAfricanPhoneNumber())
-                .role(ADMIN)
-                .status(getRandomStatus(ADMIN))
+    private User admin(int n, String pwd) {
+        return base(pwd, ADMIN)
+                .email(String.format("admin%03d@admin.ubus.za", n))
                 .build();
     }
 
-    private User createStaff(int index) {
-        return User.builder()
-                .firstname(faker.name().firstName())
-                .lastname(faker.name().lastName())
-                .email(String.format("staff%03d@ubus.ac.za", index))
-                .password(passwordEncoder.encode("staff@123"))
-                .phoneNumber(generateSouthAfricanPhoneNumber())
-                .role(STAFF)
-                .status(getRandomStatus(STAFF))
+    private User staff(int n, String pwd) {
+        return base(pwd, STAFF)
+                .email(String.format("staff%03d@ubus.ac.za", n))
                 .build();
     }
 
-    private User createDriver(int index) {
-        return User.builder()
-                .firstname(faker.name().firstName())
-                .lastname(faker.name().lastName())
-                .email(String.format("driver%03d@ubus.co.za", index))
-                .password(passwordEncoder.encode("driver@2025"))
-                .phoneNumber(generateSouthAfricanPhoneNumber())
-                .role(DRIVER)
-                .status(getRandomStatus(DRIVER))
+    private User driver(int n, String pwd) {
+        return base(pwd, DRIVER)
+                .email(String.format("driver%03d@ubus.co.za", n))
                 .build();
     }
 
-    private UserStatus getRandomStatus(UserRole role) {
-        UserStatus[] statuses = switch (role) {
-            case STUDENT -> new UserStatus[]{EMAIL_APPROVAL_PENDING, ACTIVE};
-            case DRIVER -> new UserStatus[]{ADMIN_APPROVAL_PENDING, ACTIVE};
+    private User.UserBuilder base(String pwd, UserRole role) {
+        return User.builder()
+                .firstname(faker.name().firstName())
+                .lastname(faker.name().lastName())
+                .password(pwd)
+                .phoneNumber(saPhone())
+                .role(role)
+                .status(randomStatus(role));
+    }
+
+    private UserStatus randomStatus(UserRole role) {
+        UserStatus[] s = switch (role) {
+            case STUDENT      -> new UserStatus[]{EMAIL_APPROVAL_PENDING, ACTIVE};
+            case DRIVER       -> new UserStatus[]{ADMIN_APPROVAL_PENDING, ACTIVE};
             case ADMIN, STAFF -> new UserStatus[]{ACTIVE, INACTIVE};
         };
-        return statuses[faker.random().nextInt(statuses.length)];
+        return s[ThreadLocalRandom.current().nextInt(s.length)];
     }
 
-    private String generateSouthAfricanPhoneNumber() {
-        String[] prefixes = {"081", "082", "076", "072", "079", "083"};
-        String selectedPrefix = prefixes[faker.random().nextInt(prefixes.length)];
-        String restOfNumber = String.format("%07d", faker.number().numberBetween(1000000, 9999999));
-        return selectedPrefix + restOfNumber.substring(0, 3) + restOfNumber.substring(3);
+    private String saPhone() {
+        ThreadLocalRandom r = ThreadLocalRandom.current();
+        return SA_PREFIXES[r.nextInt(SA_PREFIXES.length)]
+                + String.format("%07d", r.nextInt(1_000_000, 10_000_000));
+    }
+
+    /** Parses --students=N --admins=N --staff=N --drivers=N --force=true from CLI, falling back to defaults. */
+    private record Counts(int students, int admins, int staff, int drivers, boolean force) {
+        int total() { return students + admins + staff + drivers; }
+
+        static Counts from(String[] args, int ds, int da, int dst, int dd, boolean dForce) {
+            int students = ds, admins = da, staff = dst, drivers = dd;
+            boolean force = dForce;
+            for (String a : args) {
+                if (!a.startsWith("--")) continue;
+                String[] kv = a.substring(2).split("=", 2);
+                if (kv.length != 2) continue;
+                switch (kv[0]) {
+                    case "students" -> students = parse(kv[1], students);
+                    case "admins"   -> admins   = parse(kv[1], admins);
+                    case "staff"    -> staff    = parse(kv[1], staff);
+                    case "drivers"  -> drivers  = parse(kv[1], drivers);
+                    case "force"    -> force    = Boolean.parseBoolean(kv[1]);
+                }
+            }
+            return new Counts(Math.max(0, students), Math.max(0, admins),
+                    Math.max(0, staff),    Math.max(0, drivers), force);
+        }
+
+        private static int parse(String s, int fallback) {
+            try { return Integer.parseInt(s); } catch (NumberFormatException e) { return fallback; }
+        }
     }
 }

@@ -3,7 +3,7 @@ package org.tracker.ubus.ubus.Components.BusTracking.Service.Impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.tracker.ubus.ubus.Components.BusTracking.DTO.Requests.BusCurrentLocationMessage;
+import org.tracker.ubus.ubus.Components.BusTracking.DTO.Requests.DriverCurrentLocationMessage;
 import org.tracker.ubus.ubus.Components.BusTracking.Mappers.BusTrackingMapper;
 import org.tracker.ubus.ubus.Components.Trip.Entity.Trip;
 
@@ -24,7 +24,7 @@ public class BusTrackingBatchSavingManager {
 
     public void checkAllBusesForTimeOut(
             int timeoutSeconds,
-            ConcurrentHashMap<UUID, ConcurrentLinkedQueue<BusCurrentLocationMessage>> busQueues,
+            ConcurrentHashMap<UUID, ConcurrentLinkedQueue<DriverCurrentLocationMessage>> busQueues,
             ConcurrentHashMap<UUID, AtomicInteger> busBatchSizes,
             ConcurrentHashMap<UUID, Long> busLastFlushTime,
             ConcurrentHashMap<UUID, Trip> busTripCache
@@ -52,7 +52,7 @@ public class BusTrackingBatchSavingManager {
 
     public void flushBusBatch(
             UUID busId,
-            ConcurrentHashMap<UUID, ConcurrentLinkedQueue<BusCurrentLocationMessage>> busQueues,
+            ConcurrentHashMap<UUID, ConcurrentLinkedQueue<DriverCurrentLocationMessage>> busQueues,
             ConcurrentHashMap<UUID, AtomicInteger> busBatchSizes,
             ConcurrentHashMap<UUID, Long> busLastFlushTime,
             Trip trip,
@@ -66,8 +66,8 @@ public class BusTrackingBatchSavingManager {
         }
 
         //removing everything from the que
-        List<BusCurrentLocationMessage> locationsToSave = new ArrayList<>();
-        BusCurrentLocationMessage location;
+        List<DriverCurrentLocationMessage> locationsToSave = new ArrayList<>();
+        DriverCurrentLocationMessage location;
         while ((location = queue.poll()) != null)
             locationsToSave.add(location);
 

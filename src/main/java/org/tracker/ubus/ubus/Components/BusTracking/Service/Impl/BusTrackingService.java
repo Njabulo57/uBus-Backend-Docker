@@ -8,7 +8,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.tracker.ubus.ubus.Components.BusTracking.DTO.Requests.BusCurrentLocationMessage;
+import org.tracker.ubus.ubus.Components.BusTracking.DTO.Requests.DriverCurrentLocationMessage;
+import org.tracker.ubus.ubus.Components.BusTracking.DTO.Responses.DriverCurrentLocationResponse;
+import org.tracker.ubus.ubus.Components.BusTracking.Mappers.BusTrackingMapper;
 import org.tracker.ubus.ubus.Components.BusTracking.Service.Interface.IBusTrackingService;
 import org.tracker.ubus.ubus.Components.Trip.Repository.TripRepository;
 import org.tracker.ubus.ubus.Components.Trip.Entity.Trip;
@@ -20,12 +22,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class BusTrackingService implements IBusTrackingService {
+public class
+BusTrackingService implements IBusTrackingService {
 
     private final TripRepository tripRepository;
+    private final BusTrackingMapper busTrackingMapper;
     private final BusTrackingBatchSavingManager busTrackingSaver;
 
-    private final ConcurrentHashMap<UUID, ConcurrentLinkedQueue<BusCurrentLocationMessage>> busQueues = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, ConcurrentLinkedQueue<DriverCurrentLocationMessage>> busQueues = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, AtomicInteger> busBatchSizes = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, Long> busLastFlushTime = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, Trip> busTripCache = new ConcurrentHashMap<>();
@@ -85,7 +89,7 @@ public class BusTrackingService implements IBusTrackingService {
 
     @Override
     @Transactional
-    public UUID queueLocationForItsBatch(BusCurrentLocationMessage location) {
+    public DriverCurrentLocationResponse queueLocationForItsBatch(DriverCurrentLocationMessage location) {
         var trip = this.tripRepository.findByIdOrThrow(location.tripId());
         var busAssignment = trip.getBusAssignment();
         var bus = busAssignment.getBus();
@@ -123,7 +127,7 @@ public class BusTrackingService implements IBusTrackingService {
             );
         }
 
-        return busId;
+        return this.busTrackingMapper.toDTO(trip);
     }
 
 }

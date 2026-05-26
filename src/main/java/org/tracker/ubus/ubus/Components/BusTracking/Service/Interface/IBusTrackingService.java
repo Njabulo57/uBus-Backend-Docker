@@ -1,10 +1,12 @@
 package org.tracker.ubus.ubus.Components.BusTracking.Service.Interface;
 
-import org.tracker.ubus.ubus.Components.BusTracking.DTO.Requests.BusCurrentLocationMessage;
-import java.util.UUID;
+import org.tracker.ubus.ubus.Components.BusTracking.DTO.Requests.DriverCurrentLocationMessage;
+import org.tracker.ubus.ubus.Components.BusTracking.DTO.Responses.DriverCurrentLocationResponse;
 
 
+
+@FunctionalInterface
 public interface IBusTrackingService {
 
-    UUID queueLocationForItsBatch(BusCurrentLocationMessage location);
+    DriverCurrentLocationResponse queueLocationForItsBatch(DriverCurrentLocationMessage location);
 }

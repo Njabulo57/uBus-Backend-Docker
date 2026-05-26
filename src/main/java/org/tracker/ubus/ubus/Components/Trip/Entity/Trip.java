@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.tracker.ubus.ubus.Components.BusAssignment.Entity.BusAssignment;
 import org.tracker.ubus.ubus.Components.Shared.Entities.TimeAuditableEntity;
+import org.tracker.ubus.ubus.Components.Trip.Enum.TripRoute;
 import org.tracker.ubus.ubus.Components.Trip.Enum.TripStatus;
 import org.tracker.ubus.ubus.Components.User.Enum.Route;
 import java.util.UUID;
@@ -23,7 +24,7 @@ public class Trip extends TimeAuditableEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, updatable = false)
-    private Route route;
+    private TripRoute route;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)

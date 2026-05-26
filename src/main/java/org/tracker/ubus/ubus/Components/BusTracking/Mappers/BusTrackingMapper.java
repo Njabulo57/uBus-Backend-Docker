@@ -2,22 +2,20 @@ package org.tracker.ubus.ubus.Components.BusTracking.Mappers;
 
 
 import org.springframework.stereotype.Component;
-import org.tracker.ubus.ubus.Components.BusTracking.DTO.Internal.BusLocationsCarrierInternal;
-import org.tracker.ubus.ubus.Components.BusTracking.DTO.Requests.BusCurrentLocationMessage;
+import org.tracker.ubus.ubus.Components.BusTracking.DTO.Requests.DriverCurrentLocationMessage;
+import org.tracker.ubus.ubus.Components.BusTracking.DTO.Responses.DriverCurrentLocationResponse;
 import org.tracker.ubus.ubus.Components.Trip.Entity.Trip;
 import org.tracker.ubus.ubus.Components.TripHistory.Entity.TripHistoryPoint;
 
+import java.time.LocalTime;
 import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicInteger;
+
 
 @Component
 public class BusTrackingMapper {
 
 
-    public TripHistoryPoint toEntity(BusCurrentLocationMessage location, Trip trip) {
+    public TripHistoryPoint toEntity(DriverCurrentLocationMessage location, Trip trip) {
         return TripHistoryPoint.builder()
                 .latitude(location.latitude())
                 .longitude(location.longitude())
@@ -28,26 +26,28 @@ public class BusTrackingMapper {
 
     }
 
-    public List<TripHistoryPoint> toEntities(List<BusCurrentLocationMessage> locations, Trip trip) {
+    public List<TripHistoryPoint> toEntities(List<DriverCurrentLocationMessage> locations, Trip trip) {
         return locations.stream()
                 .map(locationMessage -> toEntity(locationMessage, trip))
                 .toList();
     }
 
-    public BusLocationsCarrierInternal toInternal(
-            ConcurrentLinkedQueue<BusCurrentLocationMessage> busCurrentLocationMessages,
-            ConcurrentMap<UUID, ConcurrentLinkedQueue<BusCurrentLocationMessage>> allCurrentBusLocations,
-            ConcurrentMap<UUID, Long> busLastFlush,
-            ConcurrentMap<UUID, AtomicInteger> tripBatchSize,
-            Trip trip) {
+    public DriverCurrentLocationResponse toDTO(Trip trip) {
 
-        return BusLocationsCarrierInternal.builder()
-                .busCurrentLocationMessages(busCurrentLocationMessages)
-                .allCurrentBusLocations(allCurrentBusLocations)
-                .busLastFlush(busLastFlush)
-                .tripBatchSize(tripBatchSize)
-                .trip(trip)
+        var busAssignment = trip.getBusAssignment();
+        var bus = busAssignment.getBus();
+
+        var route = trip.getRoute().getLabel();
+
+        return DriverCurrentLocationResponse.builder()
+                .busId(bus.getId())
+                .route(route)
+                .eta(LocalTime.NOON) // this will come from the trip tracking subsystem
+                .delay(null)
                 .build();
+
     }
+
+
 
 }
