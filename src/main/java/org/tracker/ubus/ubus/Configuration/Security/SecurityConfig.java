@@ -50,14 +50,18 @@ public class SecurityConfig {
                             STAFF.getLabel(), STUDENT.getLabel()
                         )
 
-                    .requestMatchers("/busses/register")
-                        .hasRole(ADMIN.getLabel())
-
                     .requestMatchers("/busses/**")
                         .hasRole(ADMIN.getLabel())
 
-                        .requestMatchers("/web-socket/**").permitAll()
-                        .requestMatchers("/web-socket").permitAll()
+                    .requestMatchers("/trips/register-bus-trip")
+                        .hasRole(ADMIN.getLabel())
+
+
+                    .requestMatchers("/trips/get-active-trip").permitAll()
+                    .requestMatchers("/trips/get-trip/").permitAll()
+
+                    .requestMatchers("/web-socket/**").permitAll()
+                    .requestMatchers("/web-socket").permitAll()
 
                     .requestMatchers("/admins/**")
                         .hasRole(ADMIN.getLabel())

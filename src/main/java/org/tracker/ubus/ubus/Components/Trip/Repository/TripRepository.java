@@ -6,6 +6,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.tracker.ubus.ubus.Components.Trip.Entity.Trip;
 import org.tracker.ubus.ubus.Components.Trip.Enum.TripRoute;
+import org.tracker.ubus.ubus.Components.Trip.Enum.TripStatus;
 import org.tracker.ubus.ubus.Components.Trip.Exceptions.TripNotFoundException;
 import org.tracker.ubus.ubus.Components.User.Enum.Route;
 
@@ -27,6 +28,15 @@ public interface TripRepository extends JpaRepository<Trip, UUID> {
 
 
     @Query("""
+        SELECT t  FROM Trip t
+        LEFT JOIN t.busAssignment ba
+        LEFT JOIN ba.bus b
+        WHERE t.status = 'IN_PROGRESS'
+        AND b.id =: busId
+    """)
+    Optional<Trip> findActiveTripByBus(@Param("busId") UUID busId);
+
+    @Query("""
         SELECT t FROM Trip t
         LEFT JOIN t.busAssignment ba
         LEFT JOIN ba.driver
@@ -34,6 +44,20 @@ public interface TripRepository extends JpaRepository<Trip, UUID> {
         AND t.route = : route
     """)
     List<Trip> findByRoute(@Param("route") TripRoute route);
+
+    @Query("""
+        SELECT t FROM Trip t
+        LEFT JOIN t.busAssignment ba
+        LEFT JOIN ba.bus b
+        WHERE t.status =: status
+    """)
+    List<Trip> findByStatus(@Param("status") TripStatus status);
+
+
+    default Trip findActiveTripByBusOrThrow(UUID busId) {
+        return this.findActiveTripByBus(busId)
+                .orElseThrow(() -> new TripNotFoundException("No active trip found for bus " + busId));
+    }
 
     default Trip findByIdOrThrow(UUID id) {
         return this.findByIdFetch(id)

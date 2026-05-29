@@ -7,9 +7,8 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.tracker.ubus.ubus.Components.BusTracking.DTO.Requests.DriverCurrentLocationMessage;
-import org.tracker.ubus.ubus.Components.BusTracking.Service.Interface.IBusTrackingService;
-
-import java.util.UUID;
+import org.tracker.ubus.ubus.Components.BusTracking.Service.Interface.IBusLocationBatchService;
+import org.tracker.ubus.ubus.Components.Trip.DTO.Request.TripEndingRequest;
 
 
 @Slf4j
@@ -17,21 +16,25 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class BusTrackingController {
 
-    private final IBusTrackingService busTrackingService;
+    private final IBusLocationBatchService busTrackingService;
     private final SimpMessagingTemplate simpMessagingTemplate;
 
 
 
 
+    @MessageMapping("/buses/-end-trip")
+    public void endTrip(@Payload TripEndingRequest tripEndingRequest) {
+        this.busTrackingService.endTrip(tripEndingRequest.tripId());
+    }
 
-    @MessageMapping("/bus/get-location")
+
+    @MessageMapping("/buses/get-location")
     public void busTracking(@Payload DriverCurrentLocationMessage location) {
 
-        var response = this.busTrackingService.queueLocationForItsBatch(location);
+        var response = this.busTrackingService.enqueue(location);
 
         var route = response.route();
         var busId = response.busId();
-
 
 
         //let all admins know where the bus is
@@ -40,7 +43,6 @@ public class BusTrackingController {
 
         this.sendTo("/topic/students/get-bus-location/" + busId, location);
         this.sendTo("/topic/studnets/on-board/" + busId, location);
-
 
 
         this.sendTo("/topic/route-tracking/" + route, location);
