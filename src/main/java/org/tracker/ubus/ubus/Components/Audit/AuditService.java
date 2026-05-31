@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 import org.tracker.ubus.ubus.Components.Audit.Enum.AuditType;
 import org.tracker.ubus.ubus.Components.Audit.Mapper.AuditMapper;
 import org.tracker.ubus.ubus.Components.Audit.Repository.AuditRepository;
-import org.tracker.ubus.ubus.Components.User.Entity.User;
+import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
 
 @Service
 @RequiredArgsConstructor

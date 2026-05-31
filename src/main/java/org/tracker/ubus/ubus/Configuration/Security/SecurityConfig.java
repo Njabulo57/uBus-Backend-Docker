@@ -11,7 +11,7 @@ import org.springframework.security.web.authentication.AuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.tracker.ubus.ubus.Components.TokenGenerators.Jwt.Filter.JwtFilter;
 
-import static org.tracker.ubus.ubus.Components.User.Enum.UserRole.*;
+import static org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole.*;
 
 @Configuration
 @EnableWebSecurity
@@ -45,10 +45,13 @@ public class SecurityConfig {
                     .requestMatchers("/auth/**").permitAll()
                     .requestMatchers("/one-time-password/**").permitAll()
 
+
                     .requestMatchers("/users/**")
                         .hasAnyRole(ADMIN.getLabel(), DRIVER.getLabel(),
-                            STAFF.getLabel(), STUDENT.getLabel()
-                        )
+                            STAFF.getLabel(), STUDENT.getLabel())
+
+                    .requestMatchers("/drivers/**")
+                        .hasRole(DRIVER.getLabel())
 
                     .requestMatchers("/busses/**")
                         .hasRole(ADMIN.getLabel())
@@ -57,7 +60,7 @@ public class SecurityConfig {
                         .hasRole(ADMIN.getLabel())
 
 
-                    .requestMatchers("/trips/get-active-trip").permitAll()
+                    .requestMatchers("/trips/get-active-trips").permitAll()
                     .requestMatchers("/trips/get-trip/").permitAll()
 
                     .requestMatchers("/web-socket/**").permitAll()

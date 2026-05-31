@@ -4,7 +4,7 @@ import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import org.tracker.ubus.ubus.AnnotationProcessing.Annotations.DriverPhoneRequired;
 import org.tracker.ubus.ubus.Components.Auth.DTOs.Requests.RegisterRequest;
-import org.tracker.ubus.ubus.Components.User.Enum.UserRole;
+import org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole;
 
 public class DriverPhoneNumberValidator implements ConstraintValidator<DriverPhoneRequired,
         RegisterRequest> {

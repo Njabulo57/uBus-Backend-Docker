@@ -4,8 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.tracker.ubus.ubus.Components.Auth.Exception.Internal.UserRoleNotAllowedException;
 import org.tracker.ubus.ubus.Components.Shared.Entities.TimeAuditableEntity;
-import org.tracker.ubus.ubus.Components.User.Entity.User;
-import org.tracker.ubus.ubus.Components.User.Enum.UserRole;
+import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
+import org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

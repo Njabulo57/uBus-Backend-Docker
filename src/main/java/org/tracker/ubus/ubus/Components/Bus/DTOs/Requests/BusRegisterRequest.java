@@ -33,7 +33,11 @@ public record BusRegisterRequest(
 
         @NotNull(message = "Capacity is required")
         @Positive(message = "Capacity must be Positive")
-        Integer capacity
+        Integer capacity,
+
+        @NotBlank(message = "To Route is required")
+        String toRoute
+
 
 ) {
 

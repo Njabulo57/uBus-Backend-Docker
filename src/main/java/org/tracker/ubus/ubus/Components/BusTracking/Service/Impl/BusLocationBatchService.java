@@ -63,11 +63,13 @@ public class BusLocationBatchService implements IBusLocationBatchService {
         // Cache the trip for this bus
         busTripCache.computeIfAbsent(busId, k -> tripEntity);
 
+
+        var busLocationToDistribute = this.busTrackingMapper.toDTO(tripEntity);
         if (queue.offer(msg)) {
             // Only check size if we might need to flush
             if (queue.size() >= FLUSH_BATCH_SIZE)
                 flushBus(busId, "BATCH_FULL");
-            return this.busTrackingMapper.toDTO(tripEntity);
+            return busLocationToDistribute;
         }
 
         // Queue full. dropping oldest and adding new
@@ -75,7 +77,7 @@ public class BusLocationBatchService implements IBusLocationBatchService {
         queue.offer(msg);
         log.warn("Bus {}: queue full, dropped oldest location", busId);
 
-        return null;
+        return busLocationToDistribute;
     }
 
     @Override

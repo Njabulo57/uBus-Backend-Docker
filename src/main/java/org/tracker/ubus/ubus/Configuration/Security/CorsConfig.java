@@ -3,7 +3,6 @@ package org.tracker.ubus.ubus.Configuration.Security;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
-import java.util.Arrays;
 import java.util.List;
 
 

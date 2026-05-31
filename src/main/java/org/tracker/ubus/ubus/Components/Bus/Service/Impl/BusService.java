@@ -2,6 +2,7 @@ package org.tracker.ubus.ubus.Components.Bus.Service.Impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.tracker.ubus.ubus.Components.Bus.DTOs.Requests.BusEditRequest;
 import org.tracker.ubus.ubus.Components.Bus.DTOs.Requests.BusRegisterRequest;
 import org.tracker.ubus.ubus.Components.Bus.DTOs.Responses.BusAdminViewResponse;
@@ -14,9 +15,9 @@ import org.tracker.ubus.ubus.Components.Bus.Exceptions.BusInformationMismatchExc
 import org.tracker.ubus.ubus.Components.Bus.Mapper.BusMapper;
 import org.tracker.ubus.ubus.Components.Bus.Repository.DatabaseAccessLayer.BusRepository;
 import org.tracker.ubus.ubus.Components.Bus.Service.Interface.IBusService;
-import org.tracker.ubus.ubus.Components.BusAssignment.Repository.BusAssignmentRepository;
+import org.tracker.ubus.ubus.Components.BusRoute.Mappers.BusRouteMapper;
 import org.tracker.ubus.ubus.Components.BusRoute.Repository.BusRouteRepository;
-import org.tracker.ubus.ubus.Components.User.Repository.UserRepository;
+import org.tracker.ubus.ubus.Components.Users.User.Enum.Route;
 
 import java.util.List;
 import java.util.UUID;
@@ -25,25 +26,33 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class BusService implements IBusService {
 
+
     private final BusMapper busMapper;
     private final BusRepository busRepository;
+    private final BusRouteMapper busRouteMapper;
+    private final BusRouteRepository busRouteRepository;
 
 
 
 
     @Override
+    @Transactional
     public BusRegisterResponse registerBus(BusRegisterRequest request) {
+
+        var route = Route.valueOf(request.toRoute());
 
         Bus bus = this.busMapper.toEntity(request);
         this.validateBusConstraints(bus);
-
 
 
         boolean existsByName = busRepository.existsByName(bus.getName());
         if (existsByName)
             throw new BusAlreadyExistsException("Bus with name already exists.", bus);
 
+        var busRoute = this.busRouteMapper.toEntity(bus, route);
+
         this.busRepository.save(bus);
+        this.busRouteRepository.save(busRoute);
         return this.busMapper.toDTO(bus);
     }
 

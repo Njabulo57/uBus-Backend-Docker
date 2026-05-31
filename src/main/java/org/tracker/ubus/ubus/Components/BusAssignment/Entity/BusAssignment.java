@@ -5,7 +5,7 @@ import lombok.*;
 import org.tracker.ubus.ubus.Components.Bus.Entity.Bus;
 import org.tracker.ubus.ubus.Components.BusAssignment.Enum.DriverSchedule;
 import org.tracker.ubus.ubus.Components.Shared.Entities.TimeAuditableEntity;
-import org.tracker.ubus.ubus.Components.User.Entity.User;
+import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
 
 import java.util.Objects;
 import java.util.UUID;

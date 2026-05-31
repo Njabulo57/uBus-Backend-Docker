@@ -7,10 +7,7 @@ import org.tracker.ubus.ubus.Components.EventHandler.Publisher.MultiEvenPublishe
 import org.tracker.ubus.ubus.Components.OneTimePassword.Exceptions.OneTimePasswordExistsException;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Service.Impl.OneTimePasswordService;
 import org.tracker.ubus.ubus.Components.TokenGenerators.EmailVerificationToken.EmailVerificationTokenService.EmailVerificationTokenService;
-import org.tracker.ubus.ubus.Components.User.Entity.User;
-import org.tracker.ubus.ubus.Components.User.Enum.UserRole;
-
-import java.util.Objects;
+import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
 
 @Component
 @RequiredArgsConstructor

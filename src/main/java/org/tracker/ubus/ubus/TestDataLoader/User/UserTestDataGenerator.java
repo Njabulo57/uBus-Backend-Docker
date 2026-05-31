@@ -8,18 +8,18 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-import org.tracker.ubus.ubus.Components.User.Entity.User;
-import org.tracker.ubus.ubus.Components.User.Enum.UserRole;
-import org.tracker.ubus.ubus.Components.User.Enum.UserStatus;
-import org.tracker.ubus.ubus.Components.User.Repository.UserRepository;
+import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
+import org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole;
+import org.tracker.ubus.ubus.Components.Users.User.Enum.UserStatus;
+import org.tracker.ubus.ubus.Components.Users.User.Repository.UserRepository;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.IntFunction;
 
-import static org.tracker.ubus.ubus.Components.User.Enum.UserRole.*;
-import static org.tracker.ubus.ubus.Components.User.Enum.UserStatus.*;
+import static org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole.*;
+import static org.tracker.ubus.ubus.Components.Users.User.Enum.UserStatus.*;
 
 @Slf4j
 @Order(1)
@@ -34,9 +34,9 @@ public class UserTestDataGenerator implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
 
     // Defaults — override via application.properties or CLI args
-    @Value("${seed.users.students:300000}") private int defaultStudents;
+    @Value("${seed.users.students:50000}") private int defaultStudents;
     @Value("${seed.users.admins:70}")    private int defaultAdmins;
-    @Value("${seed.users.staff:120000}")    private int defaultStaff;
+    @Value("${seed.users.staff:10000}")    private int defaultStaff;
     @Value("${seed.users.drivers:100}")   private int defaultDrivers;
     @Value("${seed.users.force:false}")  private boolean defaultForce;
 

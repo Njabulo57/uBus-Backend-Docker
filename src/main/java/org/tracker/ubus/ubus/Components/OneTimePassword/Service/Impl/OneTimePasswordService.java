@@ -15,8 +15,8 @@ import org.tracker.ubus.ubus.Components.OneTimePassword.Exceptions.OneTimePasswo
 import org.tracker.ubus.ubus.Components.OneTimePassword.Generator.OneTimePasswordGenerator;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Reposirtory.OneTimePasswordRepository;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Service.Interface.IOneTimePasswordService;
-import org.tracker.ubus.ubus.Components.User.Enum.UserStatus;
-import org.tracker.ubus.ubus.Components.User.Repository.UserRepository;
+import org.tracker.ubus.ubus.Components.Users.User.Enum.UserStatus;
+import org.tracker.ubus.ubus.Components.Users.User.Repository.UserRepository;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;

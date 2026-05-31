@@ -5,13 +5,13 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.tracker.ubus.ubus.Components.Shared.Entities.TimeAuditableEntity;
 import org.tracker.ubus.ubus.Components.Trip.Entity.Trip;
-import org.tracker.ubus.ubus.Components.User.Entity.User;
+import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
 
 
 import java.util.UUID;
 
-import static org.tracker.ubus.ubus.Components.User.Enum.UserRole.STAFF;
-import static org.tracker.ubus.ubus.Components.User.Enum.UserRole.STUDENT;
+import static org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole.STAFF;
+import static org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole.STUDENT;
 
 @Entity
 @Setter

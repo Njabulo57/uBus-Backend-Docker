@@ -9,9 +9,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.tracker.ubus.ubus.Components.BusAssignment.Entity.BusAssignment;
 import org.tracker.ubus.ubus.Components.BusAssignment.Repository.BusAssignmentRepository;
 import org.tracker.ubus.ubus.Components.Trip.Entity.Trip;
-import org.tracker.ubus.ubus.Components.Trip.Enum.TripRoute;
 import org.tracker.ubus.ubus.Components.Trip.Enum.TripStatus;
 import org.tracker.ubus.ubus.Components.Trip.Repository.TripRepository;
+import org.tracker.ubus.ubus.Components.Users.User.Enum.Route;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,7 +68,7 @@ public class TripDataGenerator implements CommandLineRunner {
 
     private List<Trip> generateTrips(List<BusAssignment> busAssignments) {
         List<Trip> trips = new ArrayList<>();
-        TripRoute[] allRoutes = TripRoute.values();
+        Route[] allRoutes = Route.values();
 
         // Ensure we don't try to create more trips than available bus assignments
         int tripsToCreate = Math.min(NUMBER_OF_TRIPS, busAssignments.size());
@@ -77,7 +77,7 @@ public class TripDataGenerator implements CommandLineRunner {
 
         for (int i = 0; i < tripsToCreate; i++) {
             BusAssignment busAssignment = busAssignments.get(i);
-            TripRoute randomRoute = allRoutes[random.nextInt(allRoutes.length)];
+            Route randomRoute = allRoutes[random.nextInt(allRoutes.length)];
 
             // Random total count between 30-100 (simulating passenger count or report count)
             int totalCount = 30 + random.nextInt(71);
@@ -126,7 +126,7 @@ public class TripDataGenerator implements CommandLineRunner {
 
         // Route distribution
         log.info("\n📈 ROUTE DISTRIBUTION:");
-        java.util.Map<TripRoute, Long> routeCount = trips.stream()
+        java.util.Map<Route, Long> routeCount = trips.stream()
                 .collect(java.util.stream.Collectors.groupingBy(
                         Trip::getRoute,
                         java.util.stream.Collectors.counting()
@@ -148,11 +148,11 @@ public class TripDataGenerator implements CommandLineRunner {
         }
 
         List<Trip> newTrips = new ArrayList<>();
-        TripRoute[] allRoutes = TripRoute.values();
+        Route[] allRoutes = Route.values();
 
         for (int i = 0; i < numberOfTrips; i++) {
             BusAssignment randomAssignment = busAssignments.get(random.nextInt(busAssignments.size()));
-            TripRoute randomRoute = allRoutes[random.nextInt(allRoutes.length)];
+            Route randomRoute = allRoutes[random.nextInt(allRoutes.length)];
             int totalCount = 30 + random.nextInt(71);
 
             Trip trip = Trip.builder()
@@ -174,7 +174,7 @@ public class TripDataGenerator implements CommandLineRunner {
 
     // Alternative generator with specific route
     @Transactional
-    public Trip createTripForBusAssignment(UUID busAssignmentId, TripRoute route, int totalCount) {
+    public Trip createTripForBusAssignment(UUID busAssignmentId, Route route, int totalCount) {
         BusAssignment busAssignment = busAssignmentRepository.findById(busAssignmentId)
                 .orElseThrow(() -> new RuntimeException("BusAssignment not found with id: " + busAssignmentId));
 

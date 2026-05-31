@@ -2,7 +2,6 @@ package org.tracker.ubus.ubus.TestDataLoader.BusAsssignments;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.Hibernate;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -12,9 +11,9 @@ import org.tracker.ubus.ubus.Components.Bus.Repository.DatabaseAccessLayer.BusRe
 import org.tracker.ubus.ubus.Components.BusAssignment.Entity.BusAssignment;
 import org.tracker.ubus.ubus.Components.BusAssignment.Enum.DriverSchedule;
 import org.tracker.ubus.ubus.Components.BusAssignment.Repository.BusAssignmentRepository;
-import org.tracker.ubus.ubus.Components.User.Entity.User;
-import org.tracker.ubus.ubus.Components.User.Enum.UserRole;
-import org.tracker.ubus.ubus.Components.User.Repository.UserRepository;
+import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
+import org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole;
+import org.tracker.ubus.ubus.Components.Users.User.Repository.UserRepository;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;

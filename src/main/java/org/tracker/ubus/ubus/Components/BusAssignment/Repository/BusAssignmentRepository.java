@@ -8,7 +8,7 @@ import org.tracker.ubus.ubus.Components.Bus.Entity.Bus;
 import org.tracker.ubus.ubus.Components.BusAssignment.Entity.BusAssignment;
 import org.tracker.ubus.ubus.Components.BusAssignment.Enum.DriverSchedule;
 import org.tracker.ubus.ubus.Components.BusAssignment.Exceptions.Internal.BusAssignmentNotFoundException;
-import org.tracker.ubus.ubus.Components.User.Entity.User;
+import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -32,16 +32,22 @@ public interface BusAssignmentRepository  extends JpaRepository<BusAssignment, U
         LEFT JOIN FETCH ba.driver
         WHERE ba.driver.id = :driverId
     """)
-    Optional<BusAssignment> findByDriver(User driverEntity);
+    Optional<BusAssignment> findByDriver(@Param("driverId") UUID driverId);
 
 
     boolean existsByBusAndDriverSchedule(Bus bus, DriverSchedule schedule);
 
+    boolean existsByDriver(User DRIVER);
+
 
 
     default BusAssignment findByDriverOrThrow(User driver) {
-        return this.findByDriver(driver)
+        return this.findByDriver(driver.getId())
                 .orElseThrow(() -> new BusAssignmentNotFoundException("Driver not assigned to any bus"));
     }
 
+    default BusAssignment findByDriverOrThrow(UUID id) {
+        return this.findByDriver(id)
+                .orElseThrow(() -> new BusAssignmentNotFoundException("Driver not assigned to any bus"));
+    }
 }

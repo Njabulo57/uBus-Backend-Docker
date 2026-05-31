@@ -7,5 +7,5 @@ import java.util.UUID;
 
 @Builder
 public record ActiveTripResponse(UUID id, UUID busId,
-                                 String route, String busName) {
+                                 String route, String busName, String busStatus) {
 }

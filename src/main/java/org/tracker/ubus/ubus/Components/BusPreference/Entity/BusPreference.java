@@ -4,8 +4,8 @@ package org.tracker.ubus.ubus.Components.BusPreference.Entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.tracker.ubus.ubus.Components.Shared.Entities.TimeAuditableEntity;
-import org.tracker.ubus.ubus.Components.User.Entity.User;
-import org.tracker.ubus.ubus.Components.User.Enum.Route;
+import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
+import org.tracker.ubus.ubus.Components.Users.User.Enum.Route;
 
 import java.util.UUID;
 

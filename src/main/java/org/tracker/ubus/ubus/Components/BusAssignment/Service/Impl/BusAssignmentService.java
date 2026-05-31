@@ -1,7 +1,6 @@
 package org.tracker.ubus.ubus.Components.BusAssignment.Service.Impl;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEvent;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.tracker.ubus.ubus.Components.Bus.Repository.DatabaseAccessLayer.BusRepository;
@@ -11,7 +10,7 @@ import org.tracker.ubus.ubus.Components.BusAssignment.Mappers.BusAssignmentMappe
 import org.tracker.ubus.ubus.Components.BusAssignment.Repository.BusAssignmentRepository;
 import org.tracker.ubus.ubus.Components.BusAssignment.Service.Interface.IBusAssignmentService;
 import org.tracker.ubus.ubus.Components.EventHandler.Publisher.MultiEvenPublisher;
-import org.tracker.ubus.ubus.Components.User.Repository.UserRepository;
+import org.tracker.ubus.ubus.Components.Users.User.Repository.UserRepository;
 
 import java.util.UUID;
 
