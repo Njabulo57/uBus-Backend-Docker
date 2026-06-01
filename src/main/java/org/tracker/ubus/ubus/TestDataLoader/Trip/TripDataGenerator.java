@@ -6,11 +6,11 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.tracker.ubus.ubus.Components.BusAssignment.Entity.BusAssignment;
-import org.tracker.ubus.ubus.Components.BusAssignment.Repository.BusAssignmentRepository;
-import org.tracker.ubus.ubus.Components.Trip.Entity.Trip;
-import org.tracker.ubus.ubus.Components.Trip.Enum.TripStatus;
-import org.tracker.ubus.ubus.Components.Trip.Repository.TripRepository;
+import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Entity.BusAssignment;
+import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Repository.BusAssignmentRepository;
+import org.tracker.ubus.ubus.Components.Trips.Trip.Entity.Trip;
+import org.tracker.ubus.ubus.Components.Trips.Trip.Enum.TripStatus;
+import org.tracker.ubus.ubus.Components.Trips.Trip.Repository.TripRepository;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.Route;
 
 import java.util.ArrayList;
@@ -20,7 +20,7 @@ import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
-@Order(4)
+@Order(5)
 @Slf4j
 public class TripDataGenerator implements CommandLineRunner {
 

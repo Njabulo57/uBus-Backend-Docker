@@ -2,7 +2,7 @@ package org.tracker.ubus.ubus.Components.Users.Driver.Mappers;
 
 
 import org.springframework.stereotype.Component;
-import org.tracker.ubus.ubus.Components.BusAssignment.Entity.BusAssignment;
+import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Entity.BusAssignment;
 import org.tracker.ubus.ubus.Components.Users.Driver.DTO.Response.BusAssignedResponse;
 
 @Component

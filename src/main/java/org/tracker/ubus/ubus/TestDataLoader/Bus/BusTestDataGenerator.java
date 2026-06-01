@@ -7,11 +7,11 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.tracker.ubus.ubus.Components.Bus.Entity.Bus;
-import org.tracker.ubus.ubus.Components.Bus.Enum.BusActivityStatus;
-import org.tracker.ubus.ubus.Components.Bus.Enum.BusOperationalStatus;
-import org.tracker.ubus.ubus.Components.Bus.Enum.BusType;
-import org.tracker.ubus.ubus.Components.Bus.Repository.DatabaseAccessLayer.BusRepository;
+import org.tracker.ubus.ubus.Components.Buses.Bus.Entity.Bus;
+import org.tracker.ubus.ubus.Components.Buses.Bus.Enum.BusActivityStatus;
+import org.tracker.ubus.ubus.Components.Buses.Bus.Enum.BusOperationalStatus;
+import org.tracker.ubus.ubus.Components.Buses.Bus.Enum.BusType;
+import org.tracker.ubus.ubus.Components.Buses.Bus.Repository.DatabaseAccessLayer.BusRepository;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;

@@ -3,7 +3,7 @@ package org.tracker.ubus.ubus.Components.Users.User.Service.Impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.tracker.ubus.ubus.Components.BusPreference.Repository.BusPreferenceRepository;
+import org.tracker.ubus.ubus.Components.Buses.BusPreference.Repository.BusPreferenceRepository;
 import org.tracker.ubus.ubus.Components.Users.User.DTOs.Responses.UserProfileResponse;
 import org.tracker.ubus.ubus.Components.Users.User.Mapper.UserMapper;
 import org.tracker.ubus.ubus.Components.Users.User.Service.Interface.IUserService;

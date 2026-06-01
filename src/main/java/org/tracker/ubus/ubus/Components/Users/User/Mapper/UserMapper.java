@@ -1,7 +1,7 @@
 package org.tracker.ubus.ubus.Components.Users.User.Mapper;
 
 import org.springframework.stereotype.Component;
-import org.tracker.ubus.ubus.Components.BusPreference.Entity.BusPreference;
+import org.tracker.ubus.ubus.Components.Buses.BusPreference.Entity.BusPreference;
 import org.tracker.ubus.ubus.Components.Users.User.DTOs.Responses.UserProfileResponse;
 import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
 

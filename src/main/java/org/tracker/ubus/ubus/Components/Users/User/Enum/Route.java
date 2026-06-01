@@ -4,24 +4,33 @@ import lombok.Getter;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 
-public enum Route {
-    SWC_DFC("Soweto Campus to Doornfontein Campus", -26.2485, 27.8660, -26.1925, 28.0383),
-    DFC_SWC("Doornfontein Campus to Soweto Campus", -26.1925, 28.0383, -26.2485, 27.8660),
-    APK_APB("Auckland Park Kingsway Campus to Auckland Park Bunting Road Campus", -26.1769, 27.9973, -26.1765, 28.0010),
-    APB_APK("Auckland Park Bunting Road Campus to Auckland Park Kingsway Campus", -26.1765, 28.0010, -26.1769, 27.9973),
-    APB_DFC("Auckland Park Bunting Road Campus to Doornfontein Campus", -26.1765, 28.0010, -26.1925, 28.0383),
-    DFC_APB("Doornfontein Campus to Auckland Park Bunting Road Campus", -26.1925, 28.0383, -26.1765, 28.0010),
-    APK_SWC("Auckland Park Kingsway Campus to Soweto Campus", -26.1769, 27.9973, -26.2485, 27.8660),
-    SWC_APK("Soweto Campus to Auckland Park Kingsway Campus", -26.2485, 27.8660, -26.1769, 27.9973);
 
-    @Getter
+@Getter
+public enum Route {
+    SWC_DFC("Soweto Campus to Doornfontein Campus",
+            Campus.SOWETO, Campus.DOORNFONTEIN),
+    DFC_SWC("Doornfontein Campus to Soweto Campus",
+            Campus.DOORNFONTEIN, Campus.SOWETO),
+    APK_APB("Auckland Park Kingsway Campus to Auckland Park Bunting Road Campus",
+            Campus.APK, Campus.APB),
+    APB_APK("Auckland Park Bunting Road Campus to Auckland Park Kingsway Campus",
+            Campus.APB, Campus.APK),
+    APB_DFC("Auckland Park Bunting Road Campus to Doornfontein Campus",
+            Campus.APB, Campus.DOORNFONTEIN),
+    DFC_APB("Doornfontein Campus to Auckland Park Bunting Road Campus",
+            Campus.DOORNFONTEIN, Campus.APB),
+    APK_SWC("Auckland Park Kingsway Campus to Soweto Campus",
+            Campus.APK, Campus.SOWETO),
+    SWC_APK("Soweto Campus to Auckland Park Kingsway Campus",
+            Campus.SOWETO, Campus.APK);
+
+
     private final String label;
-    private final double fromLat;
-    private final double fromLng;
-    private final double toLat;
-    private final double toLng;
+    private final Campus fromCampus;
+    private final Campus toCampus;
 
     private static final Map<Route, Route> REVERSE_TRIP_MAP;
 
@@ -38,12 +47,10 @@ public enum Route {
         REVERSE_TRIP_MAP = Collections.unmodifiableMap(map);
     }
 
-    Route(String label, double fromLat, double fromLng, double toLat, double toLng) {
+    Route(String label, Campus fromCampus, Campus toCampus) {
         this.label = label;
-        this.fromLat = fromLat;
-        this.fromLng = fromLng;
-        this.toLat = toLat;
-        this.toLng = toLng;
+        this.fromCampus = fromCampus;
+        this.toCampus = toCampus;
     }
 
     public Route getReverseTrip() {
@@ -57,18 +64,15 @@ public enum Route {
                 .orElseThrow(() -> new IllegalArgumentException("No such Route. Provided: " + label));
     }
 
+
     public boolean isValidLocation(double userLat, double userLng) {
-        double distanceToStart = distance(userLat, userLng, fromLat, fromLng);
-        double distanceToEnd = distance(userLat, userLng, toLat, toLng);
-        return distanceToStart <= 500 || distanceToEnd <= 500;
+        return fromCampus.isDriverWithinCampus(userLat, userLng) || toCampus.isDriverWithinCampus(userLat, userLng);
     }
 
-    private double distance(double lat1, double lng1, double lat2, double lng2) {
-        double dLat = Math.toRadians(lat2 - lat1);
-        double dLng = Math.toRadians(lng2 - lng1);
-        double a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
-                        Math.sin(dLng/2) * Math.sin(dLng/2);
-        return 6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    public Optional<Campus> getCurrentCampus(double userLat, double userLng) {
+        if (fromCampus.isDriverWithinCampus(userLat, userLng)) return Optional.of(fromCampus);
+        if (toCampus.isDriverWithinCampus(userLat, userLng)) return Optional.of(toCampus);
+        return Optional.empty();
     }
 }

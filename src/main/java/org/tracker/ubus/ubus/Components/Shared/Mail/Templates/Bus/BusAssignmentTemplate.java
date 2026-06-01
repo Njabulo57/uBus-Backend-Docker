@@ -1,7 +1,7 @@
 package org.tracker.ubus.ubus.Components.Shared.Mail.Templates.Bus;
 
-import org.tracker.ubus.ubus.Components.Bus.Entity.Bus;
-import org.tracker.ubus.ubus.Components.BusAssignment.Enum.DriverSchedule;
+import org.tracker.ubus.ubus.Components.Buses.Bus.Entity.Bus;
+import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Enum.DriverSchedule;
 import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
 
 public class BusAssignmentTemplate {

@@ -16,8 +16,6 @@ import java.util.UUID;
 public interface UserRepository extends JpaRepository<User, UUID> {
 
 
-    List<User> findByRole(UserRole role);
-
     Optional<User> findByEmail(String email);
 
     Optional<User> findByEmailAndStatus(String email, UserStatus status);
@@ -26,6 +24,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     @Query("SELECT u FROM User u WHERE u.status = :status AND u.role = :role")
     List<User> findByStatusAndRole(UserStatus status, UserRole role);
     List<User> findByStatus(UserStatus status);
+    List<User> findByRole(UserRole role);
 
 
 
