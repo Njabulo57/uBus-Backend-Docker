@@ -39,7 +39,7 @@ public class TripController {
 
     @RequestMapping("/get-past-trips")
     public Page<AbstractPastTrip> getPastTrips(
-            @PageableDefault(size = 20, sort = "tripDate", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = 15) Pageable pageable) {
         return this.tripService.getPastTrips(pageable);
     }
 

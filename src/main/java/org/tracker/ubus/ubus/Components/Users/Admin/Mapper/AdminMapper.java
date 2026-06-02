@@ -1,10 +1,14 @@
 package org.tracker.ubus.ubus.Components.Users.Admin.Mapper;
 
 
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
+import org.tracker.ubus.ubus.Components.Users.Admin.DTO.Response.DriverActivePage;
 import org.tracker.ubus.ubus.Components.Users.Admin.DTO.Response.DriverActiveResponseDTO;
 import org.tracker.ubus.ubus.Components.Users.Admin.DTO.Response.DriverPendingResponseDTO;
 import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
+import org.tracker.ubus.ubus.Components.Users.User.Service.Impl.UserService;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -16,6 +20,25 @@ public class AdminMapper {
         return users.stream()
                 .map(this::toDriverPendingResponseDTO)
                 .toList();
+    }
+
+
+    public DriverActivePage toDTO(Page<User> drivers) {
+
+        var activeDrivers = toActiveDrivers(drivers.getContent());
+
+        int totalPages = drivers.getTotalPages();
+        int pageNumber = drivers.getNumber();
+        int pageSize = drivers.getSize();
+        int totalElements = (int) drivers.getTotalElements();
+
+        return DriverActivePage.builder()
+                .drivers(activeDrivers)
+                .totalPages(totalPages)
+                .totalElements(totalElements)
+                .pageSize(pageSize)
+                .pageNumber(pageNumber)
+                .build();
     }
 
     public Collection<DriverActiveResponseDTO> toActiveDrivers(List<User> users) {

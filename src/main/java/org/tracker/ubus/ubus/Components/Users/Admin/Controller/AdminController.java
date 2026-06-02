@@ -2,7 +2,10 @@ package org.tracker.ubus.ubus.Components.Users.Admin.Controller;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
+import org.tracker.ubus.ubus.Components.Users.Admin.DTO.Response.DriverActivePage;
 import org.tracker.ubus.ubus.Components.Users.Admin.DTO.Response.DriverActiveResponseDTO;
 import org.tracker.ubus.ubus.Components.Users.Admin.DTO.Response.DriverPendingResponseDTO;
 import org.tracker.ubus.ubus.Components.Users.Admin.Service.Interface.IAdminService;
@@ -26,8 +29,8 @@ public class AdminController {
 
 
     @GetMapping("/get-active-drivers")
-    public Collection<DriverActiveResponseDTO> findActiveDrivers() {
-        return adminService.getActiveDrivers();
+    public DriverActivePage findActiveDrivers(@PageableDefault(size = 15) Pageable pageable) {
+        return adminService.getActiveDrivers(pageable);
     }
 
     @PostMapping("/approve-driver/{driverId}")

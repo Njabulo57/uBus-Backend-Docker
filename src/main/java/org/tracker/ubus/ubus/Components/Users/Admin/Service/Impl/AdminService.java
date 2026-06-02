@@ -2,10 +2,12 @@ package org.tracker.ubus.ubus.Components.Users.Admin.Service.Impl;
 
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.tracker.ubus.ubus.Components.Users.Admin.DTO.Response.DriverActivePage;
 import org.tracker.ubus.ubus.Components.Users.Admin.DTO.Response.DriverActiveResponseDTO;
 import org.tracker.ubus.ubus.Components.Users.Admin.DTO.Response.DriverPendingResponseDTO;
 import org.tracker.ubus.ubus.Components.Users.Admin.Events.DriverApprovedAuditEvent;
@@ -45,10 +47,10 @@ public class AdminService implements IAdminService {
     }
 
     @Override
-    public Collection<DriverActiveResponseDTO> getActiveDrivers() {
+    public DriverActivePage getActiveDrivers(Pageable pageable) {
 
-        var activeAdmins = this.userRepository.findByStatusAndRole(ACTIVE, DRIVER);
-        return this.adminMapper.toActiveDrivers(activeAdmins);
+        var pageOfDrivers = this.userRepository.findByStatusAndRole(ACTIVE, DRIVER, pageable);
+        return this.adminMapper.toDTO(pageOfDrivers);
     }
 
     @Override

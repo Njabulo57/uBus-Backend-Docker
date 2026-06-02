@@ -1,5 +1,7 @@
 package org.tracker.ubus.ubus.Components.Users.User.Repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -22,6 +24,8 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
 
     @Query("SELECT u FROM User u WHERE u.status = :status AND u.role = :role")
+    Page<User> findByStatusAndRole(UserStatus status, UserRole role, Pageable pageable);
+
     List<User> findByStatusAndRole(UserStatus status, UserRole role);
     List<User> findByStatus(UserStatus status);
     List<User> findByRole(UserRole role);
