@@ -10,6 +10,7 @@ import org.tracker.ubus.ubus.Components.Trips.Trip.Entity.Trip;
 import org.tracker.ubus.ubus.Components.Trips.TripUser.Entity.TripUser;
 import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
 
+import java.util.List;
 import java.util.UUID;
 
 @Repository
@@ -18,13 +19,12 @@ public interface TripUserRepository extends JpaRepository<TripUser, UUID> {
 
     int countByTrip(Trip trip);
 
-
     @Query("""
-        SELECT tu FROM TripUser tu
+        SELECT DISTINCT tu FROM TripUser tu
         LEFT JOIN FETCH tu.trip t
-        LEFT JOIN FETCH  t.busAssignment ba
+        LEFT JOIN FETCH t.busAssignment ba
         LEFT JOIN FETCH ba.driver
-        WHERE tu.user = :userParam AND t.status ='COMPLETE'
+        WHERE tu.user = :userParam AND t.status = 'COMPLETE'
     """)
     Page<TripUser> findCompletedTripsByUser(@Param("userParam") User user, Pageable pageable);
 }

@@ -47,9 +47,11 @@ public class Trip extends TimeAuditableEntity {
     @Column(updatable = false)
     private LocalDateTime departureTime;
 
-    @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, orphanRemoval = true)
+    private LocalDateTime expectedArrivalTime;
+
+    @OneToMany(mappedBy = "trip", cascade = CascadeType.PERSIST, orphanRemoval = true)
     private final Set<TripUser> tripUsers = new HashSet<>();
 
-    @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "trip", cascade = CascadeType.PERSIST, orphanRemoval = true)
     private final Set<TripHistoryPoint> tripHistoryPoints = new HashSet<>();
 }

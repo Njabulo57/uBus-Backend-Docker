@@ -1,8 +1,6 @@
 package org.tracker.ubus.ubus.Components.Trips.Trip.Service.Impl;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,23 +13,19 @@ import org.tracker.ubus.ubus.Components.Buses.BusRoute.Repository.BusRouteReposi
 import org.tracker.ubus.ubus.Components.EventHandler.Publisher.MultiEvenPublisher;
 import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Request.TripEndRequest;
 import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Request.TripRegisterCoordinates;
-import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Response.PastTrip.AbstractPastTrip;
 import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Response.ActiveTripResponse;
-import org.tracker.ubus.ubus.Components.Trips.Trip.Entity.Trip;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Enum.TripStatus;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Events.GenerateReportEvent;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Exceptions.DriverOutSideCampusBoundsException;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Repository.TripRepository;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Service.Interface.ITripService;
 import org.tracker.ubus.ubus.Components.Trips.Trip.TripMapper.TripMapper;
-import org.tracker.ubus.ubus.Components.Trips.TripUser.Entity.TripUser;
 import org.tracker.ubus.ubus.Components.Trips.TripUser.Repository.TripUserRepository;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.Campus;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.Route;
 import org.tracker.ubus.ubus.Configuration.Security.UserPrincipal;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 
 @Service
@@ -111,33 +105,6 @@ public class TripService implements ITripService {
     }
 
 
-    @Override
-    public Page<AbstractPastTrip> getPastTrips(Pageable pageable) {
-        var authentication = SecurityContextHolder.getContext()
-                .getAuthentication();
-        var userLoggedIn = (UserPrincipal) authentication.getPrincipal();
-        var userEntity = userLoggedIn.getUser();
-
-        Page<Trip> tripsPage = switch (userEntity.getRole()) {
-            case STAFF, STUDENT -> {
-                Page<TripUser> tripUserPage = tripUserRepository.findCompletedTripsByUser(userEntity, pageable);
-                yield tripUserPage.map(TripUser::getTrip);
-            }
-            case DRIVER -> {
-                var busAssignment = busAssignmentRepository.findByDriverOrThrow(userEntity);
-                yield tripRepository.findCompletedTripsByDriver(busAssignment, pageable);
-            }
-            case ADMIN -> this.tripRepository.findAllCompletedTripsWithDetails(pageable);
-        };
-
-       var tripHistoryPointsMap = tripsPage.stream()
-                .collect(Collectors.toMap(trip -> trip,
-                        Trip::getTripHistoryPoints)
-                );
-
-        return this.tripMapper.toDTOs(userEntity, tripsPage, tripHistoryPointsMap);
-
-    }
 
 
     @Override

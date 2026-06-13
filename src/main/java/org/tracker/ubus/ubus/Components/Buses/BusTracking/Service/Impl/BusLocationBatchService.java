@@ -32,24 +32,17 @@ public class BusLocationBatchService implements IBusLocationBatchService {
 
     private static final int MAX_QUEUE_SIZE = 5_000;
     private static final int FLUSH_BATCH_SIZE = 800;
-    private static final long FLUSH_INTERVAL_MS = 30_000; // 30 seconds
+    private static final long FLUSH_INTERVAL_MS = 300_000; // 5 minutes
 
 
     private final BusTrackingMapper busTrackingMapper;
     private final TripHistoryRepository tripHistoryRepository;
     private final TripRepository tripRepository;
 
-    private final ConcurrentMap<UUID, BlockingQueue<DriverCurrentLocationMessage>> busQueues = new ConcurrentHashMap<>();
-    private final ConcurrentMap<UUID, AtomicBoolean> busFlushing = new ConcurrentHashMap<>();
-    private final ConcurrentMap<UUID, Trip> busTripCache = new ConcurrentHashMap<>();
+    private final ConcurrentMap<UUID, BlockingQueue<DriverCurrentLocationMessage>> busQueues;
+    private final ConcurrentMap<UUID, AtomicBoolean> busFlushing;
+    private final ConcurrentMap<UUID, Trip> busTripCache;
 
-    @PreDestroy
-    protected void shutdown() {
-        log.info("Shutdown: flushing {} buses", busQueues.size());
-        for (UUID busId : busQueues.keySet())
-            flushBus(busId, "SHUTDOWN");
-
-    }
 
     @Override
     public DriverCurrentLocationResponse enqueue(DriverCurrentLocationMessage msg) {
@@ -93,6 +86,7 @@ public class BusLocationBatchService implements IBusLocationBatchService {
         busTripCache.remove(busId);
     }
 
+
     @Scheduled(fixedDelay = FLUSH_INTERVAL_MS)
     protected void scheduledSweep() {
 
@@ -105,6 +99,14 @@ public class BusLocationBatchService implements IBusLocationBatchService {
 
         }
     }
+
+    @PreDestroy
+    protected void shutdown() {
+        log.info("Shutdown: flushing {} buses", busQueues.size());
+        this.busQueues.forEach((busId, q)
+                -> flushBus(busId, "SHUTDOWN"));
+    }
+
 
     private void flushBus(UUID busId, String reason) {
         AtomicBoolean flushing = busFlushing.computeIfAbsent(busId,

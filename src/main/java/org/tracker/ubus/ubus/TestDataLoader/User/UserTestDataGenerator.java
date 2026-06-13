@@ -82,25 +82,25 @@ public class UserTestDataGenerator implements CommandLineRunner {
 
     private User student(int n, String pwd) {
         return base(pwd, STUDENT)
-                .email("2024" + String.format("%05d", n) + "@student.ubus.ac.za")
+                .email("2024" + String.format("%05d", n) + "@student.uj.ac.za")
                 .build();
     }
 
     private User admin(int n, String pwd) {
         return base(pwd, ADMIN)
-                .email(String.format("admin%03d@admin.ubus.za", n))
+                .email(String.format("admin%03d@admin.uj.ac.za", n))
                 .build();
     }
 
     private User staff(int n, String pwd) {
         return base(pwd, STAFF)
-                .email(String.format("staff%03d@ubus.ac.za", n))
+                .email(String.format("staff%03d@staff.uj.ac.za", n))
                 .build();
     }
 
     private User driver(int n, String pwd) {
         return base(pwd, DRIVER)
-                .email(String.format("driver%03d@ubus.co.za", n))
+                .email(String.format("driver%03d@driver.uj.ac.za", n))
                 .build();
     }
 

@@ -70,6 +70,9 @@ public class SecurityConfig {
                         .hasRole(ADMIN.getLabel())
 
 
+                        .requestMatchers("/trips-data/**")
+                        .permitAll()
+
                     .anyRequest().authenticated()
         );
         return http;

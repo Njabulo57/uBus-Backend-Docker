@@ -5,10 +5,10 @@ import org.springframework.stereotype.Component;
 import org.tracker.ubus.ubus.Components.Buses.Bus.Entity.Bus;
 import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Entity.BusAssignment;
 import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Response.*;
-import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Response.PastTrip.AbstractPastTrip;
-import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Response.PastTrip.AdminPastTripBusView;
-import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Response.PastTrip.AdminPastTripDriverView;
-import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Response.PastTrip.AdminPastTripViewResponse;
+import org.tracker.ubus.ubus.Components.Trips.TripHistory.DTO.Response.AbstractPastTrip;
+import org.tracker.ubus.ubus.Components.Trips.TripHistory.DTO.Response.AdminPastTripBusView;
+import org.tracker.ubus.ubus.Components.Trips.TripHistory.DTO.Response.AdminPastTripDriverView;
+import org.tracker.ubus.ubus.Components.Trips.TripHistory.DTO.Response.AdminPastTripViewResponse;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Entity.Trip;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Enum.TripStatus;
 import org.tracker.ubus.ubus.Components.Trips.TripHistory.Entity.TripHistoryPoint;
@@ -56,7 +56,7 @@ public class TripMapper {
 
 
     public Page<AbstractPastTrip> toDTOs(User user, Page<Trip> tripsPage,
-                                         Map<Trip, Set<TripHistoryPoint>> tripHistoryPointsMap) {
+                                         Map<Trip, List<TripHistoryPoint>> tripHistoryPointsMap) {
         return switch (user.getRole()) {
             case STAFF, STUDENT -> Page.empty();
             case DRIVER -> Page.empty();

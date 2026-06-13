@@ -1,10 +1,7 @@
 package org.tracker.ubus.ubus.Components.Trips.Trip.Service.Interface;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Request.TripEndRequest;
 import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Request.TripRegisterCoordinates;
-import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Response.PastTrip.AbstractPastTrip;
 import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Response.ActiveTripResponse;
 
 import java.util.List;
@@ -18,7 +15,6 @@ public interface ITripService {
     void endTrip(TripEndRequest endTripRequest);
 
 
-    Page<AbstractPastTrip> getPastTrips(Pageable pageable);
 
     List<ActiveTripResponse> getActiveTrips();
 

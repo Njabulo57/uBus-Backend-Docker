@@ -19,6 +19,7 @@ import static org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole.STUDENT;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "trip_id"}))
 public class TripUser extends TimeAuditableEntity {
 
     @Id @GeneratedValue(strategy = GenerationType.UUID)

@@ -30,8 +30,10 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     List<User> findByStatus(UserStatus status);
     List<User> findByRole(UserRole role);
 
+    List<User> findByRoleIn(List<UserRole> roles);
 
 
+    List<User> findByRoleInAndStatus(List<UserRole> role, UserStatus status);
 
 
     default User findByEmailOrThrow(String email) throws UserNotFoundException {

@@ -2,15 +2,10 @@ package org.tracker.ubus.ubus.Components.Trips.Trip.Controller;
 
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Request.TripEndRequest;
 import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Request.TripRegisterCoordinates;
-import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Response.PastTrip.AbstractPastTrip;
 import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Response.ActiveTripResponse;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Service.Interface.ITripService;
 
@@ -37,11 +32,6 @@ public class TripController {
         this.tripService.endTrip(endRequest);
     }
 
-    @RequestMapping("/get-past-trips")
-    public Page<AbstractPastTrip> getPastTrips(
-            @PageableDefault(size = 15) Pageable pageable) {
-        return this.tripService.getPastTrips(pageable);
-    }
 
 
     @GetMapping("/get-active-trips")
