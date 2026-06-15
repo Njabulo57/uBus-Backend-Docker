@@ -9,7 +9,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
-import org.tracker.ubus.ubus.Components.TokenGenerators.Jwt.Filter.JwtFilter;
+import org.tracker.ubus.ubus.Components.Jwt.Filter.JwtFilter;
 
 import static org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole.*;
 

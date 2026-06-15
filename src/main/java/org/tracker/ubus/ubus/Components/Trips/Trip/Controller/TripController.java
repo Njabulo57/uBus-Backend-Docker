@@ -27,20 +27,22 @@ public class TripController {
     }
 
 
+    @RequestMapping("/start-trip/{tripId}")
+    public void startTrip(@PathVariable final UUID tripId) {
+        this.tripService.startTrip(tripId);
+    }
+
+
     @RequestMapping("/end-trip")
     public void endTrip(@RequestBody TripEndRequest endRequest) {
         this.tripService.endTrip(endRequest);
     }
 
 
-
     @GetMapping("/get-active-trips")
     public List<ActiveTripResponse> getActiveTrips() {
         return this.tripService.getActiveTrips();
     }
-
-
-
 
 
     @GetMapping("/get-trip/{tripId}")

@@ -8,5 +8,5 @@ public interface ITripHistoryService {
 
 
 
-    Object getPastTrips(Pageable pageable);
+    PastTripsPageResponse getPastTrips(Pageable pageable);
 }

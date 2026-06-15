@@ -1,4 +1,4 @@
-package org.tracker.ubus.ubus.Components.TokenGenerators.Jwt.JwtService;
+package org.tracker.ubus.ubus.Components.Jwt.JwtService;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;

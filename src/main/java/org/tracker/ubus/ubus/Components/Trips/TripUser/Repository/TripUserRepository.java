@@ -27,4 +27,13 @@ public interface TripUserRepository extends JpaRepository<TripUser, UUID> {
         WHERE tu.user = :userParam AND t.status = 'COMPLETE'
     """)
     Page<TripUser> findCompletedTripsByUser(@Param("userParam") User user, Pageable pageable);
+
+    @Query("""
+        SELECT tu FROM TripUser  tu
+        LEFT JOIN FETCH tu.user
+        WHERE tu.trip =: tripParam
+    """)
+    List<TripUser> findByTrip(@Param("tripParam") Trip trip);
+
+    List<UUID> findUserIdsByTrip(Trip trip);
 }

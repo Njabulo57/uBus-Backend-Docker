@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.tracker.ubus.ubus.Components.Trips.TripHistory.DTO.Response.PastTripsPageResponse;
 import org.tracker.ubus.ubus.Components.Trips.TripHistory.Service.Interface.ITripHistoryService;
 
 
@@ -18,7 +19,7 @@ public class TripHistoryController {
     private final ITripHistoryService tripHistoryService;
 
     @RequestMapping("/get-past-trips")
-    public Object getPastTrips(
+    public PastTripsPageResponse getPastTrips(
             @PageableDefault(size = 15) Pageable pageable) {
         return this.tripHistoryService.getPastTrips(pageable);
     }

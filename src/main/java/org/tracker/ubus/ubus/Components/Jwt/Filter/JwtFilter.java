@@ -1,4 +1,4 @@
-package org.tracker.ubus.ubus.Components.TokenGenerators.Jwt.Filter;
+package org.tracker.ubus.ubus.Components.Jwt.Filter;
 
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.annotation.Nonnull;
@@ -14,7 +14,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.tracker.ubus.ubus.Components.TokenGenerators.Jwt.JwtService.JwtService;
+import org.tracker.ubus.ubus.Components.Jwt.JwtService.JwtService;
 import org.tracker.ubus.ubus.GlobalExceptionHandler.ErrorResponse.ErrorResponse;
 import tools.jackson.databind.ObjectMapper;
 import java.io.IOException;

@@ -9,12 +9,15 @@ import java.util.UUID;
 
 public interface ITripService {
 
+    void startTrip(UUID tripId);
 
     void registerTrip(TripRegisterCoordinates tripRegisterCoordinates);
 
     void endTrip(TripEndRequest endTripRequest);
 
+    void enterBus(UUID tripId);
 
+    void exitBus(UUID tripId);
 
     List<ActiveTripResponse> getActiveTrips();
 

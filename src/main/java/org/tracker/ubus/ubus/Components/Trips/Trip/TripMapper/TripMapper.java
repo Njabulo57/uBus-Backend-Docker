@@ -23,6 +23,7 @@ import java.util.function.Predicate;
 @Component
 public class TripMapper {
 
+
     public Trip toEntity(BusAssignment busAssignment, Route route) {
         return Trip.builder()
                 .route(route)
