@@ -14,13 +14,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-<<<<<<< HEAD:src/main/java/org/tracker/ubus/ubus/Components/TokenGenerators/Jwt/Filter/JwtFilter.java
-
-import org.tracker.ubus.ubus.Components.TokenBlacklist.Service.Impl.BlacklistedTokenService;
-import org.tracker.ubus.ubus.Components.TokenGenerators.Jwt.JwtService.JwtService;
-=======
 import org.tracker.ubus.ubus.Components.Jwt.JwtService.JwtService;
->>>>>>> feature/bus-management:src/main/java/org/tracker/ubus/ubus/Components/Jwt/Filter/JwtFilter.java
+import org.tracker.ubus.ubus.Components.TokenBlacklist.Service.Impl.BlacklistedTokenService;
+
 import org.tracker.ubus.ubus.GlobalExceptionHandler.ErrorResponse.ErrorResponse;
 import tools.jackson.databind.ObjectMapper;
 import java.io.IOException;
