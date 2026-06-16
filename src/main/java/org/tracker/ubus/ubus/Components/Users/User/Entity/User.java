@@ -2,11 +2,16 @@ package org.tracker.ubus.ubus.Components.Users.User.Entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.tracker.ubus.ubus.Components.Auth.Exception.Internal.UserNotStudentException;
 import org.tracker.ubus.ubus.Components.Shared.Entities.TimeAuditableEntity;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.UserStatus;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -23,7 +28,8 @@ import java.util.UUID;
 })
 public class User extends TimeAuditableEntity {
 
-    @Id @GeneratedValue(strategy = GenerationType.UUID)
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(nullable = false, updatable = false, unique = true)
     private UUID id;
 
@@ -51,7 +57,7 @@ public class User extends TimeAuditableEntity {
 
     public String getStudentNumber()
             throws UserNotStudentException {
-        if(UserRole.STUDENT.equals(this.role))
+        if (UserRole.STUDENT.equals(this.role))
             return this.email.substring(0, 9);
         return "";
     }
@@ -101,8 +107,6 @@ public class User extends TimeAuditableEntity {
         //return as is
         return phoneNumber;
     }
-
-
 
 
     @Override

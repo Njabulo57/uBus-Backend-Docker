@@ -14,6 +14,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+
+import org.tracker.ubus.ubus.Components.TokenBlacklist.Service.Impl.BlacklistedTokenService;
 import org.tracker.ubus.ubus.Components.TokenGenerators.Jwt.JwtService.JwtService;
 import org.tracker.ubus.ubus.GlobalExceptionHandler.ErrorResponse.ErrorResponse;
 import tools.jackson.databind.ObjectMapper;
@@ -28,14 +30,7 @@ public class JwtFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final ObjectMapper objectMapper;
     private final UserDetailsService userDetailsService;
-
-
-    @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getRequestURI();
-
-        return path.startsWith("/web-socket") || path.startsWith("/web-socket/");
-    }
+    private final BlacklistedTokenService blacklistedTokenService;
 
     @Override
     protected void doFilterInternal(@Nonnull HttpServletRequest request,
@@ -45,7 +40,6 @@ public class JwtFilter extends OncePerRequestFilter {
         //getting the authorization from the header
         final String authorization = request.getHeader("Authorization");
 
-
         //this means we are dealing with public endpoints so we let them through
         if(authorization == null || !authorization.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
@@ -54,6 +48,12 @@ public class JwtFilter extends OncePerRequestFilter {
 
         //the token starts from character 7 from bearer
         final String token = authorization.substring(7);
+
+        //check whether token is blacklisted
+        if(blacklistedTokenService.isBlacklisted(token)) {
+            response.setStatus(HttpStatus.UNAUTHORIZED.value());
+            return;
+        }
 
         try {
             // throws an exception if it fails
@@ -70,6 +70,7 @@ public class JwtFilter extends OncePerRequestFilter {
                         null,
                         userDetails.getAuthorities()
                 );
+
 
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
@@ -98,6 +99,5 @@ public class JwtFilter extends OncePerRequestFilter {
         objectMapper.writeValue(response.getWriter(), errorResponse);
 
     }
-
 
 }

@@ -1,13 +1,15 @@
 package org.tracker.ubus.ubus.Components.TokenGenerators.Jwt.JwtService;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
+
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
@@ -17,7 +19,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
-@Component
+@Service
 public class JwtService {
 
 
@@ -44,10 +46,10 @@ public class JwtService {
     }
 
 
-    public String generateToken(User user, String role) {
+    public String generateToken(User user) {
 
         Map<String, Object> claims = new HashMap<>();
-        claims.put("role", role);
+        claims.put("role", user.getRole().toString());
 
         SecretKey secretKeyObject = getSecretKey();
 
@@ -104,6 +106,11 @@ public class JwtService {
     public SecretKey getSecretKey() {
         byte[] bytes = this.secretKey.getBytes(StandardCharsets.UTF_8);  // Converts to bytes
         return Keys.hmacShaKeyFor(bytes);  // Wraps bytes as a SecretKey object
+    }
+
+    public long getRemainingExpiration(String token) {
+        Date expiration = extractClaim(token, Claims::getExpiration);
+        return expiration.getTime()-System.currentTimeMillis();
     }
 
 }

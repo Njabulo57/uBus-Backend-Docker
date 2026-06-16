@@ -21,9 +21,9 @@ public class BusPreference extends TimeAuditableEntity {
     @Column(unique = true, nullable = false, updatable = false)
     private UUID id;
 
-    @JoinColumn(nullable = false, updatable = false)
-    @OneToOne(cascade = CascadeType.PERSIST,  fetch = FetchType.LAZY)
-    private User busUser;
+    @JoinColumn(name = "bus_user_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    private User user;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)

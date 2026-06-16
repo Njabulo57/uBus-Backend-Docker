@@ -5,17 +5,22 @@ import org.tracker.ubus.ubus.Components.Buses.BusPreference.Entity.BusPreference
 import org.tracker.ubus.ubus.Components.Users.User.DTOs.Responses.UserProfileResponse;
 import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Component
 public class UserMapper {
 
 
-    public UserProfileResponse toDTO(User user, BusPreference busPreference) {
+    public UserProfileResponse toDTO(User user, List<BusPreference> busPreferences) {
 
-        String stringPreference = "";
-        if(busPreference != null)
-            stringPreference = busPreference
-                    .getRoute()
-                    .getLabel();
+        List<String> stringPreferences = new ArrayList<>();
+        if(busPreferences != null)
+            for(BusPreference busPreference : busPreferences)
+            {
+                stringPreferences.add(busPreference.getRoute().getLabel());
+            }
+
 
         String studentNumber = user.getStudentNumber();
         String phoneNumber = user.getPhoneNumber();
@@ -26,7 +31,7 @@ public class UserMapper {
                 .email(user.getEmail())
                 .phoneNumber(phoneNumber)
                 .studentNumber(studentNumber)
-                .busPreference(stringPreference)
+                .busPreferences(stringPreferences)
                 .build();
     }
 }

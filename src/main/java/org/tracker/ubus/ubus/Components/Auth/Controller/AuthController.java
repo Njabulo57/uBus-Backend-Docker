@@ -45,4 +45,10 @@ public class AuthController {
         return this.authService.verifyEmailToken(token);
     }
 
+    @PostMapping("/logout")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void logout() {
+        authService.logout();
+    }
+
 }

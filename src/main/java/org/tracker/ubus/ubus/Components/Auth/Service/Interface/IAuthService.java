@@ -17,4 +17,6 @@ public interface IAuthService {
     EmailAuthenticationResponse requestEmailVerification(EmailOtpRequest emailOtpRequest);
 
     boolean verifyEmailToken(String token);
+
+    void logout();
 }

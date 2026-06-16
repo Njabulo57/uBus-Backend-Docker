@@ -1,10 +1,14 @@
 package org.tracker.ubus.ubus.Components.Auth.Service.Impl;
 
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.tracker.ubus.ubus.Components.Auth.DTOs.Requests.EmailOtpRequest;
 import org.tracker.ubus.ubus.Components.Auth.DTOs.Requests.LoginRequest;
 import org.tracker.ubus.ubus.Components.Auth.DTOs.Requests.RegisterRequest;
@@ -17,12 +21,16 @@ import org.tracker.ubus.ubus.Components.Auth.Exception.Internal.AdminRegistratio
 import org.tracker.ubus.ubus.Components.Auth.Mapper.AuthMapper;
 import org.tracker.ubus.ubus.Components.Auth.Service.Interface.IAuthService;
 import org.tracker.ubus.ubus.Components.Auth.VerificationDispatcher.VerificationDispatcher;
+import org.tracker.ubus.ubus.Components.TokenBlacklist.Service.Impl.BlacklistedTokenService;
 import org.tracker.ubus.ubus.Components.TokenGenerators.EmailVerificationToken.EmailVerificationTokenService.EmailVerificationTokenService;
 import org.tracker.ubus.ubus.Components.TokenGenerators.Jwt.JwtService.JwtService;
+
 import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.UserStatus;
 import org.tracker.ubus.ubus.Components.Users.User.Repository.UserRepository;
+import org.tracker.ubus.ubus.Configuration.Security.UserPrincipal;
+
 import java.time.LocalDateTime;
 
 import static org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole.STUDENT;
@@ -40,6 +48,7 @@ public class AuthService implements IAuthService {
     private final PasswordEncoder passwordEncoder;
     private final VerificationDispatcher verificationDispatcher;
     private final EmailVerificationTokenService emailVerificationTokenService;
+    private final BlacklistedTokenService blacklistedTokenService;
 
     @Override
     public LoginSuccessfulResponse login(LoginRequest loginRequest) {
@@ -60,7 +69,8 @@ public class AuthService implements IAuthService {
 
         //user found from this point
         String role = user.getRole().getLabel();
-        String token = this.jwtService.generateToken(user, role);
+        UserPrincipal principal = new UserPrincipal(user);
+        String token = this.jwtService.generateToken(principal, role);
 
         return authMapper.toDTO(token, role);
     }
@@ -167,6 +177,18 @@ public class AuthService implements IAuthService {
         if(studentRole != STUDENT && isStudentEmail)
             throw new InvalidStudentInformationException(
                     "Only students role can register with a @student.uj.ac.za email address");
+    }
+
+    @Override
+    public void logout() {
+
+        HttpServletRequest request = (HttpServletRequest) ((ServletRequestAttributes)
+                RequestContextHolder.getRequestAttributes()).getRequest();
+
+        String authHeader = request.getHeader("Authorization");
+        String token = authHeader.substring(7);
+        long remainingMilliseconds = jwtService.getRemainingExpiration(token);
+        blacklistedTokenService.blacklist(token, remainingMilliseconds);
     }
 
 }
