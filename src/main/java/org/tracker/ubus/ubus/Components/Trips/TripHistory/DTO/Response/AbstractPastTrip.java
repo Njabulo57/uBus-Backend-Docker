@@ -1,13 +1,16 @@
-package org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Response.PastTrip;
+package org.tracker.ubus.ubus.Components.Trips.TripHistory.DTO.Response;
 
 
 import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
 
-
+@Data
 @SuperBuilder
+@NoArgsConstructor
 @AllArgsConstructor
 public abstract class AbstractPastTrip {
 

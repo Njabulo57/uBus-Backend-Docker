@@ -11,26 +11,27 @@ import java.util.stream.Stream;
 @Getter
 public enum Route {
     SWC_DFC("Soweto Campus to Doornfontein Campus",
-            Campus.SOWETO, Campus.DOORNFONTEIN),
+            Campus.SOWETO, Campus.DOORNFONTEIN, "SWC-DFC" ),
     DFC_SWC("Doornfontein Campus to Soweto Campus",
-            Campus.DOORNFONTEIN, Campus.SOWETO),
+            Campus.DOORNFONTEIN, Campus.SOWETO, "DFC-SWC" ),
     APK_APB("Auckland Park Kingsway Campus to Auckland Park Bunting Road Campus",
-            Campus.APK, Campus.APB),
+            Campus.APK, Campus.APB,"APK-APB"),
     APB_APK("Auckland Park Bunting Road Campus to Auckland Park Kingsway Campus",
-            Campus.APB, Campus.APK),
+            Campus.APB, Campus.APK, "APB-APK"),
     APB_DFC("Auckland Park Bunting Road Campus to Doornfontein Campus",
-            Campus.APB, Campus.DOORNFONTEIN),
+            Campus.APB, Campus.DOORNFONTEIN, "APB-DFC" ),
     DFC_APB("Doornfontein Campus to Auckland Park Bunting Road Campus",
-            Campus.DOORNFONTEIN, Campus.APB),
+            Campus.DOORNFONTEIN, Campus.APB, "DFC-APB"),
     APK_SWC("Auckland Park Kingsway Campus to Soweto Campus",
-            Campus.APK, Campus.SOWETO),
+            Campus.APK, Campus.SOWETO, "APK-SWC" ),
     SWC_APK("Soweto Campus to Auckland Park Kingsway Campus",
-            Campus.SOWETO, Campus.APK);
+            Campus.SOWETO, Campus.APK,"SWC-APK");
 
 
     private final String label;
     private final Campus fromCampus;
     private final Campus toCampus;
+    private final String routeAbbreviated;
 
     private static final Map<Route, Route> REVERSE_TRIP_MAP;
 
@@ -47,10 +48,11 @@ public enum Route {
         REVERSE_TRIP_MAP = Collections.unmodifiableMap(map);
     }
 
-    Route(String label, Campus fromCampus, Campus toCampus) {
+    Route(String label, Campus fromCampus, Campus toCampus, String routeAbbreviated) {
         this.label = label;
         this.fromCampus = fromCampus;
         this.toCampus = toCampus;
+        this.routeAbbreviated = routeAbbreviated;
     }
 
     public Route getReverseTrip() {

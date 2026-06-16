@@ -1,11 +1,11 @@
 package org.tracker.ubus.ubus.Components.Trips.Trip.Service.Impl;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.tracker.ubus.ubus.Components.Buses.Bus.Entity.Bus;
 import org.tracker.ubus.ubus.Components.Buses.Bus.Enum.BusActivityStatus;
 import org.tracker.ubus.ubus.Components.Buses.Bus.Repository.DatabaseAccessLayer.BusRepository;
 import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Entity.BusAssignment;
@@ -13,25 +13,24 @@ import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Repository.BusAssign
 import org.tracker.ubus.ubus.Components.Buses.BusRoute.Entity.BusRoute;
 import org.tracker.ubus.ubus.Components.Buses.BusRoute.Repository.BusRouteRepository;
 import org.tracker.ubus.ubus.Components.EventHandler.Publisher.MultiEvenPublisher;
+import org.tracker.ubus.ubus.Components.Notification.Events.BusDepartureNotification;
+import org.tracker.ubus.ubus.Components.Notification.Events.Notification;
+import org.tracker.ubus.ubus.Components.Notification.Events.Notifications;
+import org.tracker.ubus.ubus.Components.Notification.Service.Impl.NotificationDispatcher;
 import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Request.TripEndRequest;
 import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Request.TripRegisterCoordinates;
-import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Response.PastTrip.AbstractPastTrip;
 import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Response.ActiveTripResponse;
-import org.tracker.ubus.ubus.Components.Trips.Trip.Entity.Trip;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Enum.TripStatus;
-import org.tracker.ubus.ubus.Components.Trips.Trip.Events.GenerateReportEvent;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Exceptions.DriverOutSideCampusBoundsException;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Repository.TripRepository;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Service.Interface.ITripService;
 import org.tracker.ubus.ubus.Components.Trips.Trip.TripMapper.TripMapper;
-import org.tracker.ubus.ubus.Components.Trips.TripUser.Entity.TripUser;
 import org.tracker.ubus.ubus.Components.Trips.TripUser.Repository.TripUserRepository;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.Campus;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.Route;
 import org.tracker.ubus.ubus.Configuration.Security.UserPrincipal;
-
 import java.util.*;
-import java.util.stream.Collectors;
+
 
 
 @Service
@@ -44,8 +43,26 @@ public class TripService implements ITripService {
     private final BusRouteRepository busRouteRepository;
     private final TripUserRepository tripUserRepository;
     private final MultiEvenPublisher multiEvenPublisher;
+    private final NotificationDispatcher notificationDispatcher;
     private final BusAssignmentRepository busAssignmentRepository;
 
+
+
+    @Override
+    @Transactional
+    public void startTrip(UUID tripId) {
+
+        var trip = this.tripRepository.findByIdOrThrow(tripId);
+        trip.setStatus(TripStatus.IN_PROGRESS);
+        this.tripRepository.save(trip);
+
+        var usersOnBoard = this.tripUserRepository.findUserIdsByTrip(trip); // get all the users on board
+        Queue<UUID> onBoardQueue = new LinkedList<>(usersOnBoard); // adding all the users on board to the queue
+
+        var notification = Notifications.busDepartureNotification(trip.getRoute(), onBoardQueue);
+        // send notifications to all users on board that the trip is starting
+        notificationDispatcher.sendNotification(notification);
+    }
 
 
     @Override
@@ -75,6 +92,7 @@ public class TripService implements ITripService {
         this.tripRepository.save(trip);
     }
 
+
     @Override
     @Transactional
     public void endTrip(TripEndRequest endTripRequest) {
@@ -102,40 +120,48 @@ public class TripService implements ITripService {
 
         trip.setStatus(TripStatus.COMPLETE); // mark as complete
         trip.setTotalCount(totalOnBoard); //set the total staff or students on board;
-
         this.tripRepository.save(trip); //save the trip as completed
 
 
         //generate the report
-        this.multiEvenPublisher.publish(() -> new GenerateReportEvent(this, driverEntity, trip));
+        //this.multiEvenPublisher.publish(() -> new GenerateReportEvent(this, driverEntity, trip));
     }
 
 
     @Override
-    public Page<AbstractPastTrip> getPastTrips(Pageable pageable) {
-        var authentication = SecurityContextHolder.getContext()
-                .getAuthentication();
-        var userLoggedIn = (UserPrincipal) authentication.getPrincipal();
-        var userEntity = userLoggedIn.getUser();
+    @Transactional
+    public void enterBus(UUID tripId) {
 
-        Page<Trip> tripsPage = switch (userEntity.getRole()) {
-            case STAFF, STUDENT -> {
-                Page<TripUser> tripUserPage = tripUserRepository.findCompletedTripsByUser(userEntity, pageable);
-                yield tripUserPage.map(TripUser::getTrip);
-            }
-            case DRIVER -> {
-                var busAssignment = busAssignmentRepository.findByDriverOrThrow(userEntity);
-                yield tripRepository.findCompletedTripsByDriver(busAssignment, pageable);
-            }
-            case ADMIN -> this.tripRepository.findAllCompletedTripsWithDetails(pageable);
-        };
+        //hadde i had to write some code to program the notification system
+        var trip = this.tripRepository.findByIdOrThrow(tripId);
+        var bus = trip.getBusAssignment().getBus();
 
-       var tripHistoryPointsMap = tripsPage.stream()
-                .collect(Collectors.toMap(trip -> trip,
-                        Trip::getTripHistoryPoints)
-                );
+        int busCapacity = bus.getCapacity();
+        int totalPassengers = trip.getTripUsers().size();
 
-        return this.tripMapper.toDTOs(userEntity, tripsPage, tripHistoryPointsMap);
+        //this should never run
+        if(totalPassengers > busCapacity)
+            throw new IllegalStateException("trip is full");
+
+
+        if(totalPassengers < busCapacity) {
+            //logic
+        }
+
+        if(totalPassengers == busCapacity) {
+
+            //find all the users on board and send a notification to them
+            var users = this.tripUserRepository.findUserIdsByTrip(trip);
+            Queue<UUID> onBoardQueue = new LinkedList<>(users); // adding all the users on board to the queue
+            var busFullNotif = Notifications.busFullNotification(onBoardQueue);
+            this.notificationDispatcher.sendNotification(busFullNotif); // send the notification to all users on board
+
+        }
+    }
+
+
+    @Override
+    public void exitBus(UUID tripId) {
 
     }
 
@@ -159,8 +185,11 @@ public class TripService implements ITripService {
      * @param tripRegisterCoordinates the coordinates of the where the trip is starting
      * @param busRoute bus route of the bus that is being assigned to the trip
      * @return returns the route that is valid for the trip to begin
+     * @throws IllegalStateException if the trip start and end location
+     * are valid at the same time which should never be the case
      */
-    private Route validateTripStartLocation(TripRegisterCoordinates tripRegisterCoordinates, BusRoute busRoute) {
+    private Route validateTripStartLocation(TripRegisterCoordinates tripRegisterCoordinates,
+                                            BusRoute busRoute) throws IllegalStateException {
 
         Map<Boolean, Route> routeMap = new HashMap<>();
 
@@ -186,6 +215,13 @@ public class TripService implements ITripService {
     }
 
 
+    /**
+     * Checks if the driver's current location is within the bounds of the campus in the provided route.
+     * @param route The route object containing campus information for boundary checking.
+     * @param latitude The latitude of the driver's current location.
+     * @param longitude The longitude of the driver's current location.
+     * @return {@code true} if the driver's location is within the bounds of a campus in the route, {@code false} otherwise.
+     */
     private boolean isDriverWithinCampusBounds(Route route, double latitude, double longitude) {
 
         Optional<Campus> campusMatched = route.getCurrentCampus(latitude, longitude);
@@ -199,7 +235,5 @@ public class TripService implements ITripService {
         System.err.println("matching campus found. " + campus.name());
         return true;
     }
-
-
 
 }

@@ -6,24 +6,10 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFilter;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
-import org.tracker.ubus.ubus.Components.TokenGenerators.Jwt.Filter.JwtFilter;
-
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
+import org.tracker.ubus.ubus.Components.Jwt.Filter.JwtFilter;
 import static org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole.*;
 
 @Configuration
@@ -48,17 +34,15 @@ public class SecurityConfig {
 
 
     private HttpSecurity configureJwtFilter(HttpSecurity http, JwtFilter jwtFilter) throws Exception {
-        return http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+        return http.addFilterBefore(jwtFilter, AuthenticationFilter.class);
     }
 
     private HttpSecurity configureEndpointSecurity(HttpSecurity http) throws Exception{
 
         http.authorizeHttpRequests(authz ->
                 authz
-                        .requestMatchers("/auth/login").permitAll()
-                        .requestMatchers("/auth/register").permitAll()
-                        .requestMatchers("/auth/email-otp").permitAll()
-                        .requestMatchers("/one-time-password/**").permitAll()
+                    .requestMatchers("/auth/**").permitAll()
+                    .requestMatchers("/one-time-password/**").permitAll()
 
                         .requestMatchers("/auth/logout")
                         .hasAnyAuthority(ADMIN.getSecurityRole(), DRIVER.getSecurityRole(),
@@ -68,13 +52,28 @@ public class SecurityConfig {
                         .hasAnyAuthority(ADMIN.getSecurityRole(), DRIVER.getSecurityRole(),
                                 STAFF.getSecurityRole(), STUDENT.getSecurityRole())
 
-                        .requestMatchers("/busses/register")
-                        .hasAuthority(ADMIN.getSecurityRole())
 
-                        .requestMatchers("/busses/**")
-                        .hasAuthority(ADMIN.getSecurityRole())
+                    .requestMatchers("/busses/**")
+                        .hasRole(ADMIN.getLabel())
 
-                        .anyRequest().authenticated()
+                    .requestMatchers("/trips/register-bus-trip")
+                        .hasRole(ADMIN.getLabel())
+
+
+                    .requestMatchers("/trips/get-active-trips").permitAll()
+                    .requestMatchers("/trips/get-trip/").permitAll()
+
+                    .requestMatchers("/web-socket/**").permitAll()
+                    .requestMatchers("/web-socket").permitAll()
+
+                    .requestMatchers("/admins/**")
+                        .hasRole(ADMIN.getLabel())
+
+
+                        .requestMatchers("/trips-data/**")
+                        .permitAll()
+
+                    .anyRequest().authenticated()
         );
         return http;
     }
@@ -86,7 +85,7 @@ public class SecurityConfig {
 
     private HttpSecurity configureSessionManagement(HttpSecurity http) throws Exception{
         http.sessionManagement(sessionManagement ->
-                sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         );
         return http;
     }

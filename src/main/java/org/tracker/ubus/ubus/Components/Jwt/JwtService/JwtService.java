@@ -1,4 +1,4 @@
-package org.tracker.ubus.ubus.Components.TokenGenerators.Jwt.JwtService;
+package org.tracker.ubus.ubus.Components.Jwt.JwtService;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -44,6 +44,24 @@ public class JwtService {
                 .signWith(secretKeyObject)
                 .compact(); //this will automatically encode everything to base64
     }
+
+
+    public String generateToken(User userDetails, String role) {
+
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("role", role);
+
+        SecretKey secretKeyObject = getSecretKey();
+
+        return Jwts.builder()
+                .expiration(new Date(System.currentTimeMillis() + duration)) // expanding life-time with the duration
+                .issuedAt(new Date(System.currentTimeMillis())) // get the current date
+                .claims(claims)
+                .subject(userDetails.getEmail())
+                .signWith(secretKeyObject)
+                .compact(); //this will automatically encode everything to base64
+    }
+
 
 
     public String generateToken(User user) {

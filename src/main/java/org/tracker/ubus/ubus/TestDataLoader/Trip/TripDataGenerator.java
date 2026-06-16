@@ -24,46 +24,49 @@ import java.util.UUID;
 @Slf4j
 public class TripDataGenerator implements CommandLineRunner {
 
+    private final EverythingTripDataGenerator everythingTripDataGenerator;
     private final TripRepository tripRepository;
     private final BusAssignmentRepository busAssignmentRepository;
     private final Random random = new Random();
 
     private static final int NUMBER_OF_TRIPS = 10;
     private static final int REPORTS_PER_TRIP = 100; // For future tracking simulation
-
     @Override
     @Transactional
     public void run(String... args) {
         log.info("=== STARTING TRIP DATA GENERATION ===");
 
-        // Check if we already have trips
-        if (tripRepository.count() > 0) {
-            log.info("Trips already exist in database. Skipping generation.");
-            return;
+        // First, generate IN_PROGRESS trips (your existing logic)
+        if (tripRepository.count() == 0) {
+            List<BusAssignment> busAssignments = busAssignmentRepository.findAll();
+            if (busAssignments.isEmpty()) {
+                log.warn("No bus assignments found! Please generate BusAssignments first.");
+                return;
+            }
+
+            log.info("Found {} bus assignments for trip generation", busAssignments.size());
+            List<Trip> trips = generateTrips(busAssignments);
+            List<Trip> savedTrips = tripRepository.saveAll(trips);
+            log.info("✅ Successfully generated {} IN_PROGRESS trips", savedTrips.size());
+            printTripSummary(savedTrips);
+        } else {
+            log.info("Trips already exist, skipping IN_PROGRESS generation.");
         }
 
-        // Get all bus assignments (need drivers and buses assigned)
-        List<BusAssignment> busAssignments = busAssignmentRepository.findAll();
+        // Second, generate COMPLETED trips with full GPS history points
+        // This will only generate if no completed trips exist
+        log.info("Generating COMPLETED trips with history points...");
 
-        if (busAssignments.isEmpty()) {
-            log.warn("No bus assignments found! Please generate BusAssignments first.");
-            log.warn("Skipping Trip generation until bus assignments exist.");
-            return;
+        boolean do_ = false;
+        if(do_) {
+            try {
+                everythingTripDataGenerator.generateCompletedTrips();
+            } catch (Exception e) {
+                log.error("Failed to generate completed trips: ", e);
+            }
+
+            log.info("=== TRIP DATA GENERATION COMPLETE ===");
         }
-
-        log.info("Found {} bus assignments for trip generation", busAssignments.size());
-
-        // Generate trips
-        List<Trip> trips = generateTrips(busAssignments);
-
-        // Save to database
-        List<Trip> savedTrips = tripRepository.saveAll(trips);
-
-        log.info("✅ Successfully generated {} IN_PROGRESS trips", savedTrips.size());
-        log.info("=== TRIP DATA GENERATION COMPLETE ===");
-
-        // Print summary
-        printTripSummary(savedTrips);
     }
 
     private List<Trip> generateTrips(List<BusAssignment> busAssignments) {

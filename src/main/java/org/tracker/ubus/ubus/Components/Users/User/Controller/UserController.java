@@ -12,7 +12,6 @@ import org.tracker.ubus.ubus.Components.Users.User.Service.Interface.IUserServic
 @RequiredArgsConstructor
 class UserController {
 
-
     private final IUserService userService;
 
 
