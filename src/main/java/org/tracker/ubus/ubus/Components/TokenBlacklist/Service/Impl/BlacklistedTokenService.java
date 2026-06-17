@@ -3,6 +3,7 @@ package org.tracker.ubus.ubus.Components.TokenBlacklist.Service.Impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.tracker.ubus.ubus.Components.TokenBlacklist.Entity.BlacklistedToken;
 import org.tracker.ubus.ubus.Components.TokenBlacklist.Repository.BlacklistedTokenRepository;
 import org.tracker.ubus.ubus.Components.TokenBlacklist.Service.Interface.IBlacklistedTokenService;
@@ -38,7 +39,9 @@ public class BlacklistedTokenService implements IBlacklistedTokenService {
 
     @Override
     @Scheduled(fixedRate = 300000)//5 min
+    @Transactional
     public void removeExpiredBlacklistedTokens() {
+        System.out.println("Removing expired blacklisted tokens");
         blacklistedTokenRepository.deleteByExpiresAtBefore(LocalDateTime.now());
     }
 }
