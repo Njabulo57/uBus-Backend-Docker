@@ -12,4 +12,6 @@ public interface IUserService {
     boolean forgotPassword(String email);
 
     boolean changePassword(String email, String newPassword, String otp);
+
+    public void deactivateAccount(String password);
 }

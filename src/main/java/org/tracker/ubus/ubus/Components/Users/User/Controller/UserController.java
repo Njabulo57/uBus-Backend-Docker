@@ -93,4 +93,18 @@ class UserController {
         userService.changePassword(email, otp, newPassword);
     }
 
+    /**
+     *
+     * Validates the password and deactivates account
+     *
+     *       HTTP Method: PUT
+     *       Endpoint: /users/deactivate-account
+     * @param password the password of the user
+     */
+    @PutMapping("/deactivate-account")
+    @ResponseStatus(HttpStatus.OK)
+    public void deactivateAccount(@RequestParam String password) {
+        userService.deactivateAccount(password);
+    }
+
 }

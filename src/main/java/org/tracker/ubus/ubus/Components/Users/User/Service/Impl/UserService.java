@@ -132,4 +132,18 @@ public class UserService implements IUserService {
            throw new InvalidCredentialsException("OTP doesnt exist");
        return true;
     }
+
+    @Override
+    public void deactivateAccount(String password) {
+        User currentUser = getCurrentUser();
+        if(currentUser != null) {
+            if(passwordEncoder.matches(password, currentUser.getPassword())) {
+                authService.logout();
+                currentUser.setStatus(UserStatus.INACTIVE);
+                userRepository.save(currentUser);
+            } else {
+                throw new InvalidCredentialsException("Invalid password");
+            }
+        }
+    }
 }
