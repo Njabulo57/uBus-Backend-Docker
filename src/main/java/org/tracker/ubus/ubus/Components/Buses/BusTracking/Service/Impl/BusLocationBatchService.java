@@ -118,29 +118,31 @@ public class BusLocationBatchService implements IBusLocationBatchService {
             return;
         }
 
-        try {
-            var q = busQueues.get(busId);
-            if (q.isEmpty())
-                return;
+
+        var q = busQueues.get(busId);
+        if (q.isEmpty())
+            return;
 
 
-            // Drain all messages
-            List<DriverCurrentLocationMessage> drained = new ArrayList<>();
-            int drainedCount = q.drainTo(drained);
+        // Drain all messages
+        List<DriverCurrentLocationMessage> drained = new ArrayList<>();
+        int drainedCount = q.drainTo(drained);
 
-            if (drainedCount == 0)
-                return;
+        if (drainedCount == 0)
+            return;
 
-            // Get cached trip
-            Trip trip = busTripCache.get(busId);
-            log.debug("Bus {}: saving {} locations ({})", busId, drainedCount, reason);
+        // Get cached trip
+        Trip trip = busTripCache.get(busId);
+        log.debug("Bus {}: saving {} locations ({})", busId, drainedCount, reason);
 
-            // Save to database
-            var entities = busTrackingMapper.toEntities(drained, trip);
+        // Save to database
+        var entities = busTrackingMapper.toEntities(drained, trip);
+
+
+        try
+        {
             tripHistoryRepository.saveAll(entities);
-
             log.info("Bus {}: saved {} locations", busId, drainedCount);
-
         } catch (Exception e) {
             log.error("Bus {}: failed to save locations", busId, e);
         } finally {

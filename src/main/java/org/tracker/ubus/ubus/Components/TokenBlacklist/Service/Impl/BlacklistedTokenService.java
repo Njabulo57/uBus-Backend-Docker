@@ -13,6 +13,8 @@ import java.time.temporal.ChronoUnit;
 @Service
 @RequiredArgsConstructor
 public class BlacklistedTokenService implements IBlacklistedTokenService {
+
+
     private final BlacklistedTokenRepository blacklistedTokenRepository;
 
     @Override

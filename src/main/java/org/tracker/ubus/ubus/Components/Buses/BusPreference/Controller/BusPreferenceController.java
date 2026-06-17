@@ -13,6 +13,8 @@ import org.tracker.ubus.ubus.Components.Users.User.Enum.Route;
 @RequestMapping("/busPreferences")
 @RequiredArgsConstructor
 public class BusPreferenceController {
+
+
     @Autowired
     private IBusPreferenceService busPreferenceService;
 
