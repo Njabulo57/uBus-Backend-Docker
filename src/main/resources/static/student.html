@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Student · uBus</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="/shared/app.css" />
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><span class="brand-dot"></span> uBus · Student</div>
+  <div class="spacer"></div>
+  <span id="active-count" class="chip">0 buses live</span>
+  <span id="status" class="pill disconnected"><span class="dot"></span><span class="txt">Disconnected</span></span>
+</div>
+
+<div id="map"></div>
+
+<div class="panel panel-student">
+  <h2>Subscriptions</h2>
+
+  <label style="display:flex; align-items:center; gap:8px; font-size:13px; cursor:pointer; user-select:none;">
+    <input type="checkbox" id="watch-all" checked />
+    <span>Watch all buses (admins topic)</span>
+  </label>
+
+  <div style="height:14px"></div>
+
+  <label class="field">Watch by trip</label>
+  <select id="trip-pick">
+    <option value="">Loading active trips...</option>
+  </select>
+
+  <div style="height:10px"></div>
+
+  <label class="field">Watch by bus id (paste)</label>
+  <div class="row">
+    <input id="bus-id" type="text" placeholder="bus uuid…" />
+    <button id="add-bus" style="flex:0 0 auto;">+</button>
+  </div>
+
+  <h2 style="margin-top:18px">Live buses</h2>
+  <div id="bus-list" class="bus-list"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@6.1.2/dist/stomp.min.js"></script>
+<script src="/shared/sa-routes.js"></script>
+<script src="/shared/bus-icon.js"></script>
+<script>
+  const WS_URL = "http://localhost:8050/web-socket";
+
+  const map = L.map("map", { zoomControl: true }).setView([-29.5, 24.5], 6);
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png", {
+    attribution: '&copy; OpenStreetMap &copy; CARTO',
+    maxZoom: 19,
+  }).addTo(map);
+
+  const statusEl = document.getElementById("status");
+  function setStatus(s) {
+    statusEl.className = "pill " + s;
+    statusEl.querySelector(".txt").textContent =
+            s === "connected" ? "Connected" : s === "connecting" ? "Connecting…" : "Disconnected";
+  }
+
+  // State
+  const buses = new Map();
+  const subs = new Map();
+  let activeTrips = [];
+
+  function colorForTrip(tripId) {
+    const r = SA_ROUTES.find((x) => x.tripId === tripId);
+    if (r) return r.color;
+    const trip = activeTrips.find(t => t.id === tripId);
+    if (trip && trip.route) {
+      const routeMatch = SA_ROUTES.find(x => x.label.toLowerCase().includes(trip.route.toLowerCase()));
+      if (routeMatch) return routeMatch.color;
+    }
+    return "#22d3ee";
+  }
+
+  function labelForTrip(tripId) {
+    const r = SA_ROUTES.find((x) => x.tripId === tripId);
+    if (r) return r.label;
+    const trip = activeTrips.find(t => t.id === tripId);
+    if (trip && trip.route) return trip.route;
+    return tripId.slice(0, 8) + "…";
+  }
+
+  // Load active trips from backend
+  async function loadActiveTrips() {
+    try {
+      const response = await fetch('http://localhost:8050/trips/get-active-trip');
+      const trips = await response.json();
+      activeTrips = trips;
+
+      const tripPick = document.getElementById("trip-pick");
+
+      if (trips && trips.length > 0) {
+        tripPick.innerHTML = '<option value="">-- Select a trip to subscribe --</option>';
+
+        trips.forEach(trip => {
+          const opt = document.createElement('option');
+          opt.value = trip.id;
+          opt.textContent = `${trip.busName || 'Unknown Bus'} - ${trip.route || 'Unknown Route'}`;
+          tripPick.appendChild(opt);
+        });
+
+        console.log(`Loaded ${trips.length} trips:`, trips.map(t => ({ busName: t.busName, route: t.route })));
+      } else {
+        tripPick.innerHTML = '<option value="">-- No active trips available --</option>';
+      }
+    } catch (error) {
+      console.error('Failed to load active trips:', error);
+      const tripPick = document.getElementById("trip-pick");
+      tripPick.innerHTML = '<option value="">-- Error loading trips --</option>';
+    }
+  }
+
+  const listEl = document.getElementById("bus-list");
+  const activeCountEl = document.getElementById("active-count");
+
+  function ensureBus(key, displayLabel, color) {
+    if (buses.has(key)) return buses.get(key);
+
+    const marker = L.marker([-29.5, 24.5], {
+      icon: makeBusIcon(color, "🚌"),
+      opacity: 0,
+    }).addTo(map);
+
+    const card = document.createElement("div");
+    card.className = "bus-card";
+    card.style.borderLeftColor = color;
+    card.innerHTML = `<div class="title">${displayLabel}</div><div class="meta">waiting…</div>`;
+    card.addEventListener("click", () => {
+      const b = buses.get(key);
+      if (b && b.marker.getLatLng()) map.setView(b.marker.getLatLng(), 14, { animate: true });
+    });
+    listEl.appendChild(card);
+
+    const entry = { marker, lastSeen: 0, listEl: card, color, label: displayLabel };
+    buses.set(key, entry);
+    updateCount();
+    return entry;
+  }
+
+  function updateCount() {
+    const live = [...buses.values()].filter((b) => Date.now() - b.lastSeen < 15000 && b.lastSeen > 0).length;
+    activeCountEl.textContent = `${live} bus${live === 1 ? "" : "es"} live`;
+  }
+
+  function smoothMove(marker, newPos) {
+    if (!marker) return;
+    marker.setLatLng(newPos);
+  }
+
+  function handleMessage(key, msg) {
+    const lat = msg.latitude, lng = msg.longitude;
+    const tripId = msg.tripId;
+    const color = colorForTrip(tripId);
+    const label = labelForTrip(tripId);
+    const realKey = key === "__all__" ? tripId : key;
+    const b = ensureBus(realKey, label, color);
+
+    if (key === "__all__") {
+      b.marker.setIcon(makeBusIcon(color, "🚌"));
+      b.listEl.style.borderLeftColor = color;
+      b.listEl.querySelector(".title").textContent = label;
+    }
+
+    smoothMove(b.marker, [lat, lng]);
+    b.marker.setOpacity(1);
+    b.lastSeen = Date.now();
+    b.listEl.classList.remove("stale");
+    b.listEl.querySelector(".meta").innerHTML =
+            `${lat.toFixed(4)}, ${lng.toFixed(4)} · ${msg.speed || 0} km/h · ${msg.timePosted ? msg.timePosted.split("T")[1] : "—"}`;
+    updateCount();
+  }
+
+  // FIXED: Use Stomp library correctly with version 6
+  let stompClient = null;
+
+  function connectWebSocket() {
+    const socket = new SockJS(WS_URL);
+    // Stomp 6.x uses Client class
+    stompClient = Stomp.over(socket);
+    stompClient.debug = null;
+
+    stompClient.connect({},
+            function(frame) {
+              console.log("WebSocket Connected", frame);
+              setStatus("connected");
+
+              if (document.getElementById("watch-all").checked) {
+                applyWatchAll();
+              }
+
+              subs.forEach((unsub, key) => {
+                if (key !== "__watchAll__") {
+                  const dest = `/topic/students/get-bus-location/${key}`;
+                  const newUnsub = stompClient.subscribe(dest, (msg) => {
+                    const parsed = JSON.parse(msg.body);
+                    handleMessage(key, parsed);
+                  });
+                  subs.set(key, newUnsub);
+                }
+              });
+            },
+            function(error) {
+              console.error("WebSocket Error:", error);
+              setStatus("disconnected");
+              setTimeout(connectWebSocket, 3000);
+            }
+    );
+  }
+
+  connectWebSocket();
+
+  // Watch all toggle
+  let allUnsub = null;
+  const watchAll = document.getElementById("watch-all");
+
+  function applyWatchAll() {
+    if (!stompClient || !stompClient.connected) return;
+
+    if (watchAll.checked && !allUnsub) {
+      allUnsub = stompClient.subscribe("/topic/admins/all-buses", (msg) => {
+        const parsed = JSON.parse(msg.body);
+        handleMessage("__all__", parsed);
+      });
+      subs.set("__watchAll__", allUnsub);
+    } else if (!watchAll.checked && allUnsub) {
+      allUnsub.unsubscribe();
+      allUnsub = null;
+      subs.delete("__watchAll__");
+    }
+  }
+
+  watchAll.addEventListener("change", applyWatchAll);
+
+  // Subscribe by trip
+  const tripPick = document.getElementById("trip-pick");
+  tripPick.addEventListener("change", () => {
+    const tripId = tripPick.value;
+    if (!tripId) return;
+    if (subs.has(tripId)) {
+      alert("Already watching this trip");
+      tripPick.value = "";
+      return;
+    }
+
+    const trip = activeTrips.find(t => t.id === tripId);
+    if (!trip) {
+      alert("Trip not found");
+      tripPick.value = "";
+      return;
+    }
+
+    const busId = trip.busId;
+    if (!busId) {
+      alert("Cannot find bus ID for this trip");
+      tripPick.value = "";
+      return;
+    }
+
+    if (!stompClient || !stompClient.connected) {
+      alert("WebSocket not connected");
+      tripPick.value = "";
+      return;
+    }
+
+    const dest = `/topic/students/get-bus-location/${busId}`;
+    const unsub = stompClient.subscribe(dest, (msg) => {
+      const parsed = JSON.parse(msg.body);
+      handleMessage(tripId, parsed);
+    });
+
+    subs.set(tripId, unsub);
+
+    const displayName = `${trip.busName || 'Bus'} - ${trip.route || 'Trip'}`;
+    ensureBus(tripId, displayName, colorForTrip(tripId));
+    tripPick.value = "";
+  });
+
+  // Subscribe by bus id
+  document.getElementById("add-bus").addEventListener("click", () => {
+    const input = document.getElementById("bus-id");
+    const busId = input.value.trim();
+    if (!busId) return;
+    if (subs.has(busId)) {
+      alert("Already watching this bus");
+      input.value = "";
+      return;
+    }
+
+    if (!stompClient || !stompClient.connected) {
+      alert("WebSocket not connected");
+      return;
+    }
+
+    const dest = `/topic/students/get-bus-location/${busId}`;
+    const unsub = stompClient.subscribe(dest, (msg) => {
+      const parsed = JSON.parse(msg.body);
+      handleMessage(busId, parsed);
+    });
+    subs.set(busId, unsub);
+    ensureBus(busId, "Bus " + busId.slice(0, 8) + "…", "#22d3ee");
+    input.value = "";
+  });
+
+  // Stale sweeper
+  setInterval(() => {
+    const now = Date.now();
+    buses.forEach((b) => {
+      if (b.lastSeen && now - b.lastSeen > 15000) {
+        b.marker.setOpacity(0.3);
+        b.listEl.classList.add("stale");
+      } else if (b.lastSeen && now - b.lastSeen <= 15000) {
+        b.marker.setOpacity(1);
+        b.listEl.classList.remove("stale");
+      }
+    });
+    updateCount();
+  }, 2000);
+
+  // Initialize
+  loadActiveTrips();
+</script>
+</body>
+</html>

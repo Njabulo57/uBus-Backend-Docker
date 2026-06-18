@@ -4,7 +4,7 @@ package org.tracker.ubus.ubus.Components.Audit.Mapper;
 import org.springframework.stereotype.Component;
 import org.tracker.ubus.ubus.Components.Audit.Entity.Audit;
 import org.tracker.ubus.ubus.Components.Audit.Enum.AuditType;
-import org.tracker.ubus.ubus.Components.User.Entity.User;
+import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
 
 @Component
 public class AuditMapper {

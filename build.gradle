@@ -28,6 +28,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
     implementation 'io.github.cdimascio:dotenv-java:3.0.0'
+    implementation 'net.datafaker:datafaker:2.4.4'
 
 
 

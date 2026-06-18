@@ -9,9 +9,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
-import org.tracker.ubus.ubus.Components.TokenGenerators.Jwt.Filter.JwtFilter;
-
-import static org.tracker.ubus.ubus.Components.User.Enum.UserRole.*;
+import org.tracker.ubus.ubus.Components.Jwt.Filter.JwtFilter;
+import static org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole.*;
 
 @Configuration
 @EnableWebSecurity
@@ -38,27 +37,41 @@ public class SecurityConfig {
         return http.addFilterBefore(jwtFilter, AuthenticationFilter.class);
     }
 
-    private HttpSecurity configureEndpointSecurity(HttpSecurity http) throws Exception {
+    private HttpSecurity configureEndpointSecurity(HttpSecurity http) throws Exception{
 
         http.authorizeHttpRequests(authz ->
                 authz
                     .requestMatchers("/auth/**").permitAll()
                     .requestMatchers("/one-time-password/**").permitAll()
 
-                    .requestMatchers("/users/**")
-                        .hasAnyRole(ADMIN.getLabel(), DRIVER.getLabel(),
-                            STAFF.getLabel(), STUDENT.getLabel()
-                        )
+                        .requestMatchers("/auth/logout")
+                        .hasAnyAuthority(ADMIN.getSecurityRole(), DRIVER.getSecurityRole(),
+                                STAFF.getSecurityRole(), STUDENT.getSecurityRole())
 
-                    .requestMatchers("/busses/register")
-                        .hasRole(ADMIN.getLabel())
+                        .requestMatchers("/users/**")
+                        .hasAnyAuthority(ADMIN.getSecurityRole(), DRIVER.getSecurityRole(),
+                                STAFF.getSecurityRole(), STUDENT.getSecurityRole())
+
 
                     .requestMatchers("/busses/**")
                         .hasRole(ADMIN.getLabel())
 
+                    .requestMatchers("/trips/register-bus-trip")
+                        .hasRole(ADMIN.getLabel())
+
+
+                    .requestMatchers("/trips/get-active-trips").permitAll()
+                    .requestMatchers("/trips/get-trip/").permitAll()
+
+                    .requestMatchers("/web-socket/**").permitAll()
+                    .requestMatchers("/web-socket").permitAll()
+
                     .requestMatchers("/admins/**")
                         .hasRole(ADMIN.getLabel())
 
+
+                        .requestMatchers("/trips-data/**")
+                        .permitAll()
 
                     .anyRequest().authenticated()
         );

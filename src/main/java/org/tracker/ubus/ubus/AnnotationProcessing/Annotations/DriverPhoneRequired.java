@@ -14,6 +14,7 @@ import java.lang.annotation.Target;
 @Constraint(validatedBy = {})
 public @interface DriverPhoneRequired {
 
+
     String message() default "Phone number is required";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};

@@ -6,8 +6,8 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.tracker.ubus.ubus.Components.User.Entity.User;
-import org.tracker.ubus.ubus.Components.User.Enum.UserStatus;
+import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
+import org.tracker.ubus.ubus.Components.Users.User.Enum.UserStatus;
 
 import java.util.ArrayList;
 import java.util.Collection;

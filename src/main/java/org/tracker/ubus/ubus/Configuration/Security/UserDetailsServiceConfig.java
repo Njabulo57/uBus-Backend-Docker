@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.tracker.ubus.ubus.Components.User.Repository.UserRepository;
+import org.tracker.ubus.ubus.Components.Users.User.Repository.UserRepository;
 
 @Configuration
 public class UserDetailsServiceConfig {

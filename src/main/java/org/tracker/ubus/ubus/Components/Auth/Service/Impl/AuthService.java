@@ -1,10 +1,13 @@
 package org.tracker.ubus.ubus.Components.Auth.Service.Impl;
 
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.tracker.ubus.ubus.Components.Auth.DTOs.Requests.EmailOtpRequest;
 import org.tracker.ubus.ubus.Components.Auth.DTOs.Requests.LoginRequest;
 import org.tracker.ubus.ubus.Components.Auth.DTOs.Requests.RegisterRequest;
@@ -17,15 +20,18 @@ import org.tracker.ubus.ubus.Components.Auth.Exception.Internal.AdminRegistratio
 import org.tracker.ubus.ubus.Components.Auth.Mapper.AuthMapper;
 import org.tracker.ubus.ubus.Components.Auth.Service.Interface.IAuthService;
 import org.tracker.ubus.ubus.Components.Auth.VerificationDispatcher.VerificationDispatcher;
-import org.tracker.ubus.ubus.Components.TokenGenerators.EmailVerificationToken.EmailVerificationTokenService.EmailVerificationTokenService;
-import org.tracker.ubus.ubus.Components.TokenGenerators.Jwt.JwtService.JwtService;
-import org.tracker.ubus.ubus.Components.User.Entity.User;
-import org.tracker.ubus.ubus.Components.User.Enum.UserRole;
-import org.tracker.ubus.ubus.Components.User.Repository.UserRepository;
+import org.tracker.ubus.ubus.Components.Jwt.JwtService.JwtService;
+import org.tracker.ubus.ubus.Components.TokenBlacklist.Service.Impl.BlacklistedTokenService;
+
+
+import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
+import org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole;
+import org.tracker.ubus.ubus.Components.Users.User.Enum.UserStatus;
+import org.tracker.ubus.ubus.Components.Users.User.Repository.UserRepository;
 import java.time.LocalDateTime;
 
-import static org.tracker.ubus.ubus.Components.User.Enum.UserRole.STUDENT;
-import static org.tracker.ubus.ubus.Components.User.Enum.UserStatus.*;
+import static org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole.STUDENT;
+import static org.tracker.ubus.ubus.Components.Users.User.Enum.UserStatus.*;
 
 
 @Service
@@ -37,8 +43,9 @@ public class AuthService implements IAuthService {
     private final AuthMapper authMapper;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final EmailVerificationTokenService emailVerificationTokenService;
     private final VerificationDispatcher verificationDispatcher;
+    private final BlacklistedTokenService blacklistedTokenService;
+
 
     @Override
     public LoginSuccessfulResponse login(LoginRequest loginRequest) {
@@ -50,17 +57,9 @@ public class AuthService implements IAuthService {
 
         if(user.getStatus() == EMAIL_APPROVAL_PENDING ||
                 user.getStatus() == ADMIN_APPROVAL_PENDING ||
-                user.getStatus() == INACTIVE) {
+                user.getStatus() == INACTIVE)
+            throw new AccountLockedException("Account Locked.");
 
-            String message = "Account Locked.";
-            var advice = switch (user.getRole()) {
-                case DRIVER -> "Please Await Approval";
-                default -> "Please Verify";
-            };
-
-
-            throw new AccountLockedException(message + advice);
-        }
 
         if(!passwordEncoder.matches(loginRequest.password(), user.getPassword()))
             throw new InvalidCredentialsException("Invalid Credentials");
@@ -84,23 +83,19 @@ public class AuthService implements IAuthService {
             throw new DuplicateEmailException("Email Already Exists");
 
 
+        UserStatus userStatus = switch (userRole) {
 
-        //this will create the user entity based off of their role
-        var userEntity = switch (userRole) {
-
-            case STUDENT -> {
+            case STUDENT, STAFF -> {
                 this.validateIfStudent(registerRequest.email(), userRole); // validate the student's information
-                yield this.authMapper.toEntity(registerRequest, userRole, EMAIL_APPROVAL_PENDING);
+                yield EMAIL_APPROVAL_PENDING;
             }
 
-            case STAFF -> throw new AccountLockedException("Role Not Supported");
-
-            case DRIVER -> this.authMapper.toEntity(registerRequest, userRole, ADMIN_APPROVAL_PENDING);
+            case DRIVER -> ADMIN_APPROVAL_PENDING;
 
             case ADMIN -> throw new AdminRegistrationNotAllowedException("Admin Registration Not Supported");
         };
 
-
+        var userEntity = this.authMapper.toEntity(registerRequest, userRole, userStatus);
 
 
         final var encodedPassed = this.passwordEncoder.encode(userEntity.getPassword()); //hashed the password
@@ -108,8 +103,14 @@ public class AuthService implements IAuthService {
         var savedUser = this.userRepository.save(userEntity); //save the user.
 
         //send the user a verification method according to their type
-        this.verificationDispatcher.dispatch(savedUser);
+        this.verificationDispatcher.dispatchRegistrationOTP(savedUser);
         return this.authMapper.toRegisterDTO(savedUser.getRole());
+    }
+
+
+    @Override
+    public boolean verifyEmail(String email) {
+        return this.userRepository.existsByEmail(email);
     }
 
 
@@ -121,7 +122,7 @@ public class AuthService implements IAuthService {
                 .orElseThrow(() -> new AccountNotFoundException("Account Doesn't Exist"));
 
         switch(user.getStatus()) {
-            case EMAIL_APPROVAL_PENDING -> this.verificationDispatcher.dispatch(user);
+            case EMAIL_APPROVAL_PENDING -> this.verificationDispatcher.dispatchRegistrationOTP(user);
             case ACTIVE -> throw new RuntimeException("User is already verified");
             case INACTIVE -> throw new AccountLockedException("Account is disabled. Contact support.");
         }
@@ -132,20 +133,28 @@ public class AuthService implements IAuthService {
 
 
     @Override
-    @Transactional
-    public boolean verifyEmailToken(String token) {
+    public void logout() {
 
-        var emailToken = this.emailVerificationTokenService.getByToken(token);
-        if(emailToken.isExpired())
-            this.emailVerificationTokenService.deleteToken(emailToken);
+        HttpServletRequest request = (HttpServletRequest) ((ServletRequestAttributes)
+                RequestContextHolder.getRequestAttributes()).getRequest();
 
-        if(!token.equals(emailToken.getToken()))
-            return false;
-        return true;
+        String authHeader = request.getHeader("Authorization");
+        String token = authHeader.substring(7);
+        long remainingMilliseconds = jwtService.getRemainingExpiration(token);
+        blacklistedTokenService.blacklist(token, remainingMilliseconds);
     }
 
 
-
+    /**
+     * Validates if the provided email and user role correspond to a valid student.
+     *
+     * @param email the email address to validate. It must end with the domain "@student.uj.ac.za".
+     *              The part before the domain must be a 9-digit student number.
+     * @param userRole the role of the user, which must correspond to a student role for validation to pass.
+     * @throws InvalidStudentInformationException if the email does not belong to the student domain,
+     *                                            does not contain a valid 9-digit student number,
+     *                                            or if other student-related validations fail.
+     */
     private void validateIfStudent(String email, UserRole userRole)
             throws InvalidStudentInformationException {
 
@@ -165,6 +174,19 @@ public class AuthService implements IAuthService {
         this.validateIfStudentEmailCorrect(studentNumberPart, userRole);
     }
 
+    /**
+     * Validates if the student email address corresponds correctly to the provided user role.
+     * Ensures that only users with the STUDENT role can use a student email, and that
+     * users with the STUDENT role must provide a valid student email address.
+     *
+     * @param extractedStudentNumber The extracted student number from the email address.
+     *                               Should be non-null for student email addresses.
+     * @param studentRole            The role of the user, expected to be either STUDENT
+     *                               or a non-student role.
+     * @throws InvalidStudentInformationException If the role and email address are not compatible:
+     *                                            - STUDENT role provided without a valid student email address.
+     *                                            - Non-STUDENT role provided with a student email address.
+     */
     private void validateIfStudentEmailCorrect(String extractedStudentNumber, UserRole studentRole)
             throws InvalidStudentInformationException {
         boolean isStudentEmail = extractedStudentNumber != null;
@@ -179,6 +201,7 @@ public class AuthService implements IAuthService {
             throw new InvalidStudentInformationException(
                     "Only students role can register with a @student.uj.ac.za email address");
     }
+
 
 }
 

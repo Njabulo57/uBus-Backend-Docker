@@ -3,7 +3,7 @@ package org.tracker.ubus.ubus.Components.OneTimePassword.Entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.tracker.ubus.ubus.Components.User.Entity.User;
+import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

@@ -1,10 +1,12 @@
 package org.tracker.ubus.ubus.Configuration.Security;
 
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
-import java.util.Arrays;
 import java.util.List;
 
+
+@Configuration
 public class CorsConfig {
 
     @Bean
@@ -12,10 +14,14 @@ public class CorsConfig {
         CorsConfiguration config = new CorsConfiguration();
 
 
-        config.setAllowedOrigins(List.of("http://localhost:3000"));
+
+        config.setAllowedOriginPatterns(List.of("*"));
+
+//        config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:3001",
+//                "http://localhost:3002", "http://localhost:3003", "http://localhost:8050"));
 
         // Allow HTTP methods
-        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
 
         // Allow all headers
         config.setAllowedHeaders(List.of("*"));

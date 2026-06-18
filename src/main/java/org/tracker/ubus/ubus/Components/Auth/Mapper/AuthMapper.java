@@ -5,9 +5,9 @@ import org.springframework.stereotype.Component;
 import org.tracker.ubus.ubus.Components.Auth.DTOs.Requests.RegisterRequest;
 import org.tracker.ubus.ubus.Components.Auth.DTOs.Responses.LoginSuccessfulResponse;
 import org.tracker.ubus.ubus.Components.Auth.DTOs.Responses.RegisterSuccessfulResponse;
-import org.tracker.ubus.ubus.Components.User.Entity.User;
-import org.tracker.ubus.ubus.Components.User.Enum.UserRole;
-import org.tracker.ubus.ubus.Components.User.Enum.UserStatus;
+import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
+import org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole;
+import org.tracker.ubus.ubus.Components.Users.User.Enum.UserStatus;
 
 import java.time.LocalDateTime;
 

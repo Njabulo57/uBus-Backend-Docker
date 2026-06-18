@@ -1,0 +1,200 @@
+package org.tracker.ubus.ubus.TestDataLoader.Trip;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Entity.BusAssignment;
+import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Repository.BusAssignmentRepository;
+import org.tracker.ubus.ubus.Components.Trips.Trip.Entity.Trip;
+import org.tracker.ubus.ubus.Components.Trips.Trip.Enum.TripStatus;
+import org.tracker.ubus.ubus.Components.Trips.Trip.Repository.TripRepository;
+import org.tracker.ubus.ubus.Components.Users.User.Enum.Route;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.UUID;
+
+@Component
+@RequiredArgsConstructor
+@Order(5)
+@Slf4j
+public class TripDataGenerator implements CommandLineRunner {
+
+    private final EverythingTripDataGenerator everythingTripDataGenerator;
+    private final TripRepository tripRepository;
+    private final BusAssignmentRepository busAssignmentRepository;
+    private final Random random = new Random();
+
+    private static final int NUMBER_OF_TRIPS = 10;
+    private static final int REPORTS_PER_TRIP = 100; // For future tracking simulation
+    @Override
+    @Transactional
+    public void run(String... args) {
+        log.info("=== STARTING TRIP DATA GENERATION ===");
+
+        // First, generate IN_PROGRESS trips (your existing logic)
+        if (tripRepository.count() == 0) {
+            List<BusAssignment> busAssignments = busAssignmentRepository.findAll();
+            if (busAssignments.isEmpty()) {
+                log.warn("No bus assignments found! Please generate BusAssignments first.");
+                return;
+            }
+
+            log.info("Found {} bus assignments for trip generation", busAssignments.size());
+            List<Trip> trips = generateTrips(busAssignments);
+            List<Trip> savedTrips = tripRepository.saveAll(trips);
+            log.info("✅ Successfully generated {} IN_PROGRESS trips", savedTrips.size());
+            printTripSummary(savedTrips);
+        } else {
+            log.info("Trips already exist, skipping IN_PROGRESS generation.");
+        }
+
+        // Second, generate COMPLETED trips with full GPS history points
+        // This will only generate if no completed trips exist
+        log.info("Generating COMPLETED trips with history points...");
+
+        boolean do_ = false;
+        if(do_) {
+            try {
+                everythingTripDataGenerator.generateCompletedTrips();
+            } catch (Exception e) {
+                log.error("Failed to generate completed trips: ", e);
+            }
+
+            log.info("=== TRIP DATA GENERATION COMPLETE ===");
+        }
+    }
+
+    private List<Trip> generateTrips(List<BusAssignment> busAssignments) {
+        List<Trip> trips = new ArrayList<>();
+        Route[] allRoutes = Route.values();
+
+        // Ensure we don't try to create more trips than available bus assignments
+        int tripsToCreate = Math.min(NUMBER_OF_TRIPS, busAssignments.size());
+
+        log.info("Creating {} trips from {} available bus assignments", tripsToCreate, busAssignments.size());
+
+        for (int i = 0; i < tripsToCreate; i++) {
+            BusAssignment busAssignment = busAssignments.get(i);
+            Route randomRoute = allRoutes[random.nextInt(allRoutes.length)];
+
+            // Random total count between 30-100 (simulating passenger count or report count)
+            int totalCount = 30 + random.nextInt(71);
+
+            Trip trip = Trip.builder()
+
+                    .route(randomRoute)
+                    .status(TripStatus.IN_PROGRESS)  // All IN_PROGRESS as requested
+                    .busAssignment(busAssignment)
+                    .totalCount(totalCount)
+                    .build();
+
+            trips.add(trip);
+
+            log.debug("Generated trip: Bus {} - Route: {} - Status: {} - Count: {}",
+                    busAssignment.getBus().getName(),
+                    randomRoute.getLabel(),
+                    TripStatus.IN_PROGRESS.getLabel(),
+                    totalCount);
+        }
+
+        return trips;
+    }
+
+    private void printTripSummary(List<Trip> trips) {
+        log.info("\n📊 TRIP GENERATION SUMMARY:");
+        log.info("┌─────────────────────────────────────────────────────────────┐");
+        log.info(String.format("│ Total Trips Generated:     %-30d│", trips.size()));
+        log.info(String.format("│ Status:                    %-30s│", "ALL IN_PROGRESS"));
+        log.info("├─────────────────────────────────────────────────────────────┤");
+        log.info("│ TRIP DETAILS:                                              │");
+
+        for (int i = 0; i < Math.min(trips.size(), 10); i++) {
+            Trip trip = trips.get(i);
+            log.info(String.format("│ %d. Bus: %-20s Route: %-25s│",
+                    i + 1,
+                    trip.getBusAssignment().getBus().getName(),
+                    trip.getRoute().getLabel()));
+        }
+
+        if (trips.size() > 10) {
+            log.info(String.format("│ ... and %d more trips                                      │", trips.size() - 10));
+        }
+
+        log.info("└─────────────────────────────────────────────────────────────┘");
+
+        // Route distribution
+        log.info("\n📈 ROUTE DISTRIBUTION:");
+        java.util.Map<Route, Long> routeCount = trips.stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                        Trip::getRoute,
+                        java.util.stream.Collectors.counting()
+                ));
+
+        routeCount.forEach((route, count) ->
+                log.info(String.format("   %-20s: %d trips", route.getLabel(), count))
+        );
+    }
+
+    // Helper method to generate trips on demand (not just at startup)
+    @Transactional
+    public List<Trip> generateAdditionalTrips(int numberOfTrips) {
+        List<BusAssignment> busAssignments = busAssignmentRepository.findAll();
+
+        if (busAssignments.isEmpty()) {
+            log.error("Cannot generate trips: No bus assignments available");
+            return List.of();
+        }
+
+        List<Trip> newTrips = new ArrayList<>();
+        Route[] allRoutes = Route.values();
+
+        for (int i = 0; i < numberOfTrips; i++) {
+            BusAssignment randomAssignment = busAssignments.get(random.nextInt(busAssignments.size()));
+            Route randomRoute = allRoutes[random.nextInt(allRoutes.length)];
+            int totalCount = 30 + random.nextInt(71);
+
+            Trip trip = Trip.builder()
+                    .id(UUID.randomUUID())
+                    .route(randomRoute)
+                    .status(TripStatus.IN_PROGRESS)
+                    .busAssignment(randomAssignment)
+                    .totalCount(totalCount)
+                    .build();
+
+            newTrips.add(trip);
+        }
+
+        List<Trip> savedTrips = tripRepository.saveAll(newTrips);
+        log.info("✅ Generated {} additional IN_PROGRESS trips", savedTrips.size());
+
+        return savedTrips;
+    }
+
+    // Alternative generator with specific route
+    @Transactional
+    public Trip createTripForBusAssignment(UUID busAssignmentId, Route route, int totalCount) {
+        BusAssignment busAssignment = busAssignmentRepository.findById(busAssignmentId)
+                .orElseThrow(() -> new RuntimeException("BusAssignment not found with id: " + busAssignmentId));
+
+        Trip trip = Trip.builder()
+                .id(UUID.randomUUID())
+                .route(route)
+                .status(TripStatus.IN_PROGRESS)
+                .busAssignment(busAssignment)
+                .totalCount(totalCount)
+                .build();
+
+        Trip savedTrip = tripRepository.save(trip);
+        log.info("✅ Created trip: Bus {} - Route: {} - Total Count: {}",
+                busAssignment.getBus().getName(),
+                route.getLabel(),
+                totalCount);
+
+        return savedTrip;
+    }
+}

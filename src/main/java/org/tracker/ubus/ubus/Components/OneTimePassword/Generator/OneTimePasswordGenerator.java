@@ -21,12 +21,21 @@ public final class OneTimePasswordGenerator {
 
     private final SecureRandom secureRandom;
 
+    /**
+     * Generates a random alphanumeric string of the specified length.
+     * @return A random alphanumeric string of the specified length.
+     */
     public String generateOTP() {
         return generateAlphaNumeric(length);
     }
 
-
+    /**
+     * Generates a random alphanumeric string of the specified length.
+     * @param length The length of the string (default = 8)
+     * @return A random alphanumeric string of the specified length.
+     */
     private String generateAlphaNumeric(int length) {
+
 
         var stringBuilder = new StringBuilder();
         for(int i = 0; i < length; i++) {
@@ -52,6 +61,14 @@ public final class OneTimePasswordGenerator {
         return stringBuilder.toString();
     }
 
+    /**
+     * Converts the letter at the specified index of the alphabet string to a random case
+     * (either uppercase or lowercase) and returns the resulting character.
+     *
+     * @param randomIndex The index of the letter in the alphabet string to be converted.
+     * @return A character representing either the uppercase or lowercase form of the letter
+     *         at the given index in the alphabet string.
+     */
     private char getRandomLetterCase(int randomIndex) {
 
         int letterCase = secureRandom.nextInt(2); //determine the case by dice roll

@@ -2,13 +2,10 @@ package org.tracker.ubus.ubus.Components.Auth.Events;
 
 
 import lombok.Getter;
-import org.springframework.beans.factory.annotation.Value;
 import org.tracker.ubus.ubus.Components.EventHandler.AbstractEvents.EmailEvent;
 import org.tracker.ubus.ubus.Components.OneTimePassword.DTOs.Internal.OtpInternalCarrier;
-import org.tracker.ubus.ubus.Components.Shared.Mail.Templates.OtpTemplate;
-import org.tracker.ubus.ubus.Components.User.Entity.User;
-
-import java.util.UUID;
+import org.tracker.ubus.ubus.Components.Shared.Mail.Templates.Auth.OtpTemplate;
+import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
 
 
 @Getter

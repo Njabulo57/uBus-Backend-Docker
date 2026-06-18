@@ -3,7 +3,7 @@ package org.tracker.ubus.ubus.Components.EventHandler.AbstractEvents;
 import lombok.Getter;
 import org.springframework.context.ApplicationEvent;
 import org.tracker.ubus.ubus.Components.Audit.Enum.AuditType;
-import org.tracker.ubus.ubus.Components.User.Entity.User;
+import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
