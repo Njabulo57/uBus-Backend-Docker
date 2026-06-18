@@ -41,60 +41,55 @@ public class SecurityConfig {
 
         http.authorizeHttpRequests(authz ->
                 authz
-                        .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/one-time-password/**").permitAll()
+                    .requestMatchers("/auth/**").permitAll()
+                    .requestMatchers("/one-time-password/**").permitAll()
 
-                        .requestMatchers("/auth/logout")
-                        .hasAnyRole(ADMIN.getLabel(), DRIVER.getLabel(), STAFF.getLabel(),
-                                STUDENT.getLabel())
+                    .requestMatchers("/auth/logout")
+                    .hasAnyRole(ADMIN.getLabel(), DRIVER.getLabel(), STAFF.getLabel(),
+                            STUDENT.getLabel())
 
-                        .requestMatchers("/busPreferences/**")
+                    .requestMatchers("/busPreferences/**")
                         .hasAnyRole(STAFF.getLabel(), STUDENT.getLabel())
 
-                        .requestMatchers("/users/**")
-                        .hasAnyRole(ADMIN.getLabel(), DRIVER.getLabel(), STAFF.getLabel(),
-                                STUDENT.getLabel())
+                    .requestMatchers("/users/**")
+                    .hasAnyRole(ADMIN.getLabel(), DRIVER.getLabel(), STAFF.getLabel(),
+                            STUDENT.getLabel())
 
-                        .requestMatchers("/busses/edit-bus-activity-status/**")
+                    .requestMatchers("/busses/edit-bus-activity-status/**")
                         .hasAnyRole(DRIVER.getLabel())
+                    .requestMatchers("/busses/**")
+                        .hasRole(ADMIN.getLabel())
 
-                        .requestMatchers("/busses/**")
+                        
+                    .requestMatchers("/trips/register-bus-trip")
+                        .hasRole(DRIVER.getLabel())
+                    .requestMatchers("/trips/start-trip/")
+                        .hasRole(DRIVER.getLabel())
+                    .requestMatchers("/trips/end-trip")
+                        .hasRole(DRIVER.getLabel())
+
+
+                    .requestMatchers("/trips/get-active-trips")
                         .hasRole(ADMIN.getLabel())
 
 
-
-                        .requestMatchers("/trips/register-bus-trip")
-                        .hasRole(DRIVER.getLabel())
-
-                        .requestMatchers("/trips/start-trip/")
-                        .hasRole(DRIVER.getLabel())
-
-
-                        .requestMatchers("/trips/end-trip")
-                        .hasRole(DRIVER.getLabel())
-
-
-                        .requestMatchers("/trips/get-active-trips")
-                        .hasRole(ADMIN.getLabel())
-
-
-                        .requestMatchers("/trips/get-trip/")
+                    .requestMatchers("/trips/get-trip/")
                         .hasAnyRole(DRIVER.getLabel(), ADMIN.getLabel())
 
 
-                        .requestMatchers("/trips/get-active-trips").permitAll()
-                        .requestMatchers("/trips/get-trip/").permitAll()
+                    .requestMatchers("/trips/get-active-trips").permitAll()
+                    .requestMatchers("/trips/get-trip/").permitAll()
 
-                        .requestMatchers("/web-socket/**").permitAll()
-                        .requestMatchers("/web-socket").permitAll()
+                    .requestMatchers("/web-socket/**").permitAll()
+                    .requestMatchers("/web-socket").permitAll()
 
-                        .requestMatchers("/admins/**")
+                    .requestMatchers("/admins/**")
                         .hasRole(ADMIN.getLabel())
 
-                        .requestMatchers("/trips-data/**")
+                    .requestMatchers("/trips-data/**")
                         .permitAll()
 
-                        .anyRequest().authenticated()
+                    .anyRequest().authenticated()
         );
         return http;
     }

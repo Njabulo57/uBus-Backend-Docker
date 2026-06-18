@@ -13,7 +13,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 
-
+/**
+ * Represents the principal user details used for authentication and authorization purposes.
+ * This class implements {@link UserDetails} to integrate with Spring Security.
+ * It wraps a {@code User} entity and provides the necessary methods to retrieve user-related
+ * information required for security operations.
+ */
 public class UserPrincipal implements UserDetails {
 
     // this reference is kept to avoid having to recreate the user from a db sql call again
@@ -26,6 +31,7 @@ public class UserPrincipal implements UserDetails {
         this.issuedCount = 0;
         addAuthorities();//adding the role of the user and their permissions
     }
+
 
     /**
      * for security reasons this user can only ever be accessed once
@@ -44,30 +50,64 @@ public class UserPrincipal implements UserDetails {
     }
 
 
+    /**
+     * Retrieves the label of the user's role.
+     *
+     * @return the label representing the user's role
+     */
     public String getRole() {
         return user.getRole().getLabel();
     }
 
 
+    /**
+     * Retrieves the collection of authorities granted to the user.
+     * This includes roles and permissions associated with the user,
+     * which are used for access control in security operations.
+     *
+     * @return a collection of granted authorities for the user
+     */
     @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
+    public @NonNull Collection<? extends GrantedAuthority> getAuthorities() {
         return this.authorities;
     }
 
+
+    /**
+     * Retrieves the password associated with the user.
+     * The password is securely stored and may be used for authentication purposes.
+     *
+     * @return the password of the user
+     */
     @Override
-    public @Nullable String getPassword() {
+    public @NonNull String getPassword() {
         return user.getPassword();
     }
 
+
+    /**
+     * Retrieves the username of the user.
+     * The username is derived from the user's email address.
+     *
+     * @return the username, which corresponds to the user's email
+     */
     @Override
     public @NonNull String getUsername() {
         return user.getEmail();
     }
 
+
+    /**
+     * Indicates whether the user's account has expired.
+     * An expired account cannot be authenticated.
+     *
+     * @return {@code true} if the account is not expired, {@code false} otherwise
+     */
     @Override
     public boolean isAccountNonExpired() {
         return UserDetails.super.isAccountNonExpired();
     }
+
 
     /**
      * if the user's email isn't approved in the system
@@ -79,11 +119,25 @@ public class UserPrincipal implements UserDetails {
         return user.getStatus() == UserStatus.ACTIVE;
     }
 
+
+    /**
+     * Indicates whether the user's credentials (e.g., password) have expired.
+     * Expired credentials prevent the user from being authenticated.
+     *
+     * @return {@code true} if the credentials are not expired, {@code false} otherwise
+     */
     @Override
     public boolean isCredentialsNonExpired() {
         return UserDetails.super.isCredentialsNonExpired();
     }
 
+
+    /**
+     * Indicates whether the user is currently enabled.
+     * An enabled user is allowed to authenticate and access the system.
+     *
+     * @return {@code true} if the user is enabled, {@code false} otherwise
+     */
     @Override
     public boolean isEnabled() {
         return UserDetails.super.isEnabled();
@@ -97,8 +151,8 @@ public class UserPrincipal implements UserDetails {
 
     }
 
+
     private String getSecurityRole() {
         return user.getRole().getSecurityRole();
     }
-
 }
