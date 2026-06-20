@@ -85,10 +85,12 @@ public class AuthService implements IAuthService {
 
         UserStatus userStatus = switch (userRole) {
 
-            case STUDENT, STAFF -> {
+            case STUDENT -> {
                 this.validateIfStudent(registerRequest.email(), userRole); // validate the student's information
                 yield EMAIL_APPROVAL_PENDING;
             }
+
+            case STAFF -> EMAIL_APPROVAL_PENDING;
 
             case DRIVER -> ADMIN_APPROVAL_PENDING;
 
