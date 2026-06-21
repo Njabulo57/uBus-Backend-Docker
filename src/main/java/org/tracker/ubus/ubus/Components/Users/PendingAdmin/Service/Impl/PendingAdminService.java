@@ -6,12 +6,16 @@ import org.tracker.ubus.ubus.Components.Auth.Service.Interface.AuthTokenGenerati
 import org.tracker.ubus.ubus.Components.EventHandler.Publisher.MultiEvenPublisher;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Service.Interface.IOneTimePasswordService;
 import org.tracker.ubus.ubus.Components.Shared.Entities.BaseService;
+import org.tracker.ubus.ubus.Components.Users.PendingAdmin.DTO.Response.PendingAdminResponse;
 import org.tracker.ubus.ubus.Components.Users.PendingAdmin.Entity.PendingAdmin;
 import org.tracker.ubus.ubus.Components.Users.PendingAdmin.Events.PendingAdminAdditionEvent;
 import org.tracker.ubus.ubus.Components.Users.PendingAdmin.Exception.PendingAdminExistsException;
+import org.tracker.ubus.ubus.Components.Users.PendingAdmin.Mapper.PendingAdminMapper;
 import org.tracker.ubus.ubus.Components.Users.PendingAdmin.PendingAdminRepository.PendingAdminRepository;
 import org.tracker.ubus.ubus.Components.Users.PendingAdmin.Service.Interface.IPendingAdminService;
 import org.tracker.ubus.ubus.Components.Users.User.Repository.UserRepository;
+
+import java.util.Collection;
 import java.util.List;
 
 @Service
@@ -19,17 +23,19 @@ public class PendingAdminService extends BaseService implements IPendingAdminSer
 
     private final UserRepository userRepository;
     private final MultiEvenPublisher multiEvenPublisher;
+    private final PendingAdminMapper pendingAdminMapper;
     private final PendingAdminRepository pendingAdminRepository;
     private final AuthTokenGenerationService authTokenGenerationService;
 
 
     public PendingAdminService(UserRepository userRepository, PendingAdminRepository pendingAdminRepository,
                                IOneTimePasswordService authTokenGenerationService,
-                               MultiEvenPublisher multiEvenPublisher) {
+                               MultiEvenPublisher multiEvenPublisher, PendingAdminMapper pendingAdminMapper) {
         this.userRepository = userRepository;
         this.pendingAdminRepository = pendingAdminRepository;
         this.authTokenGenerationService = authTokenGenerationService;
         this.multiEvenPublisher = multiEvenPublisher;
+        this.pendingAdminMapper = pendingAdminMapper;
     }
 
 
@@ -63,11 +69,9 @@ public class PendingAdminService extends BaseService implements IPendingAdminSer
 
 
     @Override
-    public List<String> getPendingAdmins() {
-        return this.pendingAdminRepository.findAll()
-                .stream()
-                .map(PendingAdmin::getEmail)
-                .toList();
+    public Collection<PendingAdminResponse> getPendingAdmins() {
+        var pendingAdmins = this.pendingAdminRepository.findAll();
+        return this.pendingAdminMapper.toDTO(pendingAdmins);
     }
 
 

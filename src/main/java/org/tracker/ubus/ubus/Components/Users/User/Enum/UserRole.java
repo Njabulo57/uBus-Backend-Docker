@@ -14,6 +14,7 @@ public enum UserRole {
     STAFF("Staff", "ROLE_Staff"),
     DRIVER("Driver", "ROLE_Driver");
 
+
     private final String label;
     private final String securityRole;
 
@@ -21,6 +22,7 @@ public enum UserRole {
         this.label = label;
         this.securityRole = securityLabel;
     }
+
 
     /**
      * converts a label to its corresponding UserRole value.

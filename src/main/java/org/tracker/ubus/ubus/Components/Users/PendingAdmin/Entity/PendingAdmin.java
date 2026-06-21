@@ -22,6 +22,9 @@ public class PendingAdmin extends TimeAuditableEntity {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean isEmailSent = false;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private User createdBy;

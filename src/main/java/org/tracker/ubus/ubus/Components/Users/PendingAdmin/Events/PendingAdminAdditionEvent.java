@@ -19,6 +19,6 @@ public final class PendingAdminAdditionEvent extends EmailEvent {
     protected String constructHtmlBody() {
         var otp = otpInternalCarrier.opt();
         var expiry = otpInternalCarrier.expiry();
-        return "";
+        return "Hello. Your OTP is " + otp + " and it will expire in " + expiry + " minutes.";
     }
 }

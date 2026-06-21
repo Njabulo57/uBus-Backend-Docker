@@ -1,6 +1,7 @@
 package org.tracker.ubus.ubus.Components.Users.PendingAdmin.Service.Interface;
 
-import java.util.List;
+import org.tracker.ubus.ubus.Components.Users.PendingAdmin.DTO.Response.PendingAdminResponse;
+import java.util.Collection;
 
 public interface IPendingAdminService {
 
@@ -33,6 +34,6 @@ public interface IPendingAdminService {
      *
      * @return a list of email addresses currently awaiting administrator approval
      */
-    List<String> getPendingAdmins();
+    Collection<PendingAdminResponse> getPendingAdmins();
 }
 

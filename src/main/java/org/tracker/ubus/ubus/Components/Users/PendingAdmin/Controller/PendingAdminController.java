@@ -3,6 +3,7 @@ package org.tracker.ubus.ubus.Components.Users.PendingAdmin.Controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.tracker.ubus.ubus.Components.Users.PendingAdmin.DTO.Response.PendingAdminResponse;
 import org.tracker.ubus.ubus.Components.Users.PendingAdmin.Service.Interface.IPendingAdminService;
 
 import java.util.Collection;
@@ -38,7 +39,7 @@ public class PendingAdminController {
      * @return a collection of email addresses currently awaiting administrator approval
      */
     @GetMapping("/get-pending-admins")
-    public Collection<String> getPendingAdmins() {
+    public Collection<PendingAdminResponse> getPendingAdmins() {
         return this.pendingAdminService.getPendingAdmins();
     }
 
