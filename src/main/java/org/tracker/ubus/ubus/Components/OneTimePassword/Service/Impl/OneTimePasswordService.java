@@ -17,8 +17,8 @@ import org.tracker.ubus.ubus.Components.OneTimePassword.Exceptions.OneTimePasswo
 import org.tracker.ubus.ubus.Components.OneTimePassword.Generator.OneTimePasswordGenerator;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Reposirtory.OneTimePasswordRepository;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Service.Interface.IOneTimePasswordService;
-import org.tracker.ubus.ubus.Components.Users.PotentialAdmin.Entity.PendingAdmin;
-import org.tracker.ubus.ubus.Components.Users.PotentialAdmin.PendingAdminRepository.PendingAdminRepository;
+import org.tracker.ubus.ubus.Components.Users.PendingAdmin.Entity.PendingAdmin;
+import org.tracker.ubus.ubus.Components.Users.PendingAdmin.PendingAdminRepository.PendingAdminRepository;
 import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.UserStatus;

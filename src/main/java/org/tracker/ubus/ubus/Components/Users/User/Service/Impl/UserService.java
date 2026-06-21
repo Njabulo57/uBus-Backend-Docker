@@ -47,6 +47,8 @@ public class UserService implements IUserService {
         var userPrincipal = (UserPrincipal) authentication.getPrincipal();
         return userPrincipal.getUser();
     }
+
+
     @Override
     public UserProfileResponse viewProfile() {
 

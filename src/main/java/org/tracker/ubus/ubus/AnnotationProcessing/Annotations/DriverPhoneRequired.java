@@ -3,6 +3,7 @@ package org.tracker.ubus.ubus.AnnotationProcessing.Annotations;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
+import org.tracker.ubus.ubus.AnnotationProcessing.AnnotationImpl.DriverPhoneNumberValidator;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -11,7 +12,7 @@ import java.lang.annotation.Target;
 
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@Constraint(validatedBy = {})
+@Constraint(validatedBy = {DriverPhoneNumberValidator.class})
 public @interface DriverPhoneRequired {
 
 

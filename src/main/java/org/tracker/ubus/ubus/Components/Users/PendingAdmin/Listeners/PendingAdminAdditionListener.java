@@ -1,4 +1,4 @@
-package org.tracker.ubus.ubus.Components.Users.PotentialAdmin.Listeners;
+package org.tracker.ubus.ubus.Components.Users.PendingAdmin.Listeners;
 
 
 import lombok.RequiredArgsConstructor;
@@ -6,7 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.tracker.ubus.ubus.Components.Shared.Mail.EmailService;
-import org.tracker.ubus.ubus.Components.Users.PotentialAdmin.Events.PendingAdminAdditionEvent;
+import org.tracker.ubus.ubus.Components.Users.PendingAdmin.Events.PendingAdminAdditionEvent;
 
 @Slf4j
 @Component

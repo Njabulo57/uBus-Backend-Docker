@@ -5,7 +5,10 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import org.tracker.ubus.ubus.AnnotationProcessing.Annotations.DriverPhoneRequired;
 
+
+@DriverPhoneRequired
 public record RegisterRequest(
 
         @NotBlank(message = "First name is required")
@@ -27,7 +30,6 @@ public record RegisterRequest(
                 message = "Invalid Role")
         String role,
 
-        @Nullable
         String phoneNumber,
 
         @NotBlank(message = "Email is required")
@@ -35,5 +37,6 @@ public record RegisterRequest(
         @Pattern(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "Invalid email format")
         String email,
 
+        @Nullable
         String invitationCode
 ) {}

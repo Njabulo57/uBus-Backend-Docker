@@ -1,4 +1,4 @@
-package org.tracker.ubus.ubus.Components.Users.PotentialAdmin.Events;
+package org.tracker.ubus.ubus.Components.Users.PendingAdmin.Events;
 
 import org.tracker.ubus.ubus.Components.EventHandler.AbstractEvents.EmailEvent;
 import org.tracker.ubus.ubus.Components.OneTimePassword.DTOs.Internal.OtpInternalCarrier;

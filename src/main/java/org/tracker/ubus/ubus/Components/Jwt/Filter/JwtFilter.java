@@ -34,23 +34,24 @@ public class JwtFilter extends OncePerRequestFilter {
                                     @Nonnull HttpServletResponse response,
                                     @Nonnull FilterChain filterChain) throws ServletException, IOException {
 
-        final String token = this.requestTokenExtractor.extractTokenFromAuthHeaderRequest(request);
+        String token = this.requestTokenExtractor.extractTokenFromAuthHeaderRequest(request);
 
-        //check whether token is blacklisted
-        if(blacklistedTokenService.isBlacklisted(token)) {
-            response.setStatus(HttpStatus.UNAUTHORIZED.value());
-            return;
+        if(token != null) {
+            //check whether token is blacklisted
+            if (blacklistedTokenService.isBlacklisted(token)) {
+                response.setStatus(HttpStatus.UNAUTHORIZED.value());
+                return;
+            }
+
+            try {
+
+                var authToken = this.requestTokenExtractor.validateToken(token);
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+            } catch (ExpiredJwtException e) {
+                this.responseWriter.write(response, "Session Expired.", HttpStatus.UNAUTHORIZED);
+                return; // rejecting the request from this filter
+            } //any other exception will just be handled by spring security
         }
-
-        try {
-
-            var authToken = this.requestTokenExtractor.validateToken(token);
-            SecurityContextHolder.getContext().setAuthentication(authToken);
-        }catch (ExpiredJwtException e) {
-            this.responseWriter.write(response, "Session Expired.", HttpStatus.UNAUTHORIZED);
-            return; // rejecting the request from this filter
-        } //any other exception will just be handled by spring security
-
         filterChain.doFilter(request, response);
     }
 

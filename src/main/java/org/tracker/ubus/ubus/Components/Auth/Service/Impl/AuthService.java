@@ -23,10 +23,9 @@ import org.tracker.ubus.ubus.Components.Jwt.JwtService.JwtService;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Reposirtory.OneTimePasswordRepository;
 import org.tracker.ubus.ubus.Components.Shared.Entities.BaseService;
 import org.tracker.ubus.ubus.Components.TokenBlacklist.Service.Impl.BlacklistedTokenService;
-import org.tracker.ubus.ubus.Components.Users.PotentialAdmin.PendingAdminRepository.PendingAdminRepository;
+import org.tracker.ubus.ubus.Components.Users.PendingAdmin.PendingAdminRepository.PendingAdminRepository;
 import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole;
-import org.tracker.ubus.ubus.Components.Users.User.Enum.UserStatus;
 import org.tracker.ubus.ubus.Components.Users.User.Repository.UserRepository;
 import java.time.LocalDateTime;
 

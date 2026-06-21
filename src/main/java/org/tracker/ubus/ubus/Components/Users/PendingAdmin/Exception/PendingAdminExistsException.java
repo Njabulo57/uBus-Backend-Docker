@@ -1,4 +1,4 @@
-package org.tracker.ubus.ubus.Components.Users.PotentialAdmin.Exception;
+package org.tracker.ubus.ubus.Components.Users.PendingAdmin.Exception;
 
 import org.springframework.http.HttpStatus;
 import org.tracker.ubus.ubus.GlobalExceptionHandler.Exeption.ExternalBusinessException;

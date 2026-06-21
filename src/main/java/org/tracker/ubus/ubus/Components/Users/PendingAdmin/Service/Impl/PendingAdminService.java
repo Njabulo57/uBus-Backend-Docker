@@ -1,4 +1,4 @@
-package org.tracker.ubus.ubus.Components.Users.PotentialAdmin.Service.Impl;
+package org.tracker.ubus.ubus.Components.Users.PendingAdmin.Service.Impl;
 
 
 import org.springframework.stereotype.Service;
@@ -6,12 +6,13 @@ import org.tracker.ubus.ubus.Components.Auth.Service.Interface.AuthTokenGenerati
 import org.tracker.ubus.ubus.Components.EventHandler.Publisher.MultiEvenPublisher;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Service.Interface.IOneTimePasswordService;
 import org.tracker.ubus.ubus.Components.Shared.Entities.BaseService;
-import org.tracker.ubus.ubus.Components.Users.PotentialAdmin.Entity.PendingAdmin;
-import org.tracker.ubus.ubus.Components.Users.PotentialAdmin.Events.PendingAdminAdditionEvent;
-import org.tracker.ubus.ubus.Components.Users.PotentialAdmin.Exception.PendingAdminExistsException;
-import org.tracker.ubus.ubus.Components.Users.PotentialAdmin.PendingAdminRepository.PendingAdminRepository;
-import org.tracker.ubus.ubus.Components.Users.PotentialAdmin.Service.Interface.IPendingAdminService;
+import org.tracker.ubus.ubus.Components.Users.PendingAdmin.Entity.PendingAdmin;
+import org.tracker.ubus.ubus.Components.Users.PendingAdmin.Events.PendingAdminAdditionEvent;
+import org.tracker.ubus.ubus.Components.Users.PendingAdmin.Exception.PendingAdminExistsException;
+import org.tracker.ubus.ubus.Components.Users.PendingAdmin.PendingAdminRepository.PendingAdminRepository;
+import org.tracker.ubus.ubus.Components.Users.PendingAdmin.Service.Interface.IPendingAdminService;
 import org.tracker.ubus.ubus.Components.Users.User.Repository.UserRepository;
+import java.util.List;
 
 @Service
 public class PendingAdminService extends BaseService implements IPendingAdminService {
@@ -50,12 +51,23 @@ public class PendingAdminService extends BaseService implements IPendingAdminSer
     @Override
     public void removePendingAdminEmail(String email) {
 
+        var pendingAdmin = this.pendingAdminRepository.findByEmailOrThrow(email);
+        this.pendingAdminRepository.delete(pendingAdmin);
     }
 
     @Override
     public void sendEmailVerification(String email) {
         var otpCarrier = this.authTokenGenerationService.generateAuthToken(email);
         multiEvenPublisher.publish(() -> new PendingAdminAdditionEvent(this, email, otpCarrier));
+    }
+
+
+    @Override
+    public List<String> getPendingAdmins() {
+        return this.pendingAdminRepository.findAll()
+                .stream()
+                .map(PendingAdmin::getEmail)
+                .toList();
     }
 
 

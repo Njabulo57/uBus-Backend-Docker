@@ -1,4 +1,6 @@
-package org.tracker.ubus.ubus.Components.Users.PotentialAdmin.Service.Interface;
+package org.tracker.ubus.ubus.Components.Users.PendingAdmin.Service.Interface;
+
+import java.util.List;
 
 public interface IPendingAdminService {
 
@@ -24,5 +26,13 @@ public interface IPendingAdminService {
      * @param email the email address to which the verification email will be sent
      */
     void sendEmailVerification(String email);
+
+
+    /**
+     * Retrieves a list of email addresses that are marked as pending administrator accounts.
+     *
+     * @return a list of email addresses currently awaiting administrator approval
+     */
+    List<String> getPendingAdmins();
 }
 

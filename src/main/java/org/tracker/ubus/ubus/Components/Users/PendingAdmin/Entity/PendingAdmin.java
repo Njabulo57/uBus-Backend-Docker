@@ -1,4 +1,4 @@
-package org.tracker.ubus.ubus.Components.Users.PotentialAdmin.Entity;
+package org.tracker.ubus.ubus.Components.Users.PendingAdmin.Entity;
 
 import jakarta.persistence.*;
 import lombok.*;

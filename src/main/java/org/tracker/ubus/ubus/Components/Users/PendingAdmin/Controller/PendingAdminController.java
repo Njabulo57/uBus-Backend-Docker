@@ -1,12 +1,11 @@
-package org.tracker.ubus.ubus.Components.Users.PotentialAdmin.Controller;
+package org.tracker.ubus.ubus.Components.Users.PendingAdmin.Controller;
 
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.tracker.ubus.ubus.Components.Users.PotentialAdmin.Service.Interface.IPendingAdminService;
+import org.springframework.web.bind.annotation.*;
+import org.tracker.ubus.ubus.Components.Users.PendingAdmin.Service.Interface.IPendingAdminService;
+
+import java.util.Collection;
 
 /**
  * Handles HTTP requests related to the management of pending administrator accounts.
@@ -34,13 +33,24 @@ public class PendingAdminController {
 
 
     /**
+     * Retrieves a collection of email addresses that are marked as pending administrator accounts.
+     *
+     * @return a collection of email addresses currently awaiting administrator approval
+     */
+    @GetMapping("/get-pending-admins")
+    public Collection<String> getPendingAdmins() {
+        return this.pendingAdminService.getPendingAdmins();
+    }
+
+
+    /**
      * Removes the specified email address from the list of pending administrator accounts.
      *
      * @param email the email address of the pending administrator to be removed
      * {/pending-admins/remove-pending-admin-email}
      * takes a path variable of email.
      */
-    @PostMapping("/remove-pending-admin-email/{email}")
+    @DeleteMapping("/remove-pending-admin-email/{email}")
     public void removePendingEmail(@PathVariable String email) {
         this.pendingAdminService.removePendingAdminEmail(email);
     }

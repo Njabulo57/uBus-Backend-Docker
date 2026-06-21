@@ -31,7 +31,7 @@ public class RequestTokenExtractor {
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer "))
             return authHeader.substring(7);
-        throw new RuntimeException("Invalid Token");
+        return null;
     }
 
 
