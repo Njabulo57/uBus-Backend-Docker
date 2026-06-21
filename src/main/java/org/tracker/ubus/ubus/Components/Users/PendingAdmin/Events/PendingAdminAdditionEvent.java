@@ -10,9 +10,11 @@ public final class PendingAdminAdditionEvent extends EmailEvent {
     public PendingAdminAdditionEvent(Object source, String subject, OtpInternalCarrier otpInternalCarrier) {
         super(source);
 
+        this.otpInternalCarrier = otpInternalCarrier;
         setHeader("Admin Approval Pending");
         setToEmail(subject);
-        this.otpInternalCarrier = otpInternalCarrier;
+        setBody(constructHtmlBody());
+
     }
 
     @Override

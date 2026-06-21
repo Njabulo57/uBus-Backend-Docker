@@ -1,6 +1,7 @@
 package org.tracker.ubus.ubus.Components.Users.PendingAdmin.Service.Impl;
 
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.tracker.ubus.ubus.Components.Auth.Service.Interface.AuthTokenGenerationService;
 import org.tracker.ubus.ubus.Components.EventHandler.Publisher.MultiEvenPublisher;
@@ -18,6 +19,7 @@ import org.tracker.ubus.ubus.Components.Users.User.Repository.UserRepository;
 import java.util.Collection;
 
 
+@Slf4j
 @Service
 public class PendingAdminService extends BaseService implements IPendingAdminService {
 
@@ -63,11 +65,16 @@ public class PendingAdminService extends BaseService implements IPendingAdminSer
 
     @Override
     public void sendEmailVerification(String email) {
+
+        log.info("Sending Email Verification to {}", email);
         var otpCarrier = this.authTokenGenerationService.generateAuthToken(email);
         var pendingAdmin = this.pendingAdminRepository.findByEmailOrThrow(email);
+
+        log.info("almost there");
         pendingAdmin.setEmailSent(true); //set the email sent flag to true
         this.pendingAdminRepository.save(pendingAdmin); //save the pending admin entity
 
+        log.info("Email Verification sent to {}", email);
         multiEvenPublisher.publish(() -> new PendingAdminAdditionEvent(this, email, otpCarrier));
     }
 
