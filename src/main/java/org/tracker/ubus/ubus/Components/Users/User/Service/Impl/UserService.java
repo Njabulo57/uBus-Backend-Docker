@@ -77,7 +77,7 @@ public class UserService implements IUserService {
         }
         if(editUserDTO.getNewPassword() != null && editUserDTO.getOldPassword() != null)
             {
-              if(editUserDTO.getNewPassword().equals(editUserDTO.getOldPassword()))
+              if(passwordEncoder.matches(editUserDTO.getOldPassword(), currentUser.getPassword()))
                   {
                       final var encodedPassword = this.passwordEncoder.encode(editUserDTO.getNewPassword());
                       currentUser.setPassword(encodedPassword);
