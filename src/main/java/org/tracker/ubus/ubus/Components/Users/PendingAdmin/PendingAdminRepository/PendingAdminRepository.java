@@ -38,6 +38,8 @@ public interface PendingAdminRepository extends JpaRepository<PendingAdmin, UUID
                 .orElseThrow(() -> new IllegalArgumentException("Pending Admin not found"));
     }
 
+
+
     default PendingAdmin findByEmailAndCreatorOrThrow(String email, User creator) {
         return this.findByEmailAndCreatedBy(email, creator)
                 .orElseThrow(() -> new IllegalArgumentException("Pending Admin not found"));

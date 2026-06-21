@@ -222,8 +222,8 @@ public class AuthService extends BaseService implements IAuthService {
      * @throws InvalidCredentialsException If the email or invitation code does not match the pending admin data.
      */
     private void validateAdminInvitation(RegisterRequest registerRequest, User userEntity) {
-        var loggedInAdmin = this.getCurrentUser();
-        var pendingAdmin = pendingAdminRepository.findByEmailAndCreatorOrThrow(userEntity.getEmail(), loggedInAdmin);
+
+        var pendingAdmin = pendingAdminRepository.findByEmailOrThrow(userEntity.getEmail());
 
         // check if the email is the same as the one in the pending admin
         if(!pendingAdmin.getEmail().equalsIgnoreCase(userEntity.getEmail()))
