@@ -16,7 +16,7 @@ import org.tracker.ubus.ubus.Components.Users.PendingAdmin.Service.Interface.IPe
 import org.tracker.ubus.ubus.Components.Users.User.Repository.UserRepository;
 
 import java.util.Collection;
-import java.util.List;
+
 
 @Service
 public class PendingAdminService extends BaseService implements IPendingAdminService {
@@ -89,6 +89,6 @@ public class PendingAdminService extends BaseService implements IPendingAdminSer
      */
     private boolean checkIfEmailExists(String email) {
         return this.userRepository.existsByEmail(email) &&
-                !this.pendingAdminRepository.existsByEmail(email);
+                this.pendingAdminRepository.existsByEmail(email);
     }
 }
