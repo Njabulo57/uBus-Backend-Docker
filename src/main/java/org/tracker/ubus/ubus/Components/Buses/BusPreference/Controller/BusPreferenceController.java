@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.tracker.ubus.ubus.Components.Buses.BusPreference.DTO.Response.BusPreferenceResponse;
 import org.tracker.ubus.ubus.Components.Buses.BusPreference.Entity.BusPreference;
 import org.tracker.ubus.ubus.Components.Buses.BusPreference.Service.Interface.IBusPreferenceService;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.Route;
@@ -37,11 +38,26 @@ public class BusPreferenceController {
      *         - route: The Route enum value (SWC_DFC, DFC_SWC, APK_APB, APB_APK, APB_DFC, DFC_APB, APK_SWC, SWC_APK)
      */
     @PostMapping("/add")
-    public ResponseEntity<BusPreference> addBusPreference(@RequestParam String strRoute)
+    public ResponseEntity<BusPreferenceResponse> addBusPreference(@RequestParam String strRoute)
     {
         Route route = Route.valueOf(strRoute);
-        BusPreference busPreference = busPreferenceService.addPreference(route);
-        return ResponseEntity.status(HttpStatus.CREATED).body(busPreference);
+        BusPreferenceResponse busPreferenceResponse = busPreferenceService.addPreference(route);
+        return ResponseEntity.status(HttpStatus.CREATED).body(busPreferenceResponse);
+    }
+
+    /**
+     * Retrieves the current user's bus route preferences.
+     *
+     * HTTP Method: GET
+     * Endpoint: /busPreferences/view-preferences
+     *
+     * @return ResponseEntity containing a list of the user's bus route preferences as string labels
+     */
+    @GetMapping("/view-preferences")
+    public ResponseEntity<BusPreferenceResponse> viewPreferences()
+    {
+        BusPreferenceResponse busPreferenceResponse = busPreferenceService.viewPreferences();
+        return ResponseEntity.status(HttpStatus.OK).body(busPreferenceResponse);
     }
 
     /**
@@ -58,13 +74,13 @@ public class BusPreferenceController {
      *         - route: The updated Route enum value
      */
     @PutMapping("/edit")
-    public ResponseEntity<BusPreference> editPreference(@RequestParam String strOldRoute,
+    public ResponseEntity<BusPreferenceResponse> editPreference(@RequestParam String strOldRoute,
                                                         @RequestParam String strNewRoute)
     {
         Route oldRoute = Route.valueOf(strOldRoute);
         Route newRoute = Route.valueOf(strNewRoute);
-        BusPreference busPreference = busPreferenceService.editPreference(oldRoute, newRoute);
-        return ResponseEntity.status(HttpStatus.OK).body(busPreference);
+        BusPreferenceResponse busPreferenceResponse = busPreferenceService.editPreference(oldRoute, newRoute);
+        return ResponseEntity.status(HttpStatus.OK).body(busPreferenceResponse);
     }
 
     /**
