@@ -33,6 +33,8 @@ public class OneTimePassword {
     @OneToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     private User user; //we are keeping persist for convenience when persisting
 
+
+    @Column(nullable = false, unique = true)
     private String adminEmail;
 
     public boolean isExpired() {

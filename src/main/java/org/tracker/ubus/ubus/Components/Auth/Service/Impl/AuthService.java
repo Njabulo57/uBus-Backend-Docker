@@ -93,7 +93,7 @@ public class AuthService extends BaseService implements IAuthService {
                 yield EMAIL_APPROVAL_PENDING;
             }
             case ADMIN -> {
-                validateAdminInvitation(registerRequest, userEntity);
+                validateAdminInvitation(registerRequest.invitationCode(), userEntity);
                 yield ACTIVE;
             }
 
@@ -217,11 +217,11 @@ public class AuthService extends BaseService implements IAuthService {
      * Ensures the provided credentials match the pending admin invitation data and the one-time password.
      * Deletes the pending admin entry and associated one-time password upon successful validation.
      *
-     * @param registerRequest The registration request containing the invitation code provided by the admin.
+     * @param invitation The registration request containing the invitation code provided by the admin.
      * @param userEntity The user entity representing the admin to be validated.
      * @throws InvalidCredentialsException If the email or invitation code does not match the pending admin data.
      */
-    private void validateAdminInvitation(RegisterRequest registerRequest, User userEntity) {
+    private void validateAdminInvitation(String invitation, User userEntity) {
 
         var pendingAdmin = pendingAdminRepository.findByEmailOrThrow(userEntity.getEmail());
 
@@ -232,13 +232,12 @@ public class AuthService extends BaseService implements IAuthService {
 
         //get the onefold password for the admin
         var oneTimePassword = this.oneTimePasswordRepository.findByPendingAdmin(userEntity.getEmail());
-        if(!registerRequest.invitationCode().equals(oneTimePassword.getAdminEmail()))
+        if(!invitation.equals(oneTimePassword.getAdminEmail()))
             throw new InvalidCredentialsException("Invalid Credentials");
 
         this.pendingAdminRepository.delete(pendingAdmin);
         this.oneTimePasswordRepository.delete(oneTimePassword);
     }
-
 
 }
 
