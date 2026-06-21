@@ -25,6 +25,7 @@ public class PendingAdminAdditionListener {
         var body = event.getHtmlBody();
         var header = event.getHeader();
 
+        log.error("Pending Admin Addition Event body: {}", body);
         log.info("Sending Pending Admin Addition Event on thread: {}", Thread.currentThread());
         this.emailService.sendHtmlEmail(toEmail, header, body);
 
