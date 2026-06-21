@@ -3,6 +3,7 @@ package org.tracker.ubus.ubus.Components.Users.PendingAdmin.Listeners;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.tracker.ubus.ubus.Components.Shared.Mail.EmailService;
@@ -16,6 +17,7 @@ public class PendingAdminAdditionListener {
     private final EmailService emailService;
 
     @Async
+    @EventListener
     public void handlePendingAdminAdditionEvent(PendingAdminAdditionEvent event) {
 
         log.info("Pending Admin Addition Event received");
