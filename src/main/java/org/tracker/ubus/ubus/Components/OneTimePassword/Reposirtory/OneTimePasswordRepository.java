@@ -21,6 +21,15 @@ public interface OneTimePasswordRepository extends JpaRepository<OneTimePassword
     """)
     boolean existsByUser(@Param("userId") UUID userId);
 
+
+    @Query("""
+        SELECT CASE WHEN COUNT(otp) > 0 THEN true ELSE false END
+        FROM OneTimePassword otp
+        WHERE otp.user.email = :email
+    """)
+    boolean existsByUser(@Param("email") String email);
+
+
     boolean existsByOtp(String otp);
 
 
@@ -30,6 +39,21 @@ public interface OneTimePasswordRepository extends JpaRepository<OneTimePassword
         WHERE otp.user.id = :userId
     """)
     Optional<OneTimePassword> findByUser(UUID userId);
+
+
+    @Query("""
+        SELECT otp FROM OneTimePassword otp
+        LEFT JOIN FETCH otp.user
+        WHERE otp.user.email = :email
+    """)
+    Optional<OneTimePassword> findByUser(@Param("email") String email);
+
+
+    @Query("""
+        SELECT otp FROM OneTimePassword otp
+        WHERE otp.adminEmail = :email
+    """)
+    Optional<OneTimePassword> findByAdminPendingEmail(@Param("email") String email);
 
 
     @Query("""
@@ -48,6 +72,16 @@ public interface OneTimePasswordRepository extends JpaRepository<OneTimePassword
 
     default OneTimePassword findByUserOrThrow(UUID userId) {
         return this.findByUser(userId)
+                .orElseThrow(() -> new OneTimePasswordNotFoundException("OTP Doesn't Exist"));
+    }
+
+    default OneTimePassword findByUserOrThrow(String email) {
+        return this.findByUser(email)
+                .orElseThrow(() -> new OneTimePasswordNotFoundException("OTP Doesn't Exist"));
+    }
+
+    default OneTimePassword findByPendingAdmin(String email) {
+        return this.findByAdminPendingEmail(email)
                 .orElseThrow(() -> new OneTimePasswordNotFoundException("OTP Doesn't Exist"));
     }
 

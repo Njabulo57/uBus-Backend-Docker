@@ -3,6 +3,8 @@ package org.tracker.ubus.ubus.Components.OneTimePassword.Generator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole;
+
 import java.security.SecureRandom;
 
 
@@ -11,7 +13,10 @@ import java.security.SecureRandom;
 public final class OneTimePasswordGenerator {
 
     @Value("${otp.length}")
-    private int length;
+    private int defaultLength;
+
+    @Value("${otp.admin.length}")
+    private int adminLength;
 
     @Value("${otp.numeric}")
     private String numeric;
@@ -21,19 +26,33 @@ public final class OneTimePasswordGenerator {
 
     private final SecureRandom secureRandom;
 
-    /**
-     * Generates a random alphanumeric string of the specified length.
-     * @return A random alphanumeric string of the specified length.
-     */
-    public String generateOTP() {
-        return generateAlphaNumeric(length);
-    }
 
     /**
-     * Generates a random alphanumeric string of the specified length.
-     * @param length The length of the string (default = 8)
-     * @return A random alphanumeric string of the specified length.
+     * Generates a random alphanumeric string of the specified defaultLength.
+     * the default defaultLength is 6
+     * @return A random alphanumeric string of the specified defaultLength.
      */
+    public String generateOTP(UserRole role) throws UnsupportedOperationException {
+
+        if(role == UserRole.DRIVER)
+            throw new UnsupportedOperationException("Driver OTP generation is not supported");
+
+        var length = 0;
+        var otp = "";
+
+        if(role == UserRole.STAFF || role == UserRole.STUDENT) {
+            length = defaultLength;
+            otp = generateAlphaNumeric(length);
+        }
+
+        else {
+            length = adminLength;
+            otp = generateAlphaNumeric(length); // generate the otp
+            otp = formatAdminOTP(otp); //format the otp for admin users
+        }
+       return otp;
+    }
+
     private String generateAlphaNumeric(int length) {
 
 
@@ -85,6 +104,19 @@ public final class OneTimePasswordGenerator {
         return letterToAppend;
     }
 
+
+    /**
+     * Formats the given OTP (One-Time Password) for admin users by inserting
+     * hyphens at fixed intervals to enhance readability.
+     *
+     * @param otp The original OTP string, expected to be a 12-character alphanumeric sequence.
+     * @return A formatted OTP string in the pattern "XXXX-XXXX-XXXX", where
+     *         each segment consists of four characters from the input OTP.
+     * @throws StringIndexOutOfBoundsException if the input OTP is shorter than 12 characters.
+     */
+    private String formatAdminOTP(String otp) {
+        return otp.substring(0, 4) + "-" + otp.substring(4, 8) + "-" + otp.substring(8, 12);
+    }
 
 
 }

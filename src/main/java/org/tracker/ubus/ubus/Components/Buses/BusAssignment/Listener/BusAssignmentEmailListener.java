@@ -27,7 +27,7 @@ public class BusAssignmentEmailListener {
 
         var body = event.getBody();
         var header = event.getHeader();
-        var subject = event.getSubject();
+        var subject = event.getToEmail();
 
         log.info("Attempting to send an email");
         emailService.sendHtmlEmail(subject, body, header);

@@ -4,7 +4,6 @@ import org.springframework.stereotype.Component;
 import org.tracker.ubus.ubus.Components.Auth.Events.OtpEmailVerificationEvent;
 import org.tracker.ubus.ubus.Components.Auth.Service.Interface.AuthTokenGenerationService;
 import org.tracker.ubus.ubus.Components.EventHandler.Publisher.MultiEvenPublisher;
-import org.tracker.ubus.ubus.Components.ForgotPassword.Service.Interface.IForgotPasswordService;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Exceptions.OneTimePasswordExistsException;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Service.Interface.IOneTimePasswordService;
 import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
@@ -26,19 +25,14 @@ import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
 public class VerificationDispatcher {
 
     private final MultiEvenPublisher publisher;
-
-    private final AuthTokenGenerationService forgotPasswordService;
-
-
     private final AuthTokenGenerationService oneTimePasswordService;
 
+
     public VerificationDispatcher(MultiEvenPublisher publisher,
-                                  IOneTimePasswordService oneTimePasswordService ,
-                                  IForgotPasswordService oneTimePasswordPublisher) {
+                                  IOneTimePasswordService oneTimePasswordService) {
 
         this.publisher = publisher;
         this.oneTimePasswordService = oneTimePasswordService;
-        this.forgotPasswordService = oneTimePasswordPublisher;
     }
 
 
@@ -57,29 +51,9 @@ public class VerificationDispatcher {
         }
     }
 
-    /**
-     * Dispatches a one-time password (OTP) for the forgot password process based on the user's role.
-     * This method generates and sends an OTP to the user if their role is either STAFF or STUDENT.
-     * If an OTP already exists for the user, the operation will throw an exception.
-     *
-     * @param user the user for whom the forgot password OTP is being dispatched.
-     *             The user must have a valid role of either STAFF or STUDENT, as determined by the system.
-     * @throws OneTimePasswordExistsException if an existing OTP for the user is still valid and has not yet expired.
-     */
-    public void dispatchForgotPasswordOTP(User user) throws OneTimePasswordExistsException {
-        switch (user.getRole()) {
-            case STAFF, STUDENT: sendForgotPasswordOTP(user);
-        }
-    }
-
 
     private void sendOtp(User user) {
         var internalCarrier = this.oneTimePasswordService.generateAuthToken(user.getId());
-        publisher.publish(() -> new OtpEmailVerificationEvent(this, user, internalCarrier));
-    }
-
-    private void sendForgotPasswordOTP(User user) {
-        var internalCarrier = this.forgotPasswordService.generateAuthToken(user.getId());
         publisher.publish(() -> new OtpEmailVerificationEvent(this, user, internalCarrier));
     }
 

@@ -11,5 +11,25 @@ import java.util.UUID;
  */
 public interface AuthTokenGenerationService {
 
+
+    /**
+     * Generates an authentication token for the given user.
+     * This method is typically used for creating time-sensitive tokens for authentication
+     * or verification purposes, linked to a specific user in the system.
+     *
+     * @param userId the unique identifier of the user for whom the authentication token is generated.
+     * @return an {@code OtpInternalCarrier} object containing the generated OTP and its expiration time.
+     */
     OtpInternalCarrier generateAuthToken(UUID userId);
+
+
+    /**
+     * Generates an authentication token for the given email address.
+     * This method is typically used to create time-sensitive tokens for authentication
+     * or verification purposes, tied to a specific user identified by their email address.
+     *
+     * @param email the email address of the user for whom the authentication token is generated.
+     * @return an {@code OtpInternalCarrier} object containing the generated OTP and its expiration time.
+     */
+    OtpInternalCarrier generateAuthToken(String email);
 }
