@@ -64,6 +64,10 @@ public class PendingAdminService extends BaseService implements IPendingAdminSer
     @Override
     public void sendEmailVerification(String email) {
         var otpCarrier = this.authTokenGenerationService.generateAuthToken(email);
+        var pendingAdmin = this.pendingAdminRepository.findByEmailOrThrow(email);
+        pendingAdmin.setEmailSent(true); //set the email sent flag to true
+        this.pendingAdminRepository.save(pendingAdmin); //save the pending admin entity
+
         multiEvenPublisher.publish(() -> new PendingAdminAdditionEvent(this, email, otpCarrier));
     }
 
