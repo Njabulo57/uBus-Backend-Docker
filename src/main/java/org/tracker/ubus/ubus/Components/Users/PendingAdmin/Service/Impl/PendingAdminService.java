@@ -88,7 +88,7 @@ public class PendingAdminService extends BaseService implements IPendingAdminSer
      *         in the pending administrator repository, false otherwise
      */
     private boolean checkIfEmailExists(String email) {
-        return this.userRepository.existsByEmail(email) &&
+        return this.userRepository.existsByEmail(email) ||
                 this.pendingAdminRepository.existsByEmail(email);
     }
 }
