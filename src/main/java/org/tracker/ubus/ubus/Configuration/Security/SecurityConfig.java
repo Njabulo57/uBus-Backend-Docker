@@ -55,8 +55,7 @@ public class SecurityConfig {
                     .hasAnyRole(ADMIN.getLabel(), DRIVER.getLabel(), STAFF.getLabel(),
                             STUDENT.getLabel())
 
-                    .requestMatchers("/busses/edit-bus-activity-status/**")
-                        .hasAnyRole(DRIVER.getLabel())
+
                     .requestMatchers("/busses/**")
                         .hasRole(ADMIN.getLabel())
 
@@ -77,7 +76,6 @@ public class SecurityConfig {
                         .hasAnyRole(DRIVER.getLabel(), ADMIN.getLabel())
 
 
-                    .requestMatchers("/trips/get-active-trips").permitAll()
                     .requestMatchers("/trips/get-trip/").permitAll()
 
                     .requestMatchers("/web-socket/**").permitAll()
