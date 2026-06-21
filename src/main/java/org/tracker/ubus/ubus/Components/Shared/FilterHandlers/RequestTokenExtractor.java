@@ -4,6 +4,7 @@ package org.tracker.ubus.ubus.Components.Shared.FilterHandlers;
 
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -21,10 +22,11 @@ import org.tracker.ubus.ubus.Components.Jwt.JwtService.JwtService;
  * - Validate a JWT token, retrieve user information, and build an authentication object.
  */
 @Component
+@RequiredArgsConstructor
 public class RequestTokenExtractor {
 
-    private JwtService jwtService;
-    private UserDetailsService userDetailsService;
+    private final JwtService jwtService;
+    private final UserDetailsService userDetailsService;
 
     public String extractTokenFromAuthHeaderRequest(HttpServletRequest request) {
 
