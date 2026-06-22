@@ -12,7 +12,8 @@ public enum UserRole {
     ADMIN("Admin", "ROLE_Admin"),
     STUDENT("Student", "ROLE_Student"),
     STAFF("Staff", "ROLE_Staff"),
-    DRIVER("Driver", "ROLE_Driver");
+    DRIVER("Driver", "ROLE_Driver"),
+    SUPER_ADMIN("Super Admin", "ROLE_SuperAdmin");
 
 
     private final String label;

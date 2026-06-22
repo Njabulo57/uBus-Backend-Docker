@@ -39,6 +39,7 @@ public class UserTestDataGenerator implements CommandLineRunner {
     @Value("${seed.users.staff:10000}")    private int defaultStaff;
     @Value("${seed.users.drivers:100}")   private int defaultDrivers;
     @Value("${seed.users.force:false}")  private boolean defaultForce;
+    @Value("${seed.users.super-admin:20}")   private int defaultSuperAdmin;
 
     @Override
     public void run(String... args) {
@@ -63,12 +64,14 @@ public class UserTestDataGenerator implements CommandLineRunner {
         String adminPwd   = c.admins   > 0 ? passwordEncoder.encode("admin@123")   : null;
         String staffPwd   = c.staff    > 0 ? passwordEncoder.encode("staff@123")   : null;
         String driverPwd  = c.drivers  > 0 ? passwordEncoder.encode("driver@2025") : null;
+        String superAdminPwd = passwordEncoder.encode("super-admin@123");
 
         List<User> all = new ArrayList<>(c.total());
         addMany(all, c.students, i -> student(i, studentPwd));
         addMany(all, c.admins,   i -> admin(i, adminPwd));
         addMany(all, c.staff,    i -> staff(i, staffPwd));
         addMany(all, c.drivers,  i -> driver(i, driverPwd));
+        addMany(all, defaultSuperAdmin, i -> superAdmin(i, superAdminPwd));
 
         userRepository.saveAll(all);
         userRepository.flush();
@@ -114,11 +117,18 @@ public class UserTestDataGenerator implements CommandLineRunner {
                 .status(randomStatus(role));
     }
 
+    public User superAdmin(int n, String pwd) {
+        return base(pwd, SUPER_ADMIN)
+                .email(String.format("super-admin%04d@Ubus.uj.ac.za", n))
+                .build();
+    }
+
     private UserStatus randomStatus(UserRole role) {
         UserStatus[] s = switch (role) {
             case STUDENT      -> new UserStatus[]{EMAIL_APPROVAL_PENDING, ACTIVE};
             case DRIVER       -> new UserStatus[]{ADMIN_APPROVAL_PENDING, ACTIVE};
             case ADMIN, STAFF -> new UserStatus[]{ACTIVE, INACTIVE};
+            case SUPER_ADMIN  -> new UserStatus[]{ACTIVE};
         };
         return s[ThreadLocalRandom.current().nextInt(s.length)];
     }

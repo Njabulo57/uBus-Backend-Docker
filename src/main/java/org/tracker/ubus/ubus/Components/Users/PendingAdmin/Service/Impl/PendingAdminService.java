@@ -45,13 +45,12 @@ public class PendingAdminService extends BaseService implements IPendingAdminSer
     public void addPendingAdminEmail(String email) {
 
 
-        var user = getCurrentUser();
         var exists = checkIfEmailExists(email);
 
         if(exists)
             throw new PendingAdminExistsException("Email Already Exists");
 
-        var pendingAdmin = new PendingAdmin(email, user);
+        var pendingAdmin = new PendingAdmin(email);
         this.pendingAdminRepository.save(pendingAdmin);
     }
 

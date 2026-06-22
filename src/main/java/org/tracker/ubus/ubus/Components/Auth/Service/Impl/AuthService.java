@@ -29,6 +29,7 @@ import org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole;
 import org.tracker.ubus.ubus.Components.Users.User.Repository.UserRepository;
 import java.time.LocalDateTime;
 
+import static org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole.ADMIN;
 import static org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole.STUDENT;
 import static org.tracker.ubus.ubus.Components.Users.User.Enum.UserStatus.*;
 
@@ -79,13 +80,18 @@ public class AuthService extends BaseService implements IAuthService {
 
         var userRole = UserRole.fromLabel(registerRequest.role());
 
-        var userExists = this.userRepository.existsByEmail(registerRequest.email());
+        //check if the user already exists
+        var userExists = false;
+        if(userRole != ADMIN)
+            userExists = this.userRepository.existsByEmail(registerRequest.email());
+
         if(userExists)
             throw new DuplicateEmailException("Email Already Exists");
 
-
+        // create the user entity
         var userEntity = this.authMapper.toEntity(registerRequest, userRole);
 
+        // set the user status based on the user role
         var userStatus = switch (userRole) {
 
             case STUDENT -> {
@@ -100,6 +106,8 @@ public class AuthService extends BaseService implements IAuthService {
             case STAFF -> EMAIL_APPROVAL_PENDING;
 
             case DRIVER -> ADMIN_APPROVAL_PENDING;
+
+            default -> throw new RuntimeException("Invalid User Role");
         };
 
         userEntity.setStatus(userStatus); //set the status of the user

@@ -44,9 +44,6 @@ public class SecurityConfig {
                     .requestMatchers("/auth/**").permitAll()
                     .requestMatchers("/one-time-password/**").permitAll()
 
-                    .requestMatchers("/auth/logout")
-                    .hasAnyRole(ADMIN.getLabel(), DRIVER.getLabel(), STAFF.getLabel(),
-                            STUDENT.getLabel())
 
                     .requestMatchers("/busPreferences/**")
                         .hasAnyRole(STAFF.getLabel(), STUDENT.getLabel())
@@ -86,6 +83,10 @@ public class SecurityConfig {
 
                     .requestMatchers("/trips-data/**")
                         .permitAll()
+
+                        .requestMatchers("/pending-admins/**")
+                        .hasRole(SUPER_ADMIN.getLabel())
+
 
                     .anyRequest().authenticated()
         );

@@ -26,13 +26,11 @@ public class PendingAdmin extends TimeAuditableEntity {
     @Column(nullable = false)
     private boolean isEmailSent = false;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    private User createdBy;
 
 
-    public PendingAdmin(String email, User createdBy) {
+
+    public PendingAdmin(String email) {
         this.email = email;
-        this.createdBy = createdBy;
     }
 
 }
