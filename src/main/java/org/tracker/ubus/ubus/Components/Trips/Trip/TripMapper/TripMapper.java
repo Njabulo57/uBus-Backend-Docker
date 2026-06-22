@@ -97,8 +97,8 @@ public class TripMapper {
         int studentCount = this.getTotalPassengerByType(tripUsers, isStudent);
         int staffCount = this.getTotalPassengerByType(tripUsers, isStudent.negate());
 
-        var fromCampus = route.getFromCampus().getLabel();
-        var toCampus = route.getToCampus().getLabel();
+        var fromCampus = route.getFromDestination().getLabel();
+        var toCampus = route.getToDestination().getLabel();
 
         return AdminPastTripViewResponse.builder()
                 .totalPassengers(trip.getTotalCount())

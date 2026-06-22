@@ -15,11 +15,9 @@ public class UserMapper {
     public UserProfileResponse toDTO(User user, List<BusPreference> busPreferences) {
 
         List<String> stringPreferences = new ArrayList<>();
-        if(busPreferences != null)
-            for(BusPreference busPreference : busPreferences)
-            {
-                stringPreferences.add(busPreference.getRoute().getLabel());
-            }
+        for(BusPreference busPreference : busPreferences)
+            stringPreferences.add(busPreference.getRoute().getLabel());
+
 
 
         String studentNumber = user.getStudentNumber();

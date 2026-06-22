@@ -26,7 +26,6 @@ import org.tracker.ubus.ubus.Components.Users.User.Repository.UserRepository;
 import org.tracker.ubus.ubus.Components.Users.User.Service.Interface.IUserService;
 import org.tracker.ubus.ubus.Configuration.Security.UserPrincipal;
 
-import static org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole.STUDENT;
 import static org.tracker.ubus.ubus.Components.Users.User.Enum.UserStatus.*;
 
 

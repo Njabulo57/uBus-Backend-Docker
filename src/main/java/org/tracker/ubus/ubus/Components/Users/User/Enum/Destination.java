@@ -6,11 +6,12 @@ import lombok.Getter;
 
 import java.util.stream.Stream;
 
-public enum Campus {
+public enum Destination {
 
     SOWETO("Soweto Campus", -26.2520, -26.2450, 27.8620, 27.8700),
     DOORNFONTEIN("Doornfontein Campus", -26.1960, -26.1890, 28.0340, 28.0420),
     APK("Auckland Park Kingsway Campus", -26.1800, -26.1730, 27.9930, 28.0010),
+    JBS("Johannesburg Business School", -26.2000, -26.1930, 28.0130, 28.0210),
     APB("Auckland Park Bunting Road Campus", -26.1790, -26.1740, 27.9970, 28.0050);
 
     @Getter
@@ -21,7 +22,7 @@ public enum Campus {
     private final double east;  // right edge (maximum longitude)
 
 
-    Campus(String label, double south, double north, double west, double east) {
+    Destination(String label, double south, double north, double west, double east) {
         this.label = label;
         this.south = south;
         this.north = north;
@@ -31,7 +32,7 @@ public enum Campus {
 
 
 
-    public boolean isDriverWithinCampus(double lat, double lng) {
+    public boolean isDriverWithinBounds(double lat, double lng) {
         return lat >= south && lat <= north && lng >= west && lng <= east;
     }
 
@@ -44,9 +45,9 @@ public enum Campus {
     }
 
 
-    public static Campus isWithinAnyCampusBounds(double lat, double lng) {
-        return Stream.of(Campus.values())
-                .filter(campus -> campus.isDriverWithinCampus(lat, lng))
+    public static Destination isWithinAnyDestinationBounds(double lat, double lng) {
+        return Stream.of(Destination.values())
+                .filter(campus -> campus.isDriverWithinBounds(lat, lng))
                 .findFirst()
                 .orElse(null);
     }

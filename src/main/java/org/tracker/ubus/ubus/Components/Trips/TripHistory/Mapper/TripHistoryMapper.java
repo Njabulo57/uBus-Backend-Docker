@@ -58,8 +58,8 @@ public class TripHistoryMapper {
     private AbstractPastTrip toStudentPastTripResponse(Trip trip) {
 
         var route = trip.getRoute().getRouteAbbreviated();
-        var fromCampus = trip.getRoute().getFromCampus().getLabel();
-        var toCampus = trip.getRoute().getToCampus().getLabel();
+        var fromCampus = trip.getRoute().getFromDestination().getLabel();
+        var toCampus = trip.getRoute().getToDestination().getLabel();
 
         Collection<CoOrdinate> coOrdinates = toCoOrdinates(trip);
         return StudentPastTripResponse.builder()
