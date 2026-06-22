@@ -40,5 +40,5 @@ public record RegisterRequest(
         String email,
 
         @Nullable
-        String invitationCode
+        String inviteCode
 ) {}

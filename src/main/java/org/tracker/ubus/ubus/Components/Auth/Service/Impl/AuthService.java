@@ -93,7 +93,7 @@ public class AuthService extends BaseService implements IAuthService {
                 yield EMAIL_APPROVAL_PENDING;
             }
             case ADMIN -> {
-                validateAdminInvitation(registerRequest.invitationCode(), userEntity);
+                validateAdminInvitation(registerRequest.inviteCode(), userEntity);
                 yield ACTIVE;
             }
 

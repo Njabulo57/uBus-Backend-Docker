@@ -31,7 +31,7 @@ public class AdminInvitationCodeValidator implements ConstraintValidator<AdminIn
         var userRole = UserRole.ADMIN.getLabel();
         var role = value.role();
         if(role.equalsIgnoreCase(userRole))
-            return value.invitationCode() != null && !value.invitationCode().isBlank();
+            return value.inviteCode() != null && !value.inviteCode().isBlank();
         return true; // for other roles its fine so we can move on
     }
 }
