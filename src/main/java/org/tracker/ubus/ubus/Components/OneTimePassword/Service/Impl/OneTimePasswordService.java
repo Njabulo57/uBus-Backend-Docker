@@ -93,8 +93,7 @@ public class OneTimePasswordService extends TokenCredentialService implements IO
         }
 
 
-        var creator = getCurrentUser(); //get the current admin
-        var pendingAdmin = this.pendingAdminRepository.findByEmailAndCreatorOrThrow(email, creator);
+        var pendingAdmin = this.pendingAdminRepository.findByEmailOrThrow(email);
         return generateOTP(pendingAdmin);
     }
 

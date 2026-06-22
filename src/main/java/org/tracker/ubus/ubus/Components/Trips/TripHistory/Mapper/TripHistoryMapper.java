@@ -31,7 +31,8 @@ public class TripHistoryMapper {
 
         Collection<AbstractPastTrip> pastTrips = switch (user.getRole()) {
             case STAFF, STUDENT -> toStudentPastTripResponses(trips);
-            case DRIVER, ADMIN -> throw new UnsupportedOperationException("Driver and Admin past trips not supported");
+            case DRIVER, ADMIN, SUPER_ADMIN -> throw new UnsupportedOperationException("Driver and Admin past trips not supported");
+
         };
 
 

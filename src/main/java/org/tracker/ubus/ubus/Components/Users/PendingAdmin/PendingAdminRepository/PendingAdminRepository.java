@@ -24,14 +24,6 @@ public interface PendingAdminRepository extends JpaRepository<PendingAdmin, UUID
 
     Optional<PendingAdmin> findByEmail(String email);
 
-    @Query("""
-        SELECT pa FROM PendingAdmin pa
-        LEFT JOIN FETCH pa.createdBy
-        WHERE pa.email = :email
-        AND pa.createdBy = :createdBy
-    """)
-    Optional<PendingAdmin> findByEmailAndCreatedBy(@Param("email") String email, @Param("createdBy") User createdBy);
-
 
     default PendingAdmin findByEmailOrThrow(String email) {
         return this.findByEmail(email)
@@ -39,11 +31,5 @@ public interface PendingAdminRepository extends JpaRepository<PendingAdmin, UUID
     }
 
 
-
-    default PendingAdmin findByEmailAndCreatorOrThrow(String email, User creator) {
-        return this.findByEmailAndCreatedBy(email, creator)
-                .orElseThrow(() -> new IllegalArgumentException("Pending Admin not found"));
-
-    }
 
 }
