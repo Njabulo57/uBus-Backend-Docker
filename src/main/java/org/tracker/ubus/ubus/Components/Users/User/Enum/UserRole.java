@@ -13,7 +13,7 @@ public enum UserRole {
     STUDENT("Student", "ROLE_Student"),
     STAFF("Staff", "ROLE_Staff"),
     DRIVER("Driver", "ROLE_Driver"),
-    SUPER_ADMIN("Super Admin", "ROLE_SuperAdmin");
+    SUPER_ADMIN("Super Admin", "ROLE_Super Admin");
 
 
     private final String label;

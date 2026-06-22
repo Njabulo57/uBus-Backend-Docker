@@ -3,7 +3,6 @@ package org.tracker.ubus.ubus.Components.Users.PendingAdmin.Entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.tracker.ubus.ubus.Components.Shared.Entities.TimeAuditableEntity;
-import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
 
 import java.util.UUID;
 
@@ -25,9 +24,6 @@ public class PendingAdmin extends TimeAuditableEntity {
     @Builder.Default
     @Column(nullable = false)
     private boolean isEmailSent = false;
-
-
-
 
     public PendingAdmin(String email) {
         this.email = email;
