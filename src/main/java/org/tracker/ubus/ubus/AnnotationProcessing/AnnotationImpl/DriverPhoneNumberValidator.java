@@ -2,6 +2,7 @@ package org.tracker.ubus.ubus.AnnotationProcessing.AnnotationImpl;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
+import org.springframework.stereotype.Component;
 import org.tracker.ubus.ubus.AnnotationProcessing.Annotations.DriverPhoneRequired;
 import org.tracker.ubus.ubus.Components.Auth.DTOs.Requests.RegisterRequest;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole;
@@ -23,6 +24,7 @@ import org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole;
  * This validator is automatically invoked within the validation framework,
  * and no direct interaction is required by client code.
  */
+@Component
 public class DriverPhoneNumberValidator implements ConstraintValidator<DriverPhoneRequired,
         RegisterRequest> {
 

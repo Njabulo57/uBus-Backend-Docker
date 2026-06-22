@@ -5,10 +5,12 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import org.tracker.ubus.ubus.AnnotationProcessing.Annotations.AdminInvitationCodeRequired;
 import org.tracker.ubus.ubus.AnnotationProcessing.Annotations.DriverPhoneRequired;
 
 
 @DriverPhoneRequired
+@AdminInvitationCodeRequired
 public record RegisterRequest(
 
         @NotBlank(message = "First name is required")

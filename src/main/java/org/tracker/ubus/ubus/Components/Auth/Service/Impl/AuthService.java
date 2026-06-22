@@ -232,7 +232,7 @@ public class AuthService extends BaseService implements IAuthService {
 
         //get the onefold password for the admin
         var oneTimePassword = this.oneTimePasswordRepository.findByPendingAdmin(userEntity.getEmail());
-        if(!invitation.equals(oneTimePassword.getAdminEmail()))
+        if(!invitation.equals(oneTimePassword.getOtp()))
             throw new InvalidCredentialsException("Invalid Credentials");
 
         this.pendingAdminRepository.delete(pendingAdmin);
