@@ -14,6 +14,10 @@ public final class DriverApprovedEmailEvent extends EmailEvent {
     public DriverApprovedEmailEvent(Object source, User user) {
         super(source);
         this.user = user;
+
+        setHeader("Driver Approved");
+        setToEmail(user.getEmail());
+        setBody(constructHtmlBody());
     }
 
     @Override

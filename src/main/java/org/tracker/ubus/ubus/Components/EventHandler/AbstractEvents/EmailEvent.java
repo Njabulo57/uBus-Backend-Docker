@@ -16,9 +16,5 @@ public abstract class EmailEvent extends ApplicationEvent {
         super(source);
     }
 
-    public String getHtmlBody() {
-        return body;
-    }
-
     protected abstract String constructHtmlBody();
 }

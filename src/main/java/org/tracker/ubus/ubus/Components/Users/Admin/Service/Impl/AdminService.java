@@ -7,14 +7,17 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.tracker.ubus.ubus.Components.Audit.Abstract.AbstractAuditingService;
+import org.tracker.ubus.ubus.Components.Audit.Enum.AuditType;
+import org.tracker.ubus.ubus.Components.EventHandler.AbstractEvents.AuditEvent;
 import org.tracker.ubus.ubus.Components.Users.Admin.DTO.Response.DriverActivePage;
-import org.tracker.ubus.ubus.Components.Users.Admin.DTO.Response.DriverActiveResponseDTO;
 import org.tracker.ubus.ubus.Components.Users.Admin.DTO.Response.DriverPendingResponseDTO;
-import org.tracker.ubus.ubus.Components.Users.Admin.Events.DriverApprovedAuditEvent;
+import org.tracker.ubus.ubus.Components.Users.Admin.Events.DriverApprovedEmailEvent;
 import org.tracker.ubus.ubus.Components.Users.Admin.Mapper.AdminMapper;
 import org.tracker.ubus.ubus.Components.Users.Admin.Service.Interface.IAdminService;
 import org.tracker.ubus.ubus.Components.Audit.Repository.AuditRepository;
 import org.tracker.ubus.ubus.Components.EventHandler.Publisher.MultiEvenPublisher;
+import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
 import org.tracker.ubus.ubus.Components.Users.User.Repository.UserRepository;
 import org.tracker.ubus.ubus.Configuration.Security.UserPrincipal;
 
@@ -27,7 +30,7 @@ import static org.tracker.ubus.ubus.Components.Users.User.Enum.UserStatus.ADMIN_
 
 @Service
 @RequiredArgsConstructor
-public class AdminService implements IAdminService {
+public class AdminService extends AbstractAuditingService implements IAdminService {
 
     private final AdminMapper adminMapper;
     private final UserRepository userRepository;
@@ -53,14 +56,12 @@ public class AdminService implements IAdminService {
         return this.adminMapper.toDTO(pageOfDrivers);
     }
 
+
     @Override
     @Transactional
     public boolean approveDriver(UUID driverId) {
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        var loggedInAdminPrincipal = (UserPrincipal) authentication.getPrincipal(); // getting the admin performing this action
-        var adminEntity = loggedInAdminPrincipal.getUser();// only allowed to be called once for security purposes
-
+       var admin = this.getCurrentUser();
         var driver = this.userRepository.findByIdOrThrow(driverId);
 
         if(!driver.getStatus().equals(ADMIN_APPROVAL_PENDING))
@@ -70,11 +71,25 @@ public class AdminService implements IAdminService {
         this.userRepository.save(driver);
 
 
+        final var auditType = AuditType.ADMIN_DRIVER_APPROVAL;
+        final var message = this.formatMessage(auditType, admin, driver);
+
         multiEvenPublisher.publish(
-                () -> new DriverApprovedAuditEvent(this,adminEntity, driver) //auditing the action
-                //() -> new DriverApprovedEmailEvent(this,driver) // letting the driver know their account is now active
+                () -> new AuditEvent(this, auditType, admin, driver, message), //auditing the action
+                () -> new DriverApprovedEmailEvent(this, driver)
         );
 
         return true;
+    }
+
+    @Override
+    protected String formatMessage(AuditType auditType, User createdBy, User createdOn) {
+
+        String firstName = createdOn.getFirstname();
+        String lastName = createdOn.getLastname();
+
+        String fullName = createdOn.getFirstname() + " " + createdOn.getLastname();
+        String[] args = new String[]{ fullName, lastName , fullName};
+        return auditType.format(args);
     }
 }

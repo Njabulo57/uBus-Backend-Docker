@@ -22,7 +22,7 @@ public class PendingAdminAdditionListener {
 
         log.info("Pending Admin Addition Event received");
         var toEmail = event.getToEmail();
-        var body = event.getHtmlBody();
+        var body = event.getBody();
         var header = event.getHeader();
 
         log.error("Pending Admin Addition Event body: {}", body);

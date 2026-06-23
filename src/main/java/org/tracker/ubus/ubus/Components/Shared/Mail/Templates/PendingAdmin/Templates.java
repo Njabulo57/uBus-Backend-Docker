@@ -4,11 +4,11 @@ public record Templates() {
     /**
      * Builds the admin invitation email HTML content
      *
-     * @param inviteLink The registration link for the admin
+     * @param invitationCode The unique code the admin needs to enter during registration
      * @param expiryMinutes The number of minutes until the invitation expires
      * @return The complete HTML email as a String
      */
-    public static String buildAdminInvitationEmail(String inviteLink, int expiryMinutes) {
+    public static String buildAdminInvitationEmail(String invitationCode, int expiryMinutes) {
         StringBuilder html = new StringBuilder();
 
         html.append("<!DOCTYPE html>\n");
@@ -36,31 +36,66 @@ public record Templates() {
         html.append("                    You've been invited<br/>to manage UBus.\n");
         html.append("                </h1>\n");
         html.append("                <p style=\"font-size: 16px; line-height: 1.6; color: #474747; margin: 0 0 32px 0;\">\n");
-        html.append("                    You've been granted administrator access to the UBus transit management platform. Click the button below to set up your account and get started.\n");
+        html.append("                    You've been granted administrator access to the UBus transit management platform. Use the invitation code below to set up your account and get started.\n");
         html.append("                </p>\n");
-        html.append("\n");
-        html.append("                <!-- CTA Button -->\n");
-        html.append("                <table border=\"0\" cellpadding=\"0\" cellspacing=\"0\">\n");
+        html.append("                <table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"background-color: #f7f7f7; border-radius: 8px; border: 1px solid #e2e2e2; margin-bottom: 32px;\">\n");
         html.append("                    <tr>\n");
-        html.append("                        <td align=\"center\" style=\"border-radius: 4px; background-color: #f26522;\">\n");
-        html.append("                            <a href=\"").append(inviteLink).append("\" target=\"_blank\"\n");
-        html.append("                               style=\"display: inline-block; padding: 16px 32px; font-size: 15px; font-weight: 700; color: #ffffff; text-decoration: none; letter-spacing: -0.01em;\">\n");
-        html.append("                                Complete Registration →\n");
-        html.append("                            </a>\n");
+        html.append("                        <td align=\"center\" style=\"padding: 24px;\">\n");
+        html.append("                            <p style=\"font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #777777; margin: 0 0 8px 0;\">\n");
+        html.append("                                Your Invitation Code\n");
+        html.append("                            </p>\n");
+        html.append("                            <p style=\"font-size: 32px; font-weight: 700; color: #f26522; letter-spacing: 0.05em; margin: 0; font-family: 'Courier New', monospace;\">\n");
+        html.append("                                ").append(invitationCode).append("\n");
+        html.append("                            </p>\n");
         html.append("                        </td>\n");
         html.append("                    </tr>\n");
         html.append("                </table>\n");
-        html.append("\n");
-        html.append("                <!-- Fallback URL -->\n");
-        html.append("                <p style=\"font-size: 13px; color: #777777; margin: 24px 0 0 0;\">\n");
-        html.append("                    Or copy and paste this link into your browser:\n");
-        html.append("                </p>\n");
-        html.append("                <p style=\"font-size: 13px; color: #474747; margin: 6px 0 0 0; word-break: break-all;\">\n");
-        html.append("                    <a href=\"").append(inviteLink).append("\" style=\"color: #f26522; text-decoration: underline;\">").append(inviteLink).append("</a>\n");
-        html.append("                </p>\n");
-        html.append("\n");
+        html.append("                <table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"margin-bottom: 32px;\">\n");
+        html.append("                    <tr>\n");
+        html.append("                        <td style=\"padding: 12px 0;\">\n");
+        html.append("                            <table border=\"0\" cellpadding=\"0\" cellspacing=\"0\">\n");
+        html.append("                                <tr>\n");
+        html.append("                                    <td style=\"vertical-align: middle; width: 28px;\">\n");
+        html.append("                                        <span style=\"display: inline-block; width: 24px; height: 24px; background-color: #f26522; color: #ffffff; border-radius: 50%; text-align: center; font-size: 12px; font-weight: 700; line-height: 24px;\">1</span>\n");
+        html.append("                                    </td>\n");
+        html.append("                                    <td style=\"padding-left: 12px; font-size: 14px; color: #474747;\">\n");
+        html.append("                                        Go to the UBus admin registration page\n");
+        html.append("                                    </td>\n");
+        html.append("                                </tr>\n");
+        html.append("                            </table>\n");
+        html.append("                        </td>\n");
+        html.append("                    </tr>\n");
+        html.append("                    <tr>\n");
+        html.append("                        <td style=\"padding: 12px 0;\">\n");
+        html.append("                            <table border=\"0\" cellpadding=\"0\" cellspacing=\"0\">\n");
+        html.append("                                <tr>\n");
+        html.append("                                    <td style=\"vertical-align: middle; width: 28px;\">\n");
+        html.append("                                        <span style=\"display: inline-block; width: 24px; height: 24px; background-color: #f26522; color: #ffffff; border-radius: 50%; text-align: center; font-size: 12px; font-weight: 700; line-height: 24px;\">2</span>\n");
+        html.append("                                    </td>\n");
+        html.append("                                    <td style=\"padding-left: 12px; font-size: 14px; color: #474747;\">\n");
+        html.append("                                        Enter your invitation code: <strong style=\"color: #000000;\">").append(invitationCode).append("</strong>\n");
+        html.append("                                    </td>\n");
+        html.append("                                </tr>\n");
+        html.append("                            </table>\n");
+        html.append("                        </td>\n");
+        html.append("                    </tr>\n");
+        html.append("                    <tr>\n");
+        html.append("                        <td style=\"padding: 12px 0;\">\n");
+        html.append("                            <table border=\"0\" cellpadding=\"0\" cellspacing=\"0\">\n");
+        html.append("                                <tr>\n");
+        html.append("                                    <td style=\"vertical-align: middle; width: 28px;\">\n");
+        html.append("                                        <span style=\"display: inline-block; width: 24px; height: 24px; background-color: #f26522; color: #ffffff; border-radius: 50%; text-align: center; font-size: 12px; font-weight: 700; line-height: 24px;\">3</span>\n");
+        html.append("                                    </td>\n");
+        html.append("                                    <td style=\"padding-left: 12px; font-size: 14px; color: #474747;\">\n");
+        html.append("                                        Complete your profile and set up your account\n");
+        html.append("                                    </td>\n");
+        html.append("                                </tr>\n");
+        html.append("                            </table>\n");
+        html.append("                        </td>\n");
+        html.append("                    </tr>\n");
+        html.append("                </table>\n");
         html.append("                <p style=\"font-size: 14px; color: #777777; margin: 32px 0 0 0;\">\n");
-        html.append("                    This invitation link expires in <strong style=\"color: #474747;\">").append(expiryMinutes).append(" minutes</strong>. If you weren't expecting this, you can safely ignore this email — no account will be created.\n");
+        html.append("                    This invitation code expires in <strong style=\"color: #474747;\">").append(expiryMinutes).append(" minutes</strong>. If you weren't expecting this, you can safely ignore this email — no account will be created.\n");
         html.append("                </p>\n");
         html.append("            </td>\n");
         html.append("        </tr>\n");

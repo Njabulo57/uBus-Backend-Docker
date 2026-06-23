@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public enum AuditType {
 
-    ADMIN_DRIVER_APPROVAL("Driver %s %s account approved by %s %s on %s"),
+    ADMIN_DRIVER_APPROVAL("Driver %s %s account approved by %s"),
     ADMIN_DRIVER_BUS_ASSIGNMENT("Driver %s was assigned bus %s by %s"),
     ADMIN_DRIVER_BUS_UNASSIGNMENT("Driver %s was unassigned from bus %s by %s"),
 
@@ -16,11 +16,11 @@ public enum AuditType {
 
     ADMIN_BUS_STATUS_CHANGE("Bus %s status changed to %s by %s"),
     ADMIN_BUS_ROUTE_CHANGE("Bus %s route changed to %s by %s"),
-    ADMIN_BUS_CAPACITY_CHANGE("Bus %s capacity changed to %s by %s"),
+    ADMIN_BUS_CAPACITY_CHANGE("Bus %s capacity changed to %s by %s");
 
-    STUDENT_EMAIL_APPROVAL("");
 
     private final String message;
+
 
 
 
