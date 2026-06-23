@@ -1,14 +1,9 @@
-package org.tracker.ubus.ubus.Components.Shared.Mail.Templates.PendingAdmin;
+package org.tracker.ubus.ubus.Components.Shared.Mail.Templates.Students;
 
 public record Templates() {
-    /**
-     * Builds the admin invitation email HTML content
-     *
-     * @param invitationCode The unique code the admin needs to enter during registration
-     * @param expiryMinutes The number of minutes until the invitation expires
-     * @return The complete HTML email as a String
-     */
-    public static String buildAdminInvitationEmail(String invitationCode, int expiryMinutes) {
+
+
+    public static String buildWelcomeEmailHtml(String firstName, String lastName) {
         StringBuilder html = new StringBuilder();
 
         html.append("<!DOCTYPE html>\n");
@@ -16,7 +11,7 @@ public record Templates() {
         html.append("<head>\n");
         html.append("    <meta charset=\"utf-8\">\n");
         html.append("    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n");
-        html.append("    <title>You've been invited to UBus Admin</title>\n");
+        html.append("    <title>Welcome to UBus - UJ Student</title>\n");
         html.append("</head>\n");
         html.append("<body style=\"margin: 0; padding: 0; background-color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;\">\n");
         html.append("    <table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"max-width: 600px; margin: 0 auto; background-color: #ffffff;\">\n");
@@ -30,22 +25,20 @@ public record Templates() {
         html.append("        <tr>\n");
         html.append("            <td style=\"padding: 20px 40px 40px 40px;\">\n");
         html.append("                <p style=\"font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: #f26522; margin: 0 0 16px 0;\">\n");
-        html.append("                    Admin Invitation\n");
+        html.append("                    Welcome to UBus\n");
         html.append("                </p>\n");
         html.append("                <h1 style=\"font-size: 36px; font-weight: 800; color: #000000; line-height: 1.1; margin: 0 0 24px 0; letter-spacing: -0.04em;\">\n");
-        html.append("                    You've been invited<br/>to manage UBus.\n");
+        html.append("                    Hi ").append(firstName).append("  ")
+                .append(lastName).append(",<br/>welcome to UBus.\n");
         html.append("                </h1>\n");
-        html.append("                <p style=\"font-size: 16px; line-height: 1.6; color: #474747; margin: 0 0 32px 0;\">\n");
-        html.append("                    You've been granted administrator access to the UBus transit management platform.\n");
-        html.append("                </p>\n");
         html.append("                <p style=\"font-size: 16px; line-height: 1.6; color: #474747; margin: 0 0 12px 0;\">\n");
-        html.append("                    To complete your registration, visit the <a href=\"http://localhost:3000/auth/admin\" style=\"color: #f26522; text-decoration: underline;\">admin registration page</a> and use the following code:\n");
+        html.append("                    Your account is ready. You can now track UJ campus buses, check arrival times, and see where your bus is.\n");
         html.append("                </p>\n");
-        html.append("                <p style=\"font-size: 20px; font-weight: 600; color: #f26522; letter-spacing: 0.05em; margin: 16px 0 32px 0; font-family: 'Courier New', monospace; background-color: #f7f7f7; padding: 12px 20px; border-radius: 4px; display: inline-block;\">\n");
-        html.append("                    ").append(invitationCode).append("\n");
+        html.append("                <p style=\"font-size: 16px; line-height: 1.6; color: #474747; margin: 0 0 32px 0;\">\n");
+        html.append("                    Log in to get started.\n");
         html.append("                </p>\n");
         html.append("                <p style=\"font-size: 14px; color: #777777; margin: 32px 0 0 0;\">\n");
-        html.append("                    This invitation code expires in <strong style=\"color: #474747;\">").append(expiryMinutes).append(" minutes</strong>. If you weren't expecting this invitation, you can safely ignore this email.\n");
+        html.append("                    Questions? Reach out to support.\n");
         html.append("                </p>\n");
         html.append("            </td>\n");
         html.append("        </tr>\n");
@@ -59,7 +52,7 @@ public record Templates() {
         html.append("                            </td>\n");
         html.append("                            <td>\n");
         html.append("                                <span style=\"font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: #000000; margin-left: 8px;\">\n");
-        html.append("                                    Security Status: Invite Pending\n");
+        html.append("                                    UJ Student/Staff Access\n");
         html.append("                                </span>\n");
         html.append("                            </td>\n");
         html.append("                        </tr>\n");
@@ -84,5 +77,6 @@ public record Templates() {
         html.append("</html>");
 
         return html.toString();
+
     }
 }

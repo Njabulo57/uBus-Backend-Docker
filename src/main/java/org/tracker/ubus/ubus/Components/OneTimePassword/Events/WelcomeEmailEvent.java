@@ -1,22 +1,18 @@
-package org.tracker.ubus.ubus.Components.Users.Admin.Events;
+package org.tracker.ubus.ubus.Components.OneTimePassword.Events;
 
-
-import lombok.Getter;
 import org.tracker.ubus.ubus.Components.EventHandler.AbstractEvents.EmailEvent;
-import org.tracker.ubus.ubus.Components.Shared.Mail.Templates.Admin.Templates;
+import org.tracker.ubus.ubus.Components.Shared.Mail.Templates.Students.Templates;
 import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
 
 
-@Getter
-public final class DriverApprovedEmailEvent extends EmailEvent {
+public final class WelcomeEmailEvent extends EmailEvent {
 
     private final User user;
 
-    public DriverApprovedEmailEvent(Object source, User user) {
+    public WelcomeEmailEvent(Object source, User user) {
         super(source);
         this.user = user;
-
-        setHeader("Driver Approved");
+        setHeader("Welcome to Ubus");
         setToEmail(user.getEmail());
         setBody(constructHtmlBody());
     }
@@ -25,6 +21,6 @@ public final class DriverApprovedEmailEvent extends EmailEvent {
     protected String constructHtmlBody() {
         var firstName = user.getFirstname();
         var lastName = user.getLastname();
-        return Templates.buildDriverAssignedHtml(firstName, lastName);
+        return Templates.buildWelcomeEmailHtml(firstName, lastName);
     }
 }

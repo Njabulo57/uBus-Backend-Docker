@@ -10,22 +10,20 @@ import java.time.format.DateTimeFormatter;
 
 
 @Getter
-public class AuditEvent extends ApplicationEvent {
+public final class AuditEvent extends ApplicationEvent {
 
     private final AuditType auditType;
     private final User createdBy;
     private final User createdOn;
     private final String message;
-    public AuditEvent(Object source, AuditType auditType, User createdBy, User createdOn, String message) {
+    private final LocalDateTime createdAt;
+    public AuditEvent(Object source, AuditType auditType, User createdBy, User createdOn, String message, LocalDateTime createdAt) {
         super(source);
         this.auditType = auditType;
         this.createdBy = createdBy;
         this.createdOn = createdOn;
         this.message = message;
+        this.createdAt = createdAt;
     }
-
-
-
-
 
 }

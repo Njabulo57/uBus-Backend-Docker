@@ -24,11 +24,13 @@ public class DriverApprovedAuditListener {
 
         log.info("DriverApprovedAuditEvent received");
         log.info("DriverApprovedAuditEvent is now being audited");
+        log.info("DriverApprovedAuditEvent is running on thread {}", Thread.currentThread());
         var message = event.getMessage();
         var createdBy = event.getCreatedBy();
         var createdOn = event.getCreatedOn();
         var auditType = event.getAuditType();
-        this.auditService.save(message, createdBy, createdOn, auditType);
+        var eventTime = event.getCreatedAt();
+        this.auditService.save(message, createdBy, createdOn, auditType, eventTime);
 
         log.info("DriverApprovedAuditEvent save successful");
     }

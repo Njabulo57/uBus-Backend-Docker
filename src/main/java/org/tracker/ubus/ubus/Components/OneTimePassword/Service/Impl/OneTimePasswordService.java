@@ -8,9 +8,11 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.tracker.ubus.ubus.Components.Audit.Service.TokenCredentialService;
+import org.tracker.ubus.ubus.Components.EventHandler.Publisher.MultiEvenPublisher;
 import org.tracker.ubus.ubus.Components.OneTimePassword.DTOs.Internal.OtpInternalCarrier;
 import org.tracker.ubus.ubus.Components.OneTimePassword.DTOs.Requests.OtpValidationRequest;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Entity.OneTimePassword;
+import org.tracker.ubus.ubus.Components.OneTimePassword.Events.WelcomeEmailEvent;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Exceptions.OneTimePasswordExpiredException;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Exceptions.OneTimePasswordExistsException;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Exceptions.OneTimePasswordMismatchException;
@@ -42,8 +44,8 @@ public class OneTimePasswordService extends TokenCredentialService implements IO
     @Value("${otp.admin.durationDurationMinutes:20}")
     private int adminExpiryDuration;
 
-
     private final UserRepository userRepository;
+    private final MultiEvenPublisher multiEvenPublisher;
     private final PendingAdminRepository pendingAdminRepository;
     private final OneTimePasswordGenerator oneTimePasswordGenerator;
     private final OneTimePasswordRepository oneTimePasswordRepository;
@@ -122,7 +124,7 @@ public class OneTimePasswordService extends TokenCredentialService implements IO
 
         // Delete the used OTP
         this.oneTimePasswordRepository.delete(oneTimePassword);
-
+        multiEvenPublisher.publish(() -> new WelcomeEmailEvent(this, user));
         return true;
     }
 
