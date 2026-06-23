@@ -25,7 +25,7 @@ public abstract class AuditEvent extends ApplicationEvent {
         this.createdOn = createdOn;
 
         String formattedDateTime = LocalDateTime.now().format(formatter);
-        this.message = auditType.adminDriverApprovalMsg(createdBy, createdOn, formattedDateTime);
+        this.message = auditType.format(createdBy, createdOn, formattedDateTime);
     }
 
 

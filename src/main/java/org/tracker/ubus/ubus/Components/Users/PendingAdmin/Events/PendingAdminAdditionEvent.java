@@ -2,6 +2,7 @@ package org.tracker.ubus.ubus.Components.Users.PendingAdmin.Events;
 
 import org.tracker.ubus.ubus.Components.EventHandler.AbstractEvents.EmailEvent;
 import org.tracker.ubus.ubus.Components.OneTimePassword.DTOs.Internal.OtpInternalCarrier;
+import org.tracker.ubus.ubus.Components.Shared.Mail.Templates.PendingAdmin.Templates;
 
 public final class PendingAdminAdditionEvent extends EmailEvent {
 
@@ -21,6 +22,6 @@ public final class PendingAdminAdditionEvent extends EmailEvent {
     protected String constructHtmlBody() {
         var otp = otpInternalCarrier.opt();
         var expiry = otpInternalCarrier.expiry();
-        return "Hello. Your OTP is " + otp + " and it will expire in " + expiry + " minutes.";
+        return Templates.buildAdminInvitationEmail(otp, expiry);
     }
 }

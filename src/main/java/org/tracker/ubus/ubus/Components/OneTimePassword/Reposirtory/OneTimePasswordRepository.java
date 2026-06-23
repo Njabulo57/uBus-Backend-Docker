@@ -14,6 +14,9 @@ import java.util.UUID;
 @Repository
 public interface OneTimePasswordRepository extends JpaRepository<OneTimePassword, UUID> {
 
+
+    boolean  existsByAdminEmail(String email);
+
     @Query("""
         SELECT CASE WHEN COUNT(otp) > 0 THEN true ELSE false END
         FROM OneTimePassword otp

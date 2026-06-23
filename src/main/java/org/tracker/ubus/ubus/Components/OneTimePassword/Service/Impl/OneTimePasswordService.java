@@ -77,19 +77,19 @@ public class OneTimePasswordService extends TokenCredentialService implements IO
     @Transactional
     public OtpInternalCarrier generateAuthToken(String email) {
 
-
-        var exists = this.oneTimePasswordRepository.existsByUser(email);
+        var exists = this.oneTimePasswordRepository.existsByAdminEmail(email);
 
         if (exists) {
             OneTimePassword oneTimePassword = this.oneTimePasswordRepository.findByPendingAdmin(email);
-
             if(!oneTimePassword.isExpired()) {
+
                 //get the time between now and the expiration time in minutes
                 long expiresIn = Duration.between(LocalDateTime.now(), oneTimePassword.getExpiresAt()).toMinutes();
                 throw new OneTimePasswordExistsException("Valid OPT already exists.Please Use It Before It Expires", expiresIn);
-            }else
+            }else {
                 this.oneTimePasswordRepository.delete(oneTimePassword); //delete the expired one
-
+                this.oneTimePasswordRepository.flush();
+            }
         }
 
 
