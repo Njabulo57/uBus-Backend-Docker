@@ -44,7 +44,7 @@ RUN ./gradlew dependencies --no-daemon
 
 # Copy the rest of the source code and build the JAR
 COPY src ./src
-RUN ./gradlew bootJar -x test --no-daemon
+RUN ./gradlew bootJar -x test -x processAot --no-daemon
 
 # Stage 2: Runtime (Kept lightweight Alpine for production)
 FROM eclipse-temurin:21-jre-alpine
