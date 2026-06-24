@@ -28,7 +28,7 @@ public class DriverApprovedEmailListener {
 
         final var toEmail = event.getUser().getEmail();
         final var subject = event.getHeader();
-        final var htmlContent = event.getHeader();
+        final var htmlContent = event.getBody();
         this.emailService.sendHtmlEmail(toEmail, subject, htmlContent);
 
         log.info("Driver Approved Email Notification is sent ");

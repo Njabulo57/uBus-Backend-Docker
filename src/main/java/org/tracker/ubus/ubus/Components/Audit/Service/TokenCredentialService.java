@@ -1,10 +1,13 @@
 package org.tracker.ubus.ubus.Components.Audit.Service;
 
+import org.tracker.ubus.ubus.Components.Shared.Entities.BaseService;
+import org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole;
+
 /**
  * Abstract class responsible for managing credentials.
  * Provides a method to handle the removal of expired credentials.
  */
-public abstract class TokenCredentialService {
+public abstract class TokenCredentialService extends BaseService {
 
     /**
      * Removes expired credentials from the database.
@@ -19,5 +22,5 @@ public abstract class TokenCredentialService {
      * @param token the token to be verified for uniqueness
      * @return the same token if its unique, otherwise a new one
      */
-    protected abstract String verifyTokenUniqueness(String token);
+    protected abstract String verifyTokenUniqueness(String token, UserRole userRole);
 }

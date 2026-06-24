@@ -1,11 +1,9 @@
 package org.tracker.ubus.ubus.Components.Trips.Trip.Service.Impl;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.tracker.ubus.ubus.Components.Buses.Bus.Entity.Bus;
 import org.tracker.ubus.ubus.Components.Buses.Bus.Enum.BusActivityStatus;
 import org.tracker.ubus.ubus.Components.Buses.Bus.Repository.DatabaseAccessLayer.BusRepository;
 import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Entity.BusAssignment;
@@ -13,8 +11,6 @@ import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Repository.BusAssign
 import org.tracker.ubus.ubus.Components.Buses.BusRoute.Entity.BusRoute;
 import org.tracker.ubus.ubus.Components.Buses.BusRoute.Repository.BusRouteRepository;
 import org.tracker.ubus.ubus.Components.EventHandler.Publisher.MultiEvenPublisher;
-import org.tracker.ubus.ubus.Components.Notification.Events.BusDepartureNotification;
-import org.tracker.ubus.ubus.Components.Notification.Events.Notification;
 import org.tracker.ubus.ubus.Components.Notification.Events.Notifications;
 import org.tracker.ubus.ubus.Components.Notification.Service.Impl.NotificationDispatcher;
 import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Request.TripEndRequest;
@@ -26,7 +22,7 @@ import org.tracker.ubus.ubus.Components.Trips.Trip.Repository.TripRepository;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Service.Interface.ITripService;
 import org.tracker.ubus.ubus.Components.Trips.Trip.TripMapper.TripMapper;
 import org.tracker.ubus.ubus.Components.Trips.TripUser.Repository.TripUserRepository;
-import org.tracker.ubus.ubus.Components.Users.User.Enum.Campus;
+import org.tracker.ubus.ubus.Components.Users.User.Enum.Destination;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.Route;
 import org.tracker.ubus.ubus.Configuration.Security.UserPrincipal;
 import java.util.*;
@@ -224,7 +220,7 @@ public class TripService implements ITripService {
      */
     private boolean isDriverWithinCampusBounds(Route route, double latitude, double longitude) {
 
-        Optional<Campus> campusMatched = route.getCurrentCampus(latitude, longitude);
+        Optional<Destination> campusMatched = route.getCurrentCampus(latitude, longitude);
 
         if(campusMatched.isEmpty()) {
             System.err.println("no matching campus found");

@@ -1,7 +1,6 @@
 package org.tracker.ubus.ubus.Components.Notification.Events;
 
 
-import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.SuperBuilder;
@@ -21,8 +20,8 @@ public final class BusDepartureNotification extends Notification {
 
     public BusDepartureNotification(Queue<UUID> userToNotify, Route route) {
 
-        this.fromCampus = route.getFromCampus().getLabel();
-        this.toCampus = route.getToCampus().getLabel();
+        this.fromCampus = route.getFromDestination().getLabel();
+        this.toCampus = route.getToDestination().getLabel();
 
         constructMessage();
         this.setUserToNotify(userToNotify);

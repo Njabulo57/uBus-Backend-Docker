@@ -14,7 +14,9 @@ import org.tracker.ubus.ubus.Components.Auth.DTOs.Responses.LoginSuccessfulRespo
 import org.tracker.ubus.ubus.Components.Auth.DTOs.Responses.RegisterSuccessfulResponse;
 import org.tracker.ubus.ubus.Components.Auth.Service.Interface.IAuthService;
 
-
+/**
+ * Controller for handling authentication-related endpoints.
+ */
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
@@ -28,6 +30,7 @@ public class AuthController {
      * Authenticates a user with their credentials.
      * @param loginRequest the login request containing the user's credentials.
      * @return a successful login response containing the user's JWT token.
+     * {auth/login}
      */
     @PostMapping("/login")
     @ResponseStatus(HttpStatus.OK)
@@ -40,6 +43,7 @@ public class AuthController {
      * Initiates the email authentication process.
      * @param emailOtpRequest the email authentication request containing the user's email.
      * @return a successful email authentication response.
+     * {auth/email-authentication}
      */
     @PostMapping("/email-authentication")
     public EmailAuthenticationResponse requestEmailAuthentication(@RequestBody @Valid final EmailOtpRequest emailOtpRequest) {
@@ -54,6 +58,7 @@ public class AuthController {
      *                        first name, last name, password, role, email, and optional phone number.
      * @return a successful registration response containing details such as an OTP message,
      *         the assigned role, and the timestamp of the creation.
+     * {auth/register}
      */
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
@@ -63,10 +68,13 @@ public class AuthController {
 
 
     /**
-     * Verifies if a given email is valid and can be used within the system.
+     * Verifies if the provided email address is valid and can be used within the system.
      *
      * @param email the email address to be verified.
      * @return true if the email is valid and accepted, false otherwise.
+     * {auth/verify-email}
+     * HTTP Method: POST
+     *
      */
     @PostMapping("/verify-email")
     public boolean verifyEmail(@RequestParam String email) {
@@ -74,7 +82,14 @@ public class AuthController {
     }
 
 
-
+    /**
+     * Logs the user out of the current session.
+     * After invoking this method, the user's authentication credentials are invalidated,
+     * effectively terminating their access to secure endpoints until they log in again.
+     * Endpoint: {auth/logout}
+     * HTTP Method: POST
+     * Response Status: 204 NO CONTENT
+     */
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void logout() {

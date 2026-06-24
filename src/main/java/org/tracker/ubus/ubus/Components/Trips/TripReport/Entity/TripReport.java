@@ -2,11 +2,10 @@ package org.tracker.ubus.ubus.Components.Trips.TripReport.Entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
 import org.tracker.ubus.ubus.Components.Shared.Entities.TimeAuditableEntity;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Entity.Trip;
 import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
-import org.tracker.ubus.ubus.Components.Users.User.Enum.Campus;
+import org.tracker.ubus.ubus.Components.Users.User.Enum.Destination;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.Route;
 
 import java.time.LocalDateTime;
@@ -37,11 +36,11 @@ public class TripReport extends TimeAuditableEntity {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private Campus fromCampus;
+    private Destination fromDestination;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private Campus toCampus;
+    private Destination toDestination;
 
     private LocalDateTime departureTime;
     private LocalDateTime arrivalTime;

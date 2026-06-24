@@ -10,24 +10,20 @@ import java.time.format.DateTimeFormatter;
 
 
 @Getter
-public abstract class AuditEvent extends ApplicationEvent {
+public final class AuditEvent extends ApplicationEvent {
 
     private final AuditType auditType;
     private final User createdBy;
     private final User createdOn;
-    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
     private final String message;
-    public AuditEvent(Object source, AuditType auditType, User createdBy, User createdOn) {
+    private final LocalDateTime createdAt;
+    public AuditEvent(Object source, AuditType auditType, User createdBy, User createdOn, String message, LocalDateTime createdAt) {
         super(source);
         this.auditType = auditType;
         this.createdBy = createdBy;
         this.createdOn = createdOn;
-
-        String formattedDateTime = LocalDateTime.now().format(formatter);
-        this.message = auditType.getConstructedMessage(createdBy, createdOn, formattedDateTime);
+        this.message = message;
+        this.createdAt = createdAt;
     }
-
-
 
 }

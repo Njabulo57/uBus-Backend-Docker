@@ -15,14 +15,13 @@ import org.tracker.ubus.ubus.Components.Trips.TripHistory.Repository.TripHistory
 import org.tracker.ubus.ubus.Components.Trips.TripUser.Entity.TripUser;
 import org.tracker.ubus.ubus.Components.Trips.TripUser.Repository.TripUserRepository;
 import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
-import org.tracker.ubus.ubus.Components.Users.User.Enum.Campus;
+import org.tracker.ubus.ubus.Components.Users.User.Enum.Destination;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.Route;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole;
 import org.tracker.ubus.ubus.Components.Users.User.Repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @RequiredArgsConstructor
@@ -36,11 +35,11 @@ public class EverythingTripDataGenerator {
     private final TripUserRepository tripUserRepository;
     private final PlatformTransactionManager transactionManager;
 
-    private static final Map<Campus, double[]> CAMPUS_COORDS = Map.of(
-            Campus.SOWETO,       new double[]{-26.2612,    27.92155},
-            Campus.DOORNFONTEIN, new double[]{-26.19275,   28.05427},
-            Campus.APK,          new double[]{-26.18441,   27.99607},
-            Campus.APB,          new double[]{-26.1904167, 28.0193056}
+    private static final Map<Destination, double[]> CAMPUS_COORDS = Map.of(
+            Destination.SOWETO,       new double[]{-26.2612,    27.92155},
+            Destination.DOORNFONTEIN, new double[]{-26.19275,   28.05427},
+            Destination.APK,          new double[]{-26.18441,   27.99607},
+            Destination.APB,          new double[]{-26.1904167, 28.0193056}
     );
 
     // Optimized values for speed
@@ -55,8 +54,8 @@ public class EverythingTripDataGenerator {
 
     static {
         for (Route route : Route.values()) {
-            double[] from = CAMPUS_COORDS.get(route.getFromCampus());
-            double[] to = CAMPUS_COORDS.get(route.getToCampus());
+            double[] from = CAMPUS_COORDS.get(route.getFromDestination());
+            double[] to = CAMPUS_COORDS.get(route.getToDestination());
             if (from != null && to != null) {
                 ROUTE_COORDS.put(route, new double[][]{from, to});
             }

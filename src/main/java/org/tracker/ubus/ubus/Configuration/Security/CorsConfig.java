@@ -13,12 +13,10 @@ public class CorsConfig {
     public CorsConfiguration corsConfiguration() {
         CorsConfiguration config = new CorsConfiguration();
 
-
-
         config.setAllowedOriginPatterns(List.of("*"));
 
-//        config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:3001",
-//                "http://localhost:3002", "http://localhost:3003", "http://localhost:8050"));
+        config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:3001",
+                                         "http://localhost:3002", "http://localhost:3003"));
 
         // Allow HTTP methods
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));

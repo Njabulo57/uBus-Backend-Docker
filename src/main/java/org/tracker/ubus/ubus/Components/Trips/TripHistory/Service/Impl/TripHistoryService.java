@@ -53,7 +53,7 @@ public class TripHistoryService implements ITripHistoryService {
                 var busAssignment = busAssignmentRepository.findByDriverOrThrow(userEntity);
                 yield this.tripRepository.findCompletedTripsByDriver(busAssignment, pageable);
             }
-            case ADMIN -> Page.empty();
+            default -> Page.empty();
         };
 
         this.disperseLocations(tripsPage.getContent());

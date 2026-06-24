@@ -5,10 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.tracker.ubus.ubus.Components.OneTimePassword.DTOs.Requests.OtpValidationRequest;
-import org.tracker.ubus.ubus.Components.OneTimePassword.DTOs.Responses.OtpCreatedResponse;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Service.Interface.IOneTimePasswordService;
 
-import java.util.UUID;
 
 
 @RestController
@@ -24,5 +22,6 @@ class OneTimePasswordController {
     public boolean validateOTP(@RequestBody @Valid OtpValidationRequest otpValidationRequest) {
         return oneTimePasswordService.validateOTP(otpValidationRequest);
     }
+
 
 }

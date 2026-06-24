@@ -18,7 +18,7 @@ public class BusAssignmentEmailNotificationEvent extends EmailEvent {
 
 
         var subject = busAssignment.getDriver().getEmail();
-        setSubject(subject);
+        setToEmail(subject);
     }
 
     @Override

@@ -29,10 +29,13 @@ public class OneTimePassword {
     @Column(nullable = false)
     private LocalDateTime expiresAt;
 
-    @JoinColumn(nullable = false, unique = true)
+    @JoinColumn(unique = true)
     @OneToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     private User user; //we are keeping persist for convenience when persisting
 
+
+    @Column(nullable = false, unique = true)
+    private String adminEmail;
 
     public boolean isExpired() {
         return LocalDateTime.now().isAfter(expiresAt);

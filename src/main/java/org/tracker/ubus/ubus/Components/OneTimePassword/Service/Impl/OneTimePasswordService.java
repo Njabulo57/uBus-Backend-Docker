@@ -2,20 +2,27 @@ package org.tracker.ubus.ubus.Components.OneTimePassword.Service.Impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.tracker.ubus.ubus.Components.Audit.Service.TokenCredentialService;
+import org.tracker.ubus.ubus.Components.EventHandler.Publisher.MultiEvenPublisher;
 import org.tracker.ubus.ubus.Components.OneTimePassword.DTOs.Internal.OtpInternalCarrier;
 import org.tracker.ubus.ubus.Components.OneTimePassword.DTOs.Requests.OtpValidationRequest;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Entity.OneTimePassword;
+import org.tracker.ubus.ubus.Components.OneTimePassword.Events.WelcomeEmailEvent;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Exceptions.OneTimePasswordExpiredException;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Exceptions.OneTimePasswordExistsException;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Exceptions.OneTimePasswordMismatchException;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Generator.OneTimePasswordGenerator;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Reposirtory.OneTimePasswordRepository;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Service.Interface.IOneTimePasswordService;
+import org.tracker.ubus.ubus.Components.Users.PendingAdmin.Entity.PendingAdmin;
+import org.tracker.ubus.ubus.Components.Users.PendingAdmin.PendingAdminRepository.PendingAdminRepository;
+import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
+import org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.UserStatus;
 import org.tracker.ubus.ubus.Components.Users.User.Repository.UserRepository;
 
@@ -33,10 +40,15 @@ public class OneTimePasswordService extends TokenCredentialService implements IO
 
     @Value("${otp.durationDurationMinutes}")
     private int expiryDuration;
+
+    @Value("${otp.admin.durationDurationMinutes:20}")
+    private int adminExpiryDuration;
+
     private final UserRepository userRepository;
+    private final MultiEvenPublisher multiEvenPublisher;
+    private final PendingAdminRepository pendingAdminRepository;
     private final OneTimePasswordGenerator oneTimePasswordGenerator;
     private final OneTimePasswordRepository oneTimePasswordRepository;
-
 
 
 
@@ -58,20 +70,35 @@ public class OneTimePasswordService extends TokenCredentialService implements IO
         }
 
         var user = this.userRepository.findByIdOrThrow(userId);//getting the user from the db
-        var generateOTP = oneTimePasswordGenerator.generateOTP(); // generating the otp
-
-        generateOTP = this.verifyTokenUniqueness(generateOTP);
-        LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(expiryDuration);
-
-        var otp = OneTimePassword.builder()
-                .otp(generateOTP)
-                .expiresAt(expiresAt)
-                .user(user)
-                .build();
-
-        this.oneTimePasswordRepository.save(otp); //save the entry
-        return new OtpInternalCarrier(generateOTP, expiryDuration);
+        return generateOTP(user);
     }
+
+
+
+    @Override
+    @Transactional
+    public OtpInternalCarrier generateAuthToken(String email) {
+
+        var exists = this.oneTimePasswordRepository.existsByAdminEmail(email);
+
+        if (exists) {
+            OneTimePassword oneTimePassword = this.oneTimePasswordRepository.findByPendingAdmin(email);
+            if(!oneTimePassword.isExpired()) {
+
+                //get the time between now and the expiration time in minutes
+                long expiresIn = Duration.between(LocalDateTime.now(), oneTimePassword.getExpiresAt()).toMinutes();
+                throw new OneTimePasswordExistsException("Valid OPT already exists.Please Use It Before It Expires", expiresIn);
+            }else {
+                this.oneTimePasswordRepository.delete(oneTimePassword); //delete the expired one
+                this.oneTimePasswordRepository.flush();
+            }
+        }
+
+
+        var pendingAdmin = this.pendingAdminRepository.findByEmailOrThrow(email);
+        return generateOTP(pendingAdmin);
+    }
+
 
 
     @Transactional
@@ -97,7 +124,7 @@ public class OneTimePasswordService extends TokenCredentialService implements IO
 
         // Delete the used OTP
         this.oneTimePasswordRepository.delete(oneTimePassword);
-
+        multiEvenPublisher.publish(() -> new WelcomeEmailEvent(this, user));
         return true;
     }
 
@@ -125,12 +152,66 @@ public class OneTimePasswordService extends TokenCredentialService implements IO
 
 
     @Override
-    protected String verifyTokenUniqueness(String token) {
+    protected String verifyTokenUniqueness(String token, UserRole userRole) {
 
         while(this.oneTimePasswordRepository.existsByOtp(token))
-            token = this.oneTimePasswordGenerator.generateOTP();
-
+            token = this.oneTimePasswordGenerator.generateOTP(userRole);
         return token;
     }
+
+
+
+
+    /**
+     * Generates a new one-time password (OTP) for the specified user.
+     * The OTP is linked to the user, stored in the database, and has an expiration time.
+     *
+     * @param user The user for whom the OTP is to be generated. This must be a valid User entity.
+     * @return An {@link OtpInternalCarrier} object containing the generated OTP and its expiration duration.
+     */
+    @NonNull
+    private OtpInternalCarrier generateOTP(User user) {
+
+
+        var generateOTP = oneTimePasswordGenerator.generateOTP(user.getRole()); // generating the otp
+
+        generateOTP = this.verifyTokenUniqueness(generateOTP, user.getRole());
+        LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(expiryDuration);
+
+
+
+        var otp = OneTimePassword.builder()
+                .otp(generateOTP)
+                .user(user)
+                .expiresAt(expiresAt)
+                .build();
+
+        this.oneTimePasswordRepository.save(otp); //save the entry
+        return new OtpInternalCarrier(generateOTP, expiryDuration);
+    }
+
+
+
+    @NonNull
+    private OtpInternalCarrier generateOTP(PendingAdmin pendingAdmin) {
+
+        var generateOTP = oneTimePasswordGenerator.generateOTP(UserRole.ADMIN);
+
+        generateOTP = this.verifyTokenUniqueness(generateOTP, UserRole.ADMIN);
+        LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(adminExpiryDuration);
+
+
+        var otp = OneTimePassword.builder()
+                .otp(generateOTP)
+                .user(null)
+                .expiresAt(expiresAt)
+                .adminEmail(pendingAdmin.getEmail())
+                .build();
+
+        this.oneTimePasswordRepository.save(otp); //save the entry
+        return new OtpInternalCarrier(generateOTP, expiryDuration);
+
+    }
+
 
 }

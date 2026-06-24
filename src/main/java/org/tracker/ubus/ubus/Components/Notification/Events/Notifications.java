@@ -9,8 +9,8 @@ public abstract class Notifications {
 
     public static Notification busDepartureNotification(Route route, Queue<UUID> userToNotify) {
         return BusDepartureNotification.builder()
-                .fromCampus(route.getFromCampus().getLabel())
-                .toCampus(route.getToCampus().getLabel())
+                .fromCampus(route.getFromDestination().getLabel())
+                .toCampus(route.getToDestination().getLabel())
                 .userToNotify(userToNotify)
                 .build();
     }

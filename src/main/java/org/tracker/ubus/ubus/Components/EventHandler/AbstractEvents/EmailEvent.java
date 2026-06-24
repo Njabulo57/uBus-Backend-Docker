@@ -10,14 +10,10 @@ public abstract class EmailEvent extends ApplicationEvent {
 
     private String header;
     private String body;
-    private String subject;
+    private String toEmail;
 
     public EmailEvent(Object source) {
         super(source);
-    }
-
-    public String getHtmlBody() {
-        return body;
     }
 
     protected abstract String constructHtmlBody();

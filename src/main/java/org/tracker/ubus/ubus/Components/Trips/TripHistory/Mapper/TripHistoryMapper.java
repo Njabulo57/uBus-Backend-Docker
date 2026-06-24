@@ -31,7 +31,8 @@ public class TripHistoryMapper {
 
         Collection<AbstractPastTrip> pastTrips = switch (user.getRole()) {
             case STAFF, STUDENT -> toStudentPastTripResponses(trips);
-            case DRIVER, ADMIN -> throw new UnsupportedOperationException("Driver and Admin past trips not supported");
+            case DRIVER, ADMIN, SUPER_ADMIN -> throw new UnsupportedOperationException("Driver and Admin past trips not supported");
+
         };
 
 
@@ -57,8 +58,8 @@ public class TripHistoryMapper {
     private AbstractPastTrip toStudentPastTripResponse(Trip trip) {
 
         var route = trip.getRoute().getRouteAbbreviated();
-        var fromCampus = trip.getRoute().getFromCampus().getLabel();
-        var toCampus = trip.getRoute().getToCampus().getLabel();
+        var fromCampus = trip.getRoute().getFromDestination().getLabel();
+        var toCampus = trip.getRoute().getToDestination().getLabel();
 
         Collection<CoOrdinate> coOrdinates = toCoOrdinates(trip);
         return StudentPastTripResponse.builder()

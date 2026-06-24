@@ -16,33 +16,35 @@ import org.tracker.ubus.ubus.Components.Auth.DTOs.Responses.LoginSuccessfulRespo
 import org.tracker.ubus.ubus.Components.Auth.DTOs.Responses.RegisterSuccessfulResponse;
 import org.tracker.ubus.ubus.Components.Auth.Exception.External.*;
 import org.tracker.ubus.ubus.Components.Auth.Exception.Internal.AccountLockedException;
-import org.tracker.ubus.ubus.Components.Auth.Exception.Internal.AdminRegistrationNotAllowedException;
 import org.tracker.ubus.ubus.Components.Auth.Mapper.AuthMapper;
 import org.tracker.ubus.ubus.Components.Auth.Service.Interface.IAuthService;
 import org.tracker.ubus.ubus.Components.Auth.VerificationDispatcher.VerificationDispatcher;
 import org.tracker.ubus.ubus.Components.Jwt.JwtService.JwtService;
+import org.tracker.ubus.ubus.Components.OneTimePassword.Reposirtory.OneTimePasswordRepository;
+import org.tracker.ubus.ubus.Components.Shared.Entities.BaseService;
 import org.tracker.ubus.ubus.Components.TokenBlacklist.Service.Impl.BlacklistedTokenService;
-
-
+import org.tracker.ubus.ubus.Components.Users.PendingAdmin.PendingAdminRepository.PendingAdminRepository;
 import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole;
-import org.tracker.ubus.ubus.Components.Users.User.Enum.UserStatus;
 import org.tracker.ubus.ubus.Components.Users.User.Repository.UserRepository;
 import java.time.LocalDateTime;
 
+import static org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole.ADMIN;
 import static org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole.STUDENT;
 import static org.tracker.ubus.ubus.Components.Users.User.Enum.UserStatus.*;
 
 
 @Service
 @RequiredArgsConstructor
-public class AuthService implements IAuthService {
+public class AuthService extends BaseService implements IAuthService {
 
 
     private final JwtService jwtService;
     private final AuthMapper authMapper;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final OneTimePasswordRepository oneTimePasswordRepository;
+    private final PendingAdminRepository pendingAdminRepository;
     private final VerificationDispatcher verificationDispatcher;
     private final BlacklistedTokenService blacklistedTokenService;
 
@@ -78,24 +80,37 @@ public class AuthService implements IAuthService {
 
         var userRole = UserRole.fromLabel(registerRequest.role());
 
-        var userExists = this.userRepository.existsByEmail(registerRequest.email());
+        //check if the user already exists
+        var userExists = false;
+        if(userRole != ADMIN)
+            userExists = this.userRepository.existsByEmail(registerRequest.email());
+
         if(userExists)
             throw new DuplicateEmailException("Email Already Exists");
 
+        // create the user entity
+        var userEntity = this.authMapper.toEntity(registerRequest, userRole);
 
-        UserStatus userStatus = switch (userRole) {
+        // set the user status based on the user role
+        var userStatus = switch (userRole) {
 
-            case STUDENT, STAFF -> {
+            case STUDENT -> {
                 this.validateIfStudent(registerRequest.email(), userRole); // validate the student's information
                 yield EMAIL_APPROVAL_PENDING;
             }
+            case ADMIN -> {
+                validateAdminInvitation(registerRequest.inviteCode(), userEntity);
+                yield ACTIVE;
+            }
+
+            case STAFF -> EMAIL_APPROVAL_PENDING;
 
             case DRIVER -> ADMIN_APPROVAL_PENDING;
 
-            case ADMIN -> throw new AdminRegistrationNotAllowedException("Admin Registration Not Supported");
+            default -> throw new RuntimeException("Invalid User Role");
         };
 
-        var userEntity = this.authMapper.toEntity(registerRequest, userRole, userStatus);
+        userEntity.setStatus(userStatus); //set the status of the user
 
 
         final var encodedPassed = this.passwordEncoder.encode(userEntity.getPassword()); //hashed the password
@@ -106,6 +121,7 @@ public class AuthService implements IAuthService {
         this.verificationDispatcher.dispatchRegistrationOTP(savedUser);
         return this.authMapper.toRegisterDTO(savedUser.getRole());
     }
+
 
 
     @Override
@@ -174,6 +190,7 @@ public class AuthService implements IAuthService {
         this.validateIfStudentEmailCorrect(studentNumberPart, userRole);
     }
 
+
     /**
      * Validates if the student email address corresponds correctly to the provided user role.
      * Ensures that only users with the STUDENT role can use a student email, and that
@@ -202,6 +219,33 @@ public class AuthService implements IAuthService {
                     "Only students role can register with a @student.uj.ac.za email address");
     }
 
+
+    /**
+     * Validates the admin invitation process by verifying the invitation code and associated email.
+     * Ensures the provided credentials match the pending admin invitation data and the one-time password.
+     * Deletes the pending admin entry and associated one-time password upon successful validation.
+     *
+     * @param invitation The registration request containing the invitation code provided by the admin.
+     * @param userEntity The user entity representing the admin to be validated.
+     * @throws InvalidCredentialsException If the email or invitation code does not match the pending admin data.
+     */
+    private void validateAdminInvitation(String invitation, User userEntity) {
+
+        var pendingAdmin = pendingAdminRepository.findByEmailOrThrow(userEntity.getEmail());
+
+        // check if the email is the same as the one in the pending admin
+        if(!pendingAdmin.getEmail().equalsIgnoreCase(userEntity.getEmail()))
+            throw new InvalidCredentialsException("Invalid Credentials");
+
+
+        //get the onefold password for the admin
+        var oneTimePassword = this.oneTimePasswordRepository.findByPendingAdmin(userEntity.getEmail());
+        if(!invitation.equals(oneTimePassword.getOtp()))
+            throw new InvalidCredentialsException("Invalid Credentials");
+
+        this.pendingAdminRepository.delete(pendingAdmin);
+        this.oneTimePasswordRepository.delete(oneTimePassword);
+    }
 
 }
 

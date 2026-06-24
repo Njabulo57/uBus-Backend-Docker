@@ -8,6 +8,10 @@ import org.tracker.ubus.ubus.Components.Auth.DTOs.Responses.EmailAuthenticationR
 import org.tracker.ubus.ubus.Components.Auth.DTOs.Responses.LoginSuccessfulResponse;
 import org.tracker.ubus.ubus.Components.Auth.DTOs.Responses.RegisterSuccessfulResponse;
 
+
+/**
+ * Interface for managing authentication-related operations within the system.
+ */
 public interface IAuthService {
 
     /**

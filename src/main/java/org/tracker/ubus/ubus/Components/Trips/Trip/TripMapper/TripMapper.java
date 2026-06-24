@@ -62,6 +62,7 @@ public class TripMapper {
             case STAFF, STUDENT -> Page.empty();
             case DRIVER -> Page.empty();
             case ADMIN -> tripsPage.map(trip -> toDTO(trip, tripHistoryPointsMap.get(trip)));
+            default -> Page.empty();
         };
     }
 
@@ -69,9 +70,8 @@ public class TripMapper {
     public List<AbstractPastTrip> toDTOs(User user, Collection<Trip> trips,
                                          Map<Trip, Set<TripHistoryPoint>> tripHistoryPointsMap) {
         return switch (user.getRole()) {
-            case STAFF, STUDENT -> Collections.emptyList();
-            case DRIVER -> Collections.emptyList();
             case ADMIN -> toDTOs(trips, tripHistoryPointsMap);
+            default -> Collections.emptyList();
         };
     }
 
@@ -97,8 +97,8 @@ public class TripMapper {
         int studentCount = this.getTotalPassengerByType(tripUsers, isStudent);
         int staffCount = this.getTotalPassengerByType(tripUsers, isStudent.negate());
 
-        var fromCampus = route.getFromCampus().getLabel();
-        var toCampus = route.getToCampus().getLabel();
+        var fromCampus = route.getFromDestination().getLabel();
+        var toCampus = route.getToDestination().getLabel();
 
         return AdminPastTripViewResponse.builder()
                 .totalPassengers(trip.getTotalCount())

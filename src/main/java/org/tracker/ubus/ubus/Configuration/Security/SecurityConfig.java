@@ -37,46 +37,54 @@ public class SecurityConfig {
         return http.addFilterBefore(jwtFilter, AuthenticationFilter.class);
     }
 
-    private HttpSecurity configureEndpointSecurity(HttpSecurity http) throws Exception{
+
+    private HttpSecurity configureEndpointSecurity(HttpSecurity http) throws Exception {
 
         http.authorizeHttpRequests(authz ->
                 authz
-                    .requestMatchers("/auth/**").permitAll()
-                    .requestMatchers("/one-time-password/**").permitAll()
+                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/one-time-password/**").permitAll()
 
-                        .requestMatchers("/auth/logout")
-                        .hasAnyAuthority(ADMIN.getSecurityRole(), DRIVER.getSecurityRole(),
-                                STAFF.getSecurityRole(), STUDENT.getSecurityRole())
+                        .requestMatchers("/busPreferences/**")
+                        .hasAnyRole(STAFF.getLabel(), STUDENT.getLabel(), SUPER_ADMIN.getLabel())
 
                         .requestMatchers("/users/**")
-                        .hasAnyAuthority(ADMIN.getSecurityRole(), DRIVER.getSecurityRole(),
-                                STAFF.getSecurityRole(), STUDENT.getSecurityRole())
+                        .hasAnyRole(ADMIN.getLabel(), SUPER_ADMIN.getLabel(), DRIVER.getLabel(), STAFF.getLabel(),
+                                STUDENT.getLabel())
 
+                        .requestMatchers("/busses/**")
+                        .hasAnyRole(ADMIN.getLabel(), SUPER_ADMIN.getLabel())
 
-                    .requestMatchers("/busses/**")
-                        .hasRole(ADMIN.getLabel())
+                        .requestMatchers("/trips/register-bus-trip")
+                        .hasRole(DRIVER.getLabel())
+                        .requestMatchers("/trips/start-trip/")
+                        .hasRole(DRIVER.getLabel())
+                        .requestMatchers("/trips/end-trip")
+                        .hasRole(DRIVER.getLabel())
 
-                    .requestMatchers("/trips/register-bus-trip")
-                        .hasRole(ADMIN.getLabel())
+                        .requestMatchers("/trips/get-active-trips")
+                        .hasAnyRole(ADMIN.getLabel(), SUPER_ADMIN.getLabel())
 
+                        .requestMatchers("/trips/get-trip/")
+                        .hasAnyRole(DRIVER.getLabel(), ADMIN.getLabel(), SUPER_ADMIN.getLabel())
 
-                    .requestMatchers("/trips/get-active-trips").permitAll()
-                    .requestMatchers("/trips/get-trip/").permitAll()
+                        .requestMatchers("/web-socket/**").permitAll()
+                        .requestMatchers("/web-socket").permitAll()
 
-                    .requestMatchers("/web-socket/**").permitAll()
-                    .requestMatchers("/web-socket").permitAll()
-
-                    .requestMatchers("/admins/**")
-                        .hasRole(ADMIN.getLabel())
-
+                        .requestMatchers("/admins/**")
+                        .hasAnyRole(ADMIN.getLabel(), SUPER_ADMIN.getLabel())
 
                         .requestMatchers("/trips-data/**")
                         .permitAll()
 
-                    .anyRequest().authenticated()
+                        .requestMatchers("/pending-admins/**")
+                        .hasRole(SUPER_ADMIN.getLabel())
+
+                        .anyRequest().authenticated()
         );
         return http;
     }
+
 
     private HttpSecurity configureCsrf(HttpSecurity http) throws Exception{
         http.csrf(AbstractHttpConfigurer::disable);

@@ -20,14 +20,14 @@ public class EmailService {
 
 
 
-    public void sendHtmlEmail(String toEmail, String subject, String htmlContent) {
+    public void sendHtmlEmail(String toEmail, String header, String htmlContent) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
             helper.setTo(toEmail);
             helper.setFrom(fromEmail);
-            helper.setSubject(subject);
+            helper.setSubject(header);
             helper.setText(htmlContent, true);
 
             mailSender.send(message);

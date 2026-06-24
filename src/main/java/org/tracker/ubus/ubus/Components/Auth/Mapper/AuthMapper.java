@@ -26,7 +26,12 @@ public final class AuthMapper {
 
     public RegisterSuccessfulResponse toRegisterDTO(UserRole userRole) {
 
-        var message = "Register Successful.OTP sent for verification";
+        var message = "";
+        if(userRole == UserRole.ADMIN)
+            message = "Successfully Registered";
+        else
+            message = "OTP sent to your email";
+
         final LocalDateTime nowed = LocalDateTime.now();
         return RegisterSuccessfulResponse.builder()
                 .role(userRole.getLabel())
@@ -59,5 +64,6 @@ public final class AuthMapper {
                 .status(userStatus)
                 .build();
     }
+
 
  }

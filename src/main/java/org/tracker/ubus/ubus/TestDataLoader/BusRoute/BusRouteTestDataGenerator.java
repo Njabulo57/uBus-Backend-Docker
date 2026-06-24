@@ -32,6 +32,11 @@ public class BusRouteTestDataGenerator implements CommandLineRunner {
     private final SecureRandom secureRandom;
     private final AtomicInteger savedCount = new AtomicInteger(0);
 
+    // Route assignment mapping based on bus prefix
+    private static final Route[] APK_ROUTES = {Route.APK_TO_APB_DFC, Route.APK_TO_APB_JBS};
+    private static final Route[] APB_ROUTES = {Route.APB_TO_APK_SWC, Route.APK_TO_APB_JBS};
+    private static final Route[] DFC_ROUTES = {Route.DFC_TO_APB_APK, Route.DFC_TO_SWC};
+    private static final Route[] SWC_ROUTES = {Route.SWC_TO_APK_APB, Route.SWC_TO_DFC};
 
     @Override
     public void run(String... args) throws Exception {
@@ -47,7 +52,7 @@ public class BusRouteTestDataGenerator implements CommandLineRunner {
             log.info("📊 Found {} buses to assign routes", allBuses.size());
             log.info("🗺️  Available routes:");
             for (Route route : Route.values()) {
-                log.info("   • {} - {}", route.name(), route.getLabel());
+                log.info("   • {} - {} ({})", route.name(), route.getLabel(), route.getRouteNumber());
             }
 
             try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
@@ -71,7 +76,7 @@ public class BusRouteTestDataGenerator implements CommandLineRunner {
             for (Route route : Route.values()) {
                 long count = busRouteRepository.findByRoute(route).size();
                 if (count > 0) {
-                    log.info("   • {}: {} buses", route.name(), count);
+                    log.info("   • {}: {} buses", route.getRouteNumber(), count);
                 }
             }
             log.info("🎉 =============================================");
@@ -102,8 +107,8 @@ public class BusRouteTestDataGenerator implements CommandLineRunner {
                 }
 
                 if (saved <= 10) { // Log first 10 assignments for visibility
-                    log.info("   ✅ Bus {} assigned to route: {} ({})",
-                            bus.getName(), route.name(), route.getLabel());
+                    log.info("   ✅ Bus {} assigned to route: {} ({} - {})",
+                            bus.getName(), route.name(), route.getRouteNumber(), route.getLabel());
                 }
             } catch (Exception e) {
                 log.error("❌ Failed to create route for bus {}: {}", bus.getName(), e.getMessage());
@@ -122,31 +127,23 @@ public class BusRouteTestDataGenerator implements CommandLineRunner {
         int busNumber = extractBusNumber(busName);
         boolean isEvenRoute = busNumber % 2 == 0;
 
-        // Assign routes based on bus prefix
+        // Assign routes based on bus prefix and number
         return switch (prefix) {
             case "APK" -> {
-                // APK buses serve routes starting from Auckland Park Kingsway
-                Route[] apkRoutes = {Route.APK_APB, Route.APK_SWC};
-                // Even numbers get APK_APB, odd get APK_SWC
-                yield isEvenRoute ? apkRoutes[0] : apkRoutes[1];
+                // APK buses: even -> APK_TO_APB_DFC, odd -> APK_TO_APB_JBS
+                yield isEvenRoute ? APK_ROUTES[0] : APK_ROUTES[1];
             }
             case "APB" -> {
-                // APB buses serve routes starting from Auckland Park Bunting Road
-                Route[] apbRoutes = {Route.APB_APK, Route.APB_DFC};
-                // Even numbers get APB_APK, odd get APB_DFC
-                yield isEvenRoute ? apbRoutes[0] : apbRoutes[1];
+                // APB buses: even -> APB_TO_APK_SWC, odd -> APK_TO_APB_JBS
+                yield isEvenRoute ? APB_ROUTES[0] : APB_ROUTES[1];
             }
             case "DFC" -> {
-                // DFC buses serve routes starting from Doornfontein
-                Route[] dfcRoutes = {Route.DFC_SWC, Route.DFC_APB};
-                // Even numbers get DFC_SWC, odd get DFC_APB
-                yield isEvenRoute ? dfcRoutes[0] : dfcRoutes[1];
+                // DFC buses: even -> DFC_TO_APB_APK, odd -> DFC_TO_SWC
+                yield isEvenRoute ? DFC_ROUTES[0] : DFC_ROUTES[1];
             }
             case "SWC" -> {
-                // SWC buses serve routes starting from Soweto
-                Route[] swcRoutes = {Route.SWC_DFC, Route.SWC_APK};
-                // Even numbers get SWC_DFC, odd get SWC_APK
-                yield isEvenRoute ? swcRoutes[0] : swcRoutes[1];
+                // SWC buses: even -> SWC_TO_APK_APB, odd -> SWC_TO_DFC
+                yield isEvenRoute ? SWC_ROUTES[0] : SWC_ROUTES[1];
             }
             default -> {
                 // Fallback - random route for any unexpected prefixes
@@ -168,5 +165,24 @@ public class BusRouteTestDataGenerator implements CommandLineRunner {
         }
         // Return a random number if parsing fails
         return secureRandom.nextInt(100);
+    }
+
+    /**
+     * Get the appropriate route for a bus based on its prefix and route number
+     * Useful for manual assignment
+     */
+    public Route getRouteForBus(String prefix, int busNumber) {
+        boolean isEvenRoute = busNumber % 2 == 0;
+
+        return switch (prefix) {
+            case "APK" -> isEvenRoute ? Route.APK_TO_APB_DFC : Route.APK_TO_APB_JBS;
+            case "APB" -> isEvenRoute ? Route.APB_TO_APK_SWC : Route.APK_TO_APB_JBS;
+            case "DFC" -> isEvenRoute ? Route.DFC_TO_APB_APK : Route.DFC_TO_SWC;
+            case "SWC" -> isEvenRoute ? Route.SWC_TO_APK_APB : Route.SWC_TO_DFC;
+            default -> {
+                Route[] allRoutes = Route.values();
+                yield allRoutes[secureRandom.nextInt(allRoutes.length)];
+            }
+        };
     }
 }
