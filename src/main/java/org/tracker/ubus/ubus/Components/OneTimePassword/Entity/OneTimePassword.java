@@ -34,7 +34,7 @@ public class OneTimePassword {
     private User user; //we are keeping persist for convenience when persisting
 
 
-    @Column(nullable = false, unique = true)
+    @Column(unique = true)
     private String adminEmail;
 
     public boolean isExpired() {

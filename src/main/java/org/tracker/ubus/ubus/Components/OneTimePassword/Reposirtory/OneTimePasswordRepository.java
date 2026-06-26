@@ -78,11 +78,6 @@ public interface OneTimePasswordRepository extends JpaRepository<OneTimePassword
                 .orElseThrow(() -> new OneTimePasswordNotFoundException("OTP Doesn't Exist"));
     }
 
-    default OneTimePassword findByUserOrThrow(String email) {
-        return this.findByUser(email)
-                .orElseThrow(() -> new OneTimePasswordNotFoundException("OTP Doesn't Exist"));
-    }
-
     default OneTimePassword findByPendingAdmin(String email) {
         return this.findByAdminPendingEmail(email)
                 .orElseThrow(() -> new OneTimePasswordNotFoundException("OTP Doesn't Exist"));

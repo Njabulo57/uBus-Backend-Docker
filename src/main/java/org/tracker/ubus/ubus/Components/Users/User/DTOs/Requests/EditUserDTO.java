@@ -21,4 +21,5 @@ public class EditUserDTO {
     private String oldPassword;
 
     private String phoneNumber;
+    private String otp;
 }

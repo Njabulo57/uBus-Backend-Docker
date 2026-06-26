@@ -102,11 +102,11 @@ public class OneTimePasswordService extends TokenCredentialService implements IO
 
 
     @Transactional
-    public boolean validateOTP(OtpValidationRequest otpValidationRequest)
+    public boolean validateOTP(String otp)
             throws OneTimePasswordExpiredException, OneTimePasswordMismatchException {
 
 
-        var oneTimePasswordOptional = this.oneTimePasswordRepository.findByOtp(otpValidationRequest.otp());
+        var oneTimePasswordOptional = this.oneTimePasswordRepository.findByOtp(otp);
         var oneTimePassword = oneTimePasswordOptional
                 .orElseThrow(() -> new OneTimePasswordMismatchException("Invalid Otp"));
 
@@ -114,17 +114,20 @@ public class OneTimePasswordService extends TokenCredentialService implements IO
             throw new OneTimePasswordExpiredException("OTP has expired.Please Request for a new one time password");
 
 
-        if(!Objects.equals(oneTimePassword.getOtp(), otpValidationRequest.otp()))
+        if(!Objects.equals(oneTimePassword.getOtp(), otp))
             throw new OneTimePasswordMismatchException("Invalid Opt");
 
         var user = oneTimePassword.getUser();
-        // Update user status to ACTIVE
-        user.setStatus(UserStatus.ACTIVE);
-        userRepository.save(user);
+        var previousStatus = user.getStatus();
 
+        if(previousStatus.equals(UserStatus.EMAIL_APPROVAL_PENDING) ) {
+            // Update user status to ACTIVE
+            user.setStatus(UserStatus.ACTIVE);
+            userRepository.save(user);
+            multiEvenPublisher.publish(() -> new WelcomeEmailEvent(this, user));
+        }
         // Delete the used OTP
         this.oneTimePasswordRepository.delete(oneTimePassword);
-        multiEvenPublisher.publish(() -> new WelcomeEmailEvent(this, user));
         return true;
     }
 

@@ -69,7 +69,6 @@ public class PendingAdminService extends BaseService implements IPendingAdminSer
         var otpCarrier = this.authTokenGenerationService.generateAuthToken(email);
         var pendingAdmin = this.pendingAdminRepository.findByEmailOrThrow(email);
 
-        log.info("almost thereyy");
         pendingAdmin.setEmailSent(true); //set the email sent flag to true
         this.pendingAdminRepository.save(pendingAdmin); //save the pending admin entity
 

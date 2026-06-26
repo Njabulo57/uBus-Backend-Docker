@@ -120,7 +120,7 @@ public class UserService implements IUserService {
 
     @Transactional
     public boolean changePassword(String email, String newPassword, String otp) {
-       if(oneTimePasswordService.validateOTP(new OtpValidationRequest(otp)))
+       if(oneTimePasswordService.validateOTP(otp))
        {
            User user = userRepository.findByEmail(email).orElse(null);
            if(user != null && user.getStatus() == ACTIVE) {

@@ -3,6 +3,7 @@ package org.tracker.ubus.ubus.Components.Buses.Bus.Service.Impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.tracker.ubus.ubus.Components.Audit.Enum.AuditType;
 import org.tracker.ubus.ubus.Components.Buses.Bus.DTOs.Requests.BusEditRequest;
 import org.tracker.ubus.ubus.Components.Buses.Bus.DTOs.Requests.BusRegisterRequest;
 import org.tracker.ubus.ubus.Components.Buses.Bus.DTOs.Responses.BusAdminViewResponse;
@@ -10,6 +11,8 @@ import org.tracker.ubus.ubus.Components.Buses.Bus.DTOs.Responses.BusRegisterResp
 import org.tracker.ubus.ubus.Components.Buses.Bus.Entity.Bus;
 import org.tracker.ubus.ubus.Components.Buses.Bus.Enum.BusActivityStatus;
 import org.tracker.ubus.ubus.Components.Buses.Bus.Enum.BusOperationalStatus;
+import org.tracker.ubus.ubus.Components.Buses.Bus.Events.AdminBusDeletionEvent;
+import org.tracker.ubus.ubus.Components.Buses.Bus.Events.AdminBusRegistrationEvent;
 import org.tracker.ubus.ubus.Components.Buses.Bus.Exceptions.BusAlreadyExistsException;
 import org.tracker.ubus.ubus.Components.Buses.Bus.Exceptions.BusInformationMismatchException;
 import org.tracker.ubus.ubus.Components.Buses.Bus.Mapper.BusMapper;
@@ -17,6 +20,8 @@ import org.tracker.ubus.ubus.Components.Buses.Bus.Repository.DatabaseAccessLayer
 import org.tracker.ubus.ubus.Components.Buses.Bus.Service.Interface.IBusService;
 import org.tracker.ubus.ubus.Components.Buses.BusRoute.Mappers.BusRouteMapper;
 import org.tracker.ubus.ubus.Components.Buses.BusRoute.Repository.BusRouteRepository;
+import org.tracker.ubus.ubus.Components.EventHandler.Publisher.MultiEvenPublisher;
+import org.tracker.ubus.ubus.Components.Shared.Entities.BaseService;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.Route;
 
 import java.util.List;
@@ -24,13 +29,14 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class BusService implements IBusService {
+public class BusService extends BaseService implements IBusService {
 
 
     private final BusMapper busMapper;
     private final BusRepository busRepository;
     private final BusRouteMapper busRouteMapper;
     private final BusRouteRepository busRouteRepository;
+    private final MultiEvenPublisher multiEvenPublisher;
 
 
 
@@ -47,21 +53,25 @@ public class BusService implements IBusService {
 
         boolean existsByName = busRepository.existsByName(bus.getName());
         if (existsByName)
-            throw new BusAlreadyExistsException("Bus with name already exists.", bus);
+            throw new BusAlreadyExistsException("Bus Already Exists");
+
 
         var busRoute = this.busRouteMapper.toEntity(bus, route);
 
         this.busRepository.save(bus);
         this.busRouteRepository.save(busRoute);
+
+        var admin = this.getCurrentUser();
+
+        multiEvenPublisher.publish(() -> new AdminBusRegistrationEvent(this, bus, admin));
         return this.busMapper.toDTO(bus);
     }
 
     @Override
-    public void editBusActivityStatus(UUID busId, String activityStatus) {
-
+    public void editBusActivityStatus(String busId, String activityStatus) {
 
         var activityStatusEnum = BusActivityStatus.fromLabel(activityStatus);
-        var bus = this.busRepository.findByIdOrThrow(busId);
+        var bus = this.busRepository.findByIdOrThrow(UUID.fromString(busId));
         bus.setActivityStatus(activityStatusEnum); // save the new status
         this.busRepository.save(bus);
     }
@@ -75,14 +85,18 @@ public class BusService implements IBusService {
         if(!bus.isActive())
             throw new IllegalStateException("Bus is already deleted");
 
+
         bus.setActive(false); //soft delete the bus
         this.busRepository.save(bus);
+
+        var admin = this.getCurrentUser();
+        multiEvenPublisher.publish(() -> new AdminBusDeletionEvent(this, admin, bus));
     }
 
     @Override
-    public void editBus(BusEditRequest request, UUID busId) {
+    public void editBus(BusEditRequest request) {
 
-        var bus = this.busRepository.findByIdOrThrow(busId);
+        var bus = this.busRepository.findByIdOrThrow(UUID.fromString(request.id()));
         var editedBus = this.busMapper.editBus(request, bus);
         this.busRepository.save(editedBus);
     }

@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.tracker.ubus.ubus.Components.Buses.BusPreference.DTO.Request.BusPreferenceDTO;
 import org.tracker.ubus.ubus.Components.Buses.BusPreference.DTO.Response.BusPreferenceResponse;
 import org.tracker.ubus.ubus.Components.Buses.BusPreference.Entity.BusPreference;
 import org.tracker.ubus.ubus.Components.Buses.BusPreference.Service.Interface.IBusPreferenceService;
@@ -31,17 +32,17 @@ public class BusPreferenceController {
      * HTTP Method: POST
      * Endpoint: /busPreferences/add
      *
-     * @param strRoute the bus route as a string label (e.g., "Soweto Campus to Doornfontein Campus")
+     * @param busPreferenceDTO the DTO containing the bus route information (Expected newRoute param)
      * @return ResponseEntity containing the created BusPreference entity with:
      *         - id: UUID identifier for the preference
      *         - user: The associated user
-     *         - route: The Route enum value (SWC_DFC, DFC_SWC, APK_APB, APB_APK, APB_DFC, DFC_APB, APK_SWC, SWC_APK)
+     *        route: The Route enum value (DFC_TO_APB_APK, APK_TO_APB_DFC, SWC_TO_APK_APB, APB_TO_APK_SWC,
+     *      *           SWC_TO_DFC, DFC_TO_SWC, APK_TO_APB_JBS, JBS_TO_APB_APK)
      */
     @PostMapping("/add")
-    public ResponseEntity<BusPreferenceResponse> addBusPreference(@RequestParam String strRoute)
+    public ResponseEntity<BusPreferenceResponse> addBusPreference(@RequestBody BusPreferenceDTO busPreferenceDTO)
     {
-        Route route = Route.valueOf(strRoute);
-        BusPreferenceResponse busPreferenceResponse = busPreferenceService.addPreference(route);
+        BusPreferenceResponse busPreferenceResponse = busPreferenceService.addPreference(busPreferenceDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(busPreferenceResponse);
     }
 
@@ -49,11 +50,11 @@ public class BusPreferenceController {
      * Retrieves the current user's bus route preferences.
      *
      * HTTP Method: GET
-     * Endpoint: /busPreferences/view-preferences
+     * Endpoint: /busPreferences/view
      *
      * @return ResponseEntity containing a list of the user's bus route preferences as string labels
      */
-    @GetMapping("/view-preferences")
+    @GetMapping("/view")
     public ResponseEntity<BusPreferenceResponse> viewPreferences()
     {
         BusPreferenceResponse busPreferenceResponse = busPreferenceService.viewPreferences();
@@ -66,20 +67,17 @@ public class BusPreferenceController {
      * HTTP Method: PUT
      * Endpoint: /busPreferences/edit
      *
-     * @param strOldRoute the current bus route as a string label to be replaced
-     * @param strNewRoute the new bus route as a string label
+     * @param busPreferenceDTO the DTO containing the old and new bus routes (Expected oldRoute and newRoute params)
      * @return ResponseEntity containing the updated BusPreference entity with:
      *         - id: UUID identifier for the preference
      *         - user: The associated user
      *         - route: The updated Route enum value
      */
     @PutMapping("/edit")
-    public ResponseEntity<BusPreferenceResponse> editPreference(@RequestParam String strOldRoute,
-                                                        @RequestParam String strNewRoute)
+    public ResponseEntity<BusPreferenceResponse> editPreference(@RequestBody BusPreferenceDTO busPreferenceDTO)
     {
-        Route oldRoute = Route.valueOf(strOldRoute);
-        Route newRoute = Route.valueOf(strNewRoute);
-        BusPreferenceResponse busPreferenceResponse = busPreferenceService.editPreference(oldRoute, newRoute);
+
+        BusPreferenceResponse busPreferenceResponse = busPreferenceService.editPreference(busPreferenceDTO);
         return ResponseEntity.status(HttpStatus.OK).body(busPreferenceResponse);
     }
 
@@ -89,14 +87,13 @@ public class BusPreferenceController {
      * HTTP Method: DELETE
      * Endpoint: /busPreferences/delete
      *
-     * @param strOldRoute the bus route as a string label to be deleted
+     * @param busPreferenceDTO the DTO containing the bus route to be deleted (Expected oldRoute param)
      * @return ResponseEntity with no content (HTTP 204)
      */
     @DeleteMapping("/delete")
-    public ResponseEntity<BusPreference> deletePreference(@RequestParam String strOldRoute)
+    public ResponseEntity<BusPreference> deletePreference(@RequestBody BusPreferenceDTO busPreferenceDTO)
     {
-        Route oldRoute = Route.valueOf(strOldRoute);
-        busPreferenceService.deletePreference(oldRoute);
+        busPreferenceService.deletePreference(busPreferenceDTO);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
     }
 }

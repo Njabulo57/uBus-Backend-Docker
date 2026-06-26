@@ -13,11 +13,11 @@ public interface IBusService {
 
     BusRegisterResponse registerBus(BusRegisterRequest request);
 
-    void editBusActivityStatus(UUID busId, String activityStatus);
+    void editBusActivityStatus(String busId, String activityStatus);
 
     void deleteBus(UUID busId);
 
-    void editBus(BusEditRequest request, UUID busId);
+    void editBus(BusEditRequest request);
 
     List<BusAdminViewResponse> viewBuses();
 }

@@ -26,6 +26,7 @@ import org.tracker.ubus.ubus.Components.TokenBlacklist.Service.Impl.BlacklistedT
 import org.tracker.ubus.ubus.Components.Users.PendingAdmin.PendingAdminRepository.PendingAdminRepository;
 import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole;
+import org.tracker.ubus.ubus.Components.Users.User.Enum.UserStatus;
 import org.tracker.ubus.ubus.Components.Users.User.Repository.UserRepository;
 import java.time.LocalDateTime;
 
@@ -80,36 +81,14 @@ public class AuthService extends BaseService implements IAuthService {
 
         var userRole = UserRole.fromLabel(registerRequest.role());
 
-        //check if the user already exists
-        var userExists = false;
         if(userRole != ADMIN)
-            userExists = this.userRepository.existsByEmail(registerRequest.email());
-
-        if(userExists)
-            throw new DuplicateEmailException("Email Already Exists");
+            validateUserDoesNotExist(registerRequest.email());
 
         // create the user entity
         var userEntity = this.authMapper.toEntity(registerRequest, userRole);
 
         // set the user status based on the user role
-        var userStatus = switch (userRole) {
-
-            case STUDENT -> {
-                this.validateIfStudent(registerRequest.email(), userRole); // validate the student's information
-                yield EMAIL_APPROVAL_PENDING;
-            }
-            case ADMIN -> {
-                validateAdminInvitation(registerRequest.inviteCode(), userEntity);
-                yield ACTIVE;
-            }
-
-            case STAFF -> EMAIL_APPROVAL_PENDING;
-
-            case DRIVER -> ADMIN_APPROVAL_PENDING;
-
-            default -> throw new RuntimeException("Invalid User Role");
-        };
-
+        var userStatus = determineUserStatus(registerRequest, userRole, userEntity);
         userEntity.setStatus(userStatus); //set the status of the user
 
 
@@ -117,8 +96,10 @@ public class AuthService extends BaseService implements IAuthService {
         userEntity.setPassword(encodedPassed); //add the encoded version of the password
         var savedUser = this.userRepository.save(userEntity); //save the user.
 
-        //send the user a verification method according to their type
-        this.verificationDispatcher.dispatchRegistrationOTP(savedUser);
+        //check if the user requires verification
+        if(needsVerification(savedUser))
+            this.verificationDispatcher.dispatchRegistrationOTP(savedUser);
+
         return this.authMapper.toRegisterDTO(savedUser.getRole());
     }
 
@@ -158,6 +139,64 @@ public class AuthService extends BaseService implements IAuthService {
         String token = authHeader.substring(7);
         long remainingMilliseconds = jwtService.getRemainingExpiration(token);
         blacklistedTokenService.blacklist(token, remainingMilliseconds);
+    }
+
+
+
+    /**
+     * Validates that a user with the given email and role does not already exist in the system.
+     *
+     * @param email The email address to check for existence.
+     * @throws DuplicateEmailException if a user with the specified email already exists and the role is not ADMIN.
+     */
+    private void validateUserDoesNotExist(String email) throws DuplicateEmailException {
+
+
+        if(this.userRepository.existsByEmail(email))
+            throw new DuplicateEmailException("Email Already Exists");
+    }
+
+
+    /**
+     * Determines and returns the user status based on the provided register request, user role, and user entity.
+     *
+     * @param registerRequest the object containing registration details such as email and invite code.
+     * @param userRole the role of the user, such as STUDENT, ADMIN, STAFF, or DRIVER.
+     * @param userEntity the user entity containing existing user data for validation.
+     * @return the status of the user based on the role and validation logic. Possible values include
+     *         EMAIL_APPROVAL_PENDING, ADMIN_APPROVAL_PENDING, ACTIVE, or exceptions for invalid roles.
+     * @throws RuntimeException if an invalid user role is provided.
+     */
+    private UserStatus determineUserStatus(RegisterRequest registerRequest, UserRole userRole, User userEntity) {
+        return switch (userRole) {
+
+            case STUDENT -> {
+                this.validateIfStudent(registerRequest.email(), userRole); // validate the student's information
+                yield EMAIL_APPROVAL_PENDING;
+            }
+            case ADMIN -> {
+                validateAdminInvitation(registerRequest.inviteCode(), userEntity);
+                yield ACTIVE;
+            }
+
+            case STAFF -> EMAIL_APPROVAL_PENDING;
+
+            case DRIVER -> ADMIN_APPROVAL_PENDING;
+
+            default -> throw new RuntimeException("Invalid User Role");
+        };
+
+    }
+
+
+    /**
+     * Determines if the specified user requires verification based on their status.
+     *
+     * @param user the user to check for verification requirements, must not be null
+     * @return true if the user's status is EMAIL_APPROVAL_PENDING, false otherwise
+     */
+    private boolean needsVerification(User user) {
+        return user.getStatus() == EMAIL_APPROVAL_PENDING;
     }
 
 
@@ -246,6 +285,7 @@ public class AuthService extends BaseService implements IAuthService {
         this.pendingAdminRepository.delete(pendingAdmin);
         this.oneTimePasswordRepository.delete(oneTimePassword);
     }
+
 
 }
 

@@ -31,7 +31,6 @@ dependencies {
     implementation 'net.datafaker:datafaker:2.4.4'
 
     implementation 'org.springframework.security:spring-security-messaging'
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
 
 
     // JWT Dependencies
@@ -76,3 +75,4 @@ javadoc {
 tasks.named('test') {
     useJUnitPlatform()
 }
+

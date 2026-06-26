@@ -8,7 +8,7 @@ import org.tracker.ubus.ubus.Components.OneTimePassword.DTOs.Requests.OtpValidat
 public interface IOneTimePasswordService extends AuthTokenGenerationService {
 
 
-    boolean validateOTP(OtpValidationRequest otpValidationRequest);
+    boolean validateOTP(String otpValidationRequest);
 
 
 

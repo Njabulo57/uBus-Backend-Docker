@@ -41,6 +41,10 @@ public class Bus extends TimeAuditableEntity {
     @Column(nullable = false)
     private int capacity;
 
+
+    @Column(nullable = false, unique = true)
+    private String registrationNumber;
+
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private BusType type;

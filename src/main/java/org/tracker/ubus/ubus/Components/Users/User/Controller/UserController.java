@@ -67,12 +67,13 @@ class UserController {
      * HTTP Method: POST
      * Endpoint: /users/forgot-password
      *
-     * @param email the email address of the user requesting password reset
+     * @param editUserDTO the user data containing:
+     *        - email: The user's email address
      */
     @PostMapping("/forgot-password")
-    @ResponseStatus(HttpStatus.CONTINUE)
-    public void forgotPassword(@RequestParam String email) {
-        userService.forgotPassword(email);
+    @ResponseStatus(HttpStatus.OK)
+    public void forgotPassword(@RequestBody EditUserDTO editUserDTO) {
+        userService.forgotPassword(editUserDTO.getEmail());
     }
 
     /**
@@ -81,16 +82,15 @@ class UserController {
      * HTTP Method: PUT
      * Endpoint: /users/valid-forgot-password
      *
-     * @param email the email address of the user
-     * @param otp the one-time password sent to the user's email
-     * @param newPassword the new password to set for the user
+     * @param editUserDTO the user data containing:
+     *        - email: The user's email address
+     *        - otp: The one-time password sent to the user's email
+     *        - newPassword: The new password to be set
      */
     @PutMapping("/valid-forgot-password")
     @ResponseStatus(HttpStatus.OK)
-    public void validForgotPassword(@RequestParam String email,
-                                    @RequestParam String otp,
-                                    @RequestParam String newPassword) {
-        userService.changePassword(email, otp, newPassword);
+    public void validForgotPassword(@RequestBody EditUserDTO editUserDTO) {
+        userService.changePassword(editUserDTO.getEmail(), editUserDTO.getNewPassword(), editUserDTO.getOtp());
     }
 
     /**
@@ -99,12 +99,12 @@ class UserController {
      *
      *       HTTP Method: PUT
      *       Endpoint: /users/deactivate-account
-     * @param password the password of the user
+     * @param editUserDTO the user data containing the old password
      */
     @PutMapping("/deactivate-account")
     @ResponseStatus(HttpStatus.OK)
-    public void deactivateAccount(@RequestParam String password) {
-        userService.deactivateAccount(password);
+    public void deactivateAccount(@RequestBody EditUserDTO editUserDTO) {
+        userService.deactivateAccount(editUserDTO.getOldPassword());
     }
 
 }

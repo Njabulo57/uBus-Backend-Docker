@@ -10,10 +10,10 @@ import java.util.UUID;
 public record BusAdminViewResponse(
         UUID id,
         String busName,      // eg BUS-101
-        String registrationNumber,  // eg GP 229-441
         String model,
         int capacity,
         String type,
+        String registrationNumber,
         String operationalStatus,
         String activityStatus,
         String currentDriver,

@@ -24,6 +24,9 @@ public record BusRegisterRequest(
         )
         String operationalStatus,
 
+        @NotBlank(message = "Registration number is required")
+        String registrationNumber,
+
         @NotBlank(message = "Activity status is required")
         @Pattern(regexp = "STATIONERY|LOADING PASSENGERS|ON TRIP|BREAK",
                 flags = Pattern.Flag.CASE_INSENSITIVE,

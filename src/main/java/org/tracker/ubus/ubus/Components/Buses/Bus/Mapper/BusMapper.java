@@ -12,7 +12,7 @@ import org.tracker.ubus.ubus.Components.Buses.Bus.Enum.BusType;
 import org.tracker.ubus.ubus.Components.Buses.Bus.Repository.Projections.DriverWithOrWithoutAssignmentView;
 
 import java.util.List;
-import java.util.function.Predicate;
+
 
 @Component
 public class BusMapper {
@@ -91,10 +91,10 @@ public class BusMapper {
         return BusAdminViewResponse.builder()
                 .id(bus.getId())
                 .busName(bus.getName())
-                .registrationNumber("Registration")
                 .model(bus.getModel())
                 .capacity(bus.getCapacity())
                 .type(type)
+                .registrationNumber(bus.getRegistrationNumber())
                 .operationalStatus(operationalStatus)
                 .activityStatus(activityStatus)
                 .currentDriver(currentDriver)
@@ -104,10 +104,5 @@ public class BusMapper {
                 .build();
     }
 
-    private int getSpecificBusTotal(List<Bus> buses, Predicate<Bus> condition) {
-        return (int) buses.stream()
-                .filter(condition)
-                .count();
-    }
 
 }

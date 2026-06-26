@@ -7,13 +7,15 @@ import java.util.Arrays;
 @Getter
 public enum BusType {
 
-    ELECTRIC("Electric"),
-    COMBUSTION("Combustion");
+    ELECTRIC("Electric", "UJ EV BUS"),
+    COMBUSTION("Combustion", "STABUS");
 
     private final String label;
+    private final String description;
 
-    BusType(String label) {
+    BusType(String label, String description) {
         this.label = label;
+        this.description = description;
     }
 
     public static BusType fromLabel(String value) {

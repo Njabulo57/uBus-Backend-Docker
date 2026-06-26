@@ -60,16 +60,18 @@ public class BusController {
     /**
      * Updates the activity status of a specific bus.
      *
-     * @param busId          the unique identifier of the bus whose activity status is to be updated.
-     * @param activityStatus the new activity status for the bus. Valid values include:
+     * Request body variables:
+     * id: the unique identifier of the bus to be updated.
+     * activityStatus: the new activity status of the bus.
+     * Valid values are "STATIONERY", "LOADING PASSENGERS", "ON TRIP", or "BREAK".
      *                       "STATIONERY", "LOADING PASSENGERS", "ON TRIP", or "BREAK".
      * {bus/edit-bus-activity-status}
      * HTTP Method: PUT
      */
-    @PutMapping("/edit-bus-activity-status/{busId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void editBusActivityStatus(@PathVariable UUID busId, @RequestParam String activityStatus) {
-        this.busService.editBusActivityStatus(busId, activityStatus);
+    @PutMapping("/edit-bus-activity-status")
+    @ResponseStatus(HttpStatus.OK)
+    public void editBusActivityStatus(@RequestBody BusEditRequest busEditRequest) {
+        this.busService.editBusActivityStatus(busEditRequest.id(), busEditRequest.activityStatus());
     }
 
 
@@ -92,19 +94,28 @@ public class BusController {
     /**
      * Edits the details of an existing bus in the system.
      *
+     * Request body variables:
+     * id: the unique identifier of the bus to be edited.
+     * name: the new name of the bus.
+     * model: the updated model of the bus.
+     * type: the updated bus type. Valid values are "ELECTRIC" or "COMBUSTION".
+     * operationalStatus: the new operational status of the bus.
+     * Valid values are "OPERATIONAL", "MAINTENANCE", or "OUT OF SERVICE".
+     * activityStatus: the new activity status of the bus.
+     * Valid values are "STATIONERY", "LOADING PASSENGERS", "ON TRIP", or "BREAK".
+     * capacity: the updated passenger capacity of the bus.
+     * toRoute: the new route assigned to the bus.
+     *
      * @param busEditRequest the request containing the updated details of the bus.
      *                       It must adhere to the validation constraints defined in {@link BusEditRequest}.
-     * @param busId          the unique identifier of the bus to be edited.
-     * {bus/edit-bus} 
-     * takes the busId as path variable.                     
+     * Endpoint: /busses/edit-bus/{busId}
      * HTTP Method: PUT
-     * Response Code: 204 No Content
+     * Response Code: 200 OK
      */
     @PutMapping("/edit-bus/{busId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void editBus(@RequestBody @Valid BusEditRequest busEditRequest,
-                        @PathVariable UUID busId) {
-        this.busService.editBus(busEditRequest , busId);
+    @ResponseStatus(HttpStatus.OK)
+    public void editBus(@RequestBody BusEditRequest busEditRequest) {
+        this.busService.editBus(busEditRequest);
     }
 
 

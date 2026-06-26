@@ -45,6 +45,10 @@ public class SecurityConfig {
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/one-time-password/**").permitAll()
 
+                        .requestMatchers("/users/forgot-password").permitAll()
+                        .requestMatchers("/users/valid-forgot-password").permitAll()
+
+
                         .requestMatchers("/busPreferences/**")
                         .hasAnyRole(STAFF.getLabel(), STUDENT.getLabel(), SUPER_ADMIN.getLabel())
 

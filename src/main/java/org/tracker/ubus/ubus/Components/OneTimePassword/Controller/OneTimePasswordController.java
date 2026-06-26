@@ -20,7 +20,7 @@ class OneTimePasswordController {
     @PostMapping("/validate")
     @ResponseStatus(HttpStatus.OK)
     public boolean validateOTP(@RequestBody @Valid OtpValidationRequest otpValidationRequest) {
-        return oneTimePasswordService.validateOTP(otpValidationRequest);
+        return oneTimePasswordService.validateOTP(otpValidationRequest.otp());
     }
 
 

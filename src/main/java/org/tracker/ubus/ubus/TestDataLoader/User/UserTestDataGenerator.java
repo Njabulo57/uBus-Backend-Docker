@@ -34,9 +34,9 @@ public class UserTestDataGenerator implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
 
     // Defaults — override via application.properties or CLI args
-    @Value("${seed.users.students:50000}") private int defaultStudents;
-    @Value("${seed.users.admins:70}")    private int defaultAdmins;
-    @Value("${seed.users.staff:10000}")    private int defaultStaff;
+    @Value("${seed.users.students:2000}") private int defaultStudents;
+    @Value("${seed.users.admins:50}")    private int defaultAdmins;
+    @Value("${seed.users.staff:700}")    private int defaultStaff;
     @Value("${seed.users.drivers:100}")   private int defaultDrivers;
     @Value("${seed.users.force:false}")  private boolean defaultForce;
     @Value("${seed.users.super-admin:20}")   private int defaultSuperAdmin;
