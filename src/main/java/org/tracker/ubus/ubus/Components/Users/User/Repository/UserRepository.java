@@ -9,6 +9,8 @@ import org.tracker.ubus.ubus.Components.Auth.Exception.Internal.UserNotFoundExce
 import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.UserStatus;
+
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,6 +19,10 @@ import java.util.UUID;
 @Repository
 public interface UserRepository extends JpaRepository<User, UUID> {
 
+
+
+
+    Optional<User> findByNfcCode(String nfcCode);
 
     Optional<User> findByEmail(String email);
 
@@ -30,10 +36,15 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     List<User> findByStatus(UserStatus status);
     List<User> findByRole(UserRole role);
 
+    List<User> findByIdIn(Collection<UUID> ids);
+
     List<User> findByRoleIn(List<UserRole> roles);
 
-
     List<User> findByRoleInAndStatus(List<UserRole> role, UserStatus status);
+
+    List<User> findByRoleAndStatus(UserRole role, UserStatus status);
+
+    boolean existsByEmail(String email);
 
 
     default User findByEmailOrThrow(String email) throws UserNotFoundException {
@@ -46,5 +57,10 @@ public interface UserRepository extends JpaRepository<User, UUID> {
                 .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
     }
 
-    boolean existsByEmail(String email);
+    default User findByNfcCodeOrThrow(String nfcCode) {
+        return this.findByNfcCode(nfcCode)
+                .orElseThrow(() -> new UserNotFoundException("User not found with nfcCode: " + nfcCode));
+
+    }
+
 }

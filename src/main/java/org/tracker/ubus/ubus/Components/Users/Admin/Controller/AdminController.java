@@ -1,11 +1,7 @@
 package org.tracker.ubus.ubus.Components.Users.Admin.Controller;
 
 import lombok.RequiredArgsConstructor;
-
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
-import org.tracker.ubus.ubus.Components.Users.Admin.DTO.Response.DriverActivePage;
 import org.tracker.ubus.ubus.Components.Users.Admin.DTO.Response.DriverActiveResponseDTO;
 import org.tracker.ubus.ubus.Components.Users.Admin.DTO.Response.DriverPendingResponseDTO;
 import org.tracker.ubus.ubus.Components.Users.Admin.Service.Interface.IAdminService;
@@ -33,7 +29,7 @@ public class AdminController {
      * awaiting verification or activation in the system.
      *
      * @return a collection of {@link DriverPendingResponseDTO} objects representing the pending drivers.
-     * {admins/get-pending-drivers}
+     * {admins/getFromTripSimulationCache-pending-drivers}
      */
     @GetMapping("/get-pending-drivers")
     public Collection<DriverPendingResponseDTO> findPendingDrivers() {
@@ -41,22 +37,10 @@ public class AdminController {
     }
 
 
-    /**
-     * Retrieves a paginated list of active drivers in the system.
-     * This endpoint allows administrators to view active drivers with
-     * pagination support for efficient data management.
-     *
-     * @param pageable the pagination information, including page number, page size,
-     *                 and sorting options. Defaults to a page size of 15 if not specified.
-     * @return a {@code DriverActivePage} object containing a collection of active drivers
-     *         and pagination metadata such as total pages, total elements, current page number,
-     *         and page size
-     * {admins/get-active-drivers}
-     * since its a pagable the endpoint ends with page?={page number}&size={page size}
-     */
+
     @GetMapping("/get-active-drivers")
-    public DriverActivePage findActiveDrivers(@PageableDefault(size = 15) Pageable pageable) {
-        return adminService.getActiveDrivers(pageable);
+    public Collection<DriverActiveResponseDTO> findActiveDrivers() {
+        return adminService.getActiveDrivers();
     }
 
 

@@ -5,10 +5,10 @@ import org.springframework.context.annotation.Configuration;
 import org.tracker.ubus.ubus.Components.Buses.BusTracking.DTO.Requests.DriverCurrentLocationMessage;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Entity.Trip;
 
+import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 @Configuration
 public class BusTrackingConfiguration {
@@ -18,7 +18,7 @@ public class BusTrackingConfiguration {
      * This bean is the central buffer for incoming driver location updates before they are
      * batched and persisted to the database. Every time a driver sends a location update
      * during an active trip, the message is added to their bus's dedicated queue.
-     * Key: Bus ID (UUID) Value: BlockingQueue of DriverCurrentLocationMessage
+     * Key: tripID (UUID) Value: BlockingQueue of DriverCurrentLocationMessage
      * Each bus gets its own queue, providing isolation between buses.
      * Queue is bounded to prevent memory exhaustion (max size defined in service).
      * When queue is full, the oldest message is dropped and newest is added.
@@ -27,27 +27,48 @@ public class BusTrackingConfiguration {
      * @return a new ConcurrentHashMap that maps bus UUID to its blocking queue of location messages
      */
     @Bean
-    public ConcurrentHashMap<UUID, BlockingQueue<DriverCurrentLocationMessage>> busQueues() {
+    public ConcurrentHashMap<UUID, ConcurrentLinkedDeque<DriverCurrentLocationMessage>> busQueues() {
         return new ConcurrentHashMap<>();
     }
 
+
     /**
-     * Tracks whether a bus is currently being flushed to prevent concurrent flush operations.
+     * Creates a thread-safe set to track UUIDs of buses currently being monitored for proximity.
+     * This set is used to manage buses that are actively monitored for proximity
+     * calculations, such as determining nearby buses or geographic clustering.
      *
-     * @return ConcurrentHashMap mapping bus ID to an atomic boolean flush flag
+     * @return a thread-safe set of UUIDs representing the buses being monitored for proximity
      */
     @Bean
-    public ConcurrentHashMap<UUID, AtomicBoolean> busLastFlush() {
+    Set<UUID> busMonitoringForProximity() {
+        return ConcurrentHashMap.newKeySet();
+    }
+
+
+    /**
+     * Creates a thread-safe map for storing the route coordinates of buses.
+     * This map associates each bus, identified by a unique UUID, with an array of double values
+     * representing its geographic route coordinates.
+     *
+     * @return a new ConcurrentHashMap where the key is the UUID of a trip
+     *         and the value is an array of doubles representing the bus's route coordinates.
+     */
+    @Bean
+    public ConcurrentHashMap<UUID, double[]> busRouteCoordinates() {
         return new ConcurrentHashMap<>();
     }
 
+
     /**
-     * Caches the active trip for each bus to avoid database lookups on every location update.
+     * Creates a thread-safe map that holds the details of all active trips.
+     * This map associates each trip with its corresponding {@link Trip} object,
+     * identified by a unique UUID. The map is designed to allow concurrent access,
+     * ensuring thread safety in a multi-threaded environment.
      *
-     * @return ConcurrentHashMap mapping bus ID to active trip entity
-     */
+     * @return a new ConcurrentHashMap where the key is a UUID representing the trip ID
+     *         and the value is a*/
     @Bean
-    public ConcurrentHashMap<UUID, Trip> busTripCache() {
+    public ConcurrentHashMap<UUID, Trip> tripCacheMap() {
         return new ConcurrentHashMap<>();
     }
 }

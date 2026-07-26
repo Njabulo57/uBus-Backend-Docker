@@ -10,6 +10,7 @@ import java.util.UUID;
 public record RegisterSuccessfulResponse(
         String otpMessage,
         String role,
+        UUID id,
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
         LocalDateTime createdAt) {
 }

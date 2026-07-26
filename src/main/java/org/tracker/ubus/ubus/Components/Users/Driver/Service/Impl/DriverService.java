@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Repository.BusAssignmentRepository;
-import org.tracker.ubus.ubus.Components.Buses.BusRoute.Repository.BusRouteRepository;
 import org.tracker.ubus.ubus.Components.Users.Driver.DTO.Response.BusAssignedResponse;
 import org.tracker.ubus.ubus.Components.Users.Driver.Mappers.DriverMapper;
 import org.tracker.ubus.ubus.Components.Users.Driver.Service.Interface.IDriverService;
@@ -17,7 +16,6 @@ public class DriverService implements IDriverService {
 
 
     private final DriverMapper driverMapper;
-    private final BusRouteRepository busRouteRepository;
     private final BusAssignmentRepository busAssignmentRepository;
 
 

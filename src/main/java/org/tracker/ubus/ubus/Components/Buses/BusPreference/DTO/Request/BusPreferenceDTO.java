@@ -1,5 +1,6 @@
 package org.tracker.ubus.ubus.Components.Buses.BusPreference.DTO.Request;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,6 +11,16 @@ import lombok.Setter;
 @Getter
 @Setter
 public class BusPreferenceDTO {
-    String oldRoute;
-    String newRoute;
+
+    @NotBlank(message = "From location cannot be blank")
+    String from;
+
+    @NotBlank(message = "To location cannot be blank")
+    String to;
+
+
+    String oldFrom;
+    String oldTo;
 }
+
+

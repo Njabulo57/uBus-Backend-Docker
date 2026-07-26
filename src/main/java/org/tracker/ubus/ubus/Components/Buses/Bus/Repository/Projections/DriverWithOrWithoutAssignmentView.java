@@ -7,6 +7,6 @@ import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
 public interface DriverWithOrWithoutAssignmentView {
 
     User getDriver();
-
+    Boolean getAssigned();
     Bus getBus();
 }

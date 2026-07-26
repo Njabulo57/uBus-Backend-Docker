@@ -55,6 +55,9 @@ public class User extends TimeAuditableEntity {
     @Enumerated(value = EnumType.STRING)
     private UserStatus status;
 
+    @Column(nullable = true, unique = true)
+    private String nfcCode;
+
     public String getStudentNumber()
             throws UserNotStudentException {
         if (UserRole.STUDENT.equals(this.role))
@@ -119,6 +122,6 @@ public class User extends TimeAuditableEntity {
     @Override
     public int hashCode() {
         return Objects.hash(id, firstname, lastname,
-                email, password, role);
+                email, role);
     }
 }

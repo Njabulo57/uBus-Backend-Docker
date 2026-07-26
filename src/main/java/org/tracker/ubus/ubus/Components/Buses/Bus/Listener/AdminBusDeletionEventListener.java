@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.tracker.ubus.ubus.Components.Audit.AuditService;
-import org.tracker.ubus.ubus.Components.Buses.Bus.Events.AdminBusDeletionEvent;
+import org.tracker.ubus.ubus.Components.Buses.Bus.Events.AdminBusDeletionAuditEvent;
 
 @Slf4j
 @Component
@@ -20,7 +20,7 @@ public class AdminBusDeletionEventListener {
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void onAdminDeleteBusEvent(AdminBusDeletionEvent event) {
+    public void onAdminDeleteBusEvent(AdminBusDeletionAuditEvent event) {
         log.info("Received Admin Bus Deletion Event");
 
         log.info("Admin Bus Deletion Event running on Thread: {}", Thread.currentThread());

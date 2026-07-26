@@ -10,9 +10,11 @@ import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Entity.BusAssignment
 import org.tracker.ubus.ubus.Components.Trips.Trip.Entity.Trip;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Enum.TripStatus;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Exceptions.TripNotFoundException;
+import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.Route;
 
 import javax.swing.text.html.Option;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -21,13 +23,40 @@ import java.util.UUID;
 public interface TripRepository extends JpaRepository<Trip, UUID> {
 
 
+    // Check if any trips exist between two dates
+    boolean existsByDepartureTimeBetween(LocalDateTime start, LocalDateTime end);
+
+    long countByDepartureTimeBetween(LocalDateTime start, LocalDateTime end);
+
+
+    boolean existsByBusAssignmentAndDepartureTimeBetween(
+            BusAssignment busAssignment,
+            LocalDateTime start,
+            LocalDateTime end
+    );
+
+
+    List<Trip> findByBusAssignmentAndStatus(BusAssignment busAssignment, TripStatus status);
+
+
+
+    // Find trips by bus assignment and departure time between
+    List<Trip> findByBusAssignmentAndDepartureTimeBetween(
+            BusAssignment busAssignment,
+            LocalDateTime start,
+            LocalDateTime end
+    );
+
     @Query("""
         SELECT trip FROM Trip trip
         LEFT JOIN FETCH trip.busAssignment ba
+        LEFT JOIN FETCH ba.driver
         LEFT JOIN FETCH ba.bus
+        LEFT JOIN FETCH trip.schedule s
         WHERE trip.id = :id
     """)
     Optional<Trip> findByIdFetch(@Param("id") UUID id);
+
 
     @Query("""
         SELECT t  FROM Trip t
@@ -51,6 +80,19 @@ public interface TripRepository extends JpaRepository<Trip, UUID> {
 
 
     @Query("""
+       SELECT DISTINCT t FROM Trip t
+       LEFT JOIN FETCH t.busAssignment ba
+       JOIN FETCH ba.driver d
+       WHERE ba = :busAssignment
+       AND t.status IN :statuses
+    """)
+    List<Trip> findByBusAssignmentAndStatusIn(
+            @Param("busAssignment") BusAssignment busAssignment,
+            @Param("statuses") List<TripStatus> statuses
+    );
+
+
+    @Query("""
         SELECT t FROM Trip t
         LEFT JOIN FETCH t.busAssignment ba
         LEFT JOIN FETCH ba.driver
@@ -60,9 +102,12 @@ public interface TripRepository extends JpaRepository<Trip, UUID> {
     List<Trip> findByRoute(@Param("route") Route ute);
 
     @Query("""
-        SELECT t FROM Trip t
+        SELECT DISTINCT t FROM Trip t
         LEFT JOIN FETCH t.busAssignment ba
+        LEFT JOIN FETCH t.schedule s
+        lEFT JOIN FETCH ba.driver
         LEFT JOIN FETCH ba.bus b
+        LEFT JOIN FETCH t.tripUsers tu
         WHERE t.status = :statusParam
     """)
     List<Trip> findByStatus(@Param("statusParam") TripStatus status);
@@ -106,4 +151,34 @@ public interface TripRepository extends JpaRepository<Trip, UUID> {
                 .orElseThrow(() -> new TripNotFoundException("Trip with id " + id + " not found"));
     }
 
+    List<Trip> findByCreatedAtAfter(LocalDateTime createdAt);
+
+    @Query("""
+    SELECT t
+    FROM Trip t
+    LEFT JOIN FETCH t.schedule s
+    WHERE t.schedule IS NOT NULL
+    AND (:dateTime IS NULL OR t.createdAt > :dateTime)
+    """)
+    List<Trip> findAllWithScheduleFetched(@Param("dateTime") LocalDateTime dateTime);
+
+    @Query("""
+    SELECT t
+    FROM Trip t
+    WHERE t.busAssignment = :busAssignment
+    ORDER BY t.createdAt DESC
+    LIMIT 1
+    """)
+    Trip findLatestTripByBusAssignment(@Param("busAssignment") BusAssignment busAssignment);
+
+    @Query("""
+    SELECT COUNT(t)
+    FROM Trip t
+    JOIN t.busAssignment ba
+    WHERE ba.driver = :driver
+    AND t.status IN ('ACTIVE','CREATED')
+    """)
+    int countActiveTripsByDriver(@Param("driver") User driver);
+
+    List<Trip> findByDepartureTimeBetween(LocalDateTime startOfDay, LocalDateTime endOfDay);
 }

@@ -6,5 +6,7 @@ import java.util.UUID;
 
 @Builder
 public record DriverActiveResponseDTO(UUID driverId, String firstName,
-                                      String lastName, String email, String phoneNumber) {
+                                      String lastName, String email,
+                                      String phoneNumber, boolean isAssigned,
+                                      DriverBusResponse busAssignedTo) {
 }

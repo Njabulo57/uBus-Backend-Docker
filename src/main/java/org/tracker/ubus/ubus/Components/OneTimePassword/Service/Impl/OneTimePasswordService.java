@@ -8,9 +8,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.tracker.ubus.ubus.Components.Audit.Service.TokenCredentialService;
-import org.tracker.ubus.ubus.Components.EventHandler.Publisher.MultiEvenPublisher;
+import org.tracker.ubus.ubus.Components.Auth.Events.OtpEmailVerificationEvent;
+import org.tracker.ubus.ubus.Components.Shared.EventHandler.Publisher.MultiEvenPublisher;
 import org.tracker.ubus.ubus.Components.OneTimePassword.DTOs.Internal.OtpInternalCarrier;
-import org.tracker.ubus.ubus.Components.OneTimePassword.DTOs.Requests.OtpValidationRequest;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Entity.OneTimePassword;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Events.WelcomeEmailEvent;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Exceptions.OneTimePasswordExpiredException;
@@ -61,7 +61,7 @@ public class OneTimePasswordService extends TokenCredentialService implements IO
             OneTimePassword oneTimePassword = this.oneTimePasswordRepository.findByUserOrThrow(userId);
 
             if(!oneTimePassword.isExpired()) {
-                //get the time between now and the expiration time in minutes
+                //getFromTripSimulationCache the time between now and the expiration time in minutes
                 long expiresIn = Duration.between(LocalDateTime.now(), oneTimePassword.getExpiresAt()).toMinutes();
                 throw new OneTimePasswordExistsException("Valid OPT already exists.Please Use It Before It Expires", expiresIn);
             }else
@@ -85,7 +85,7 @@ public class OneTimePasswordService extends TokenCredentialService implements IO
             OneTimePassword oneTimePassword = this.oneTimePasswordRepository.findByPendingAdmin(email);
             if(!oneTimePassword.isExpired()) {
 
-                //get the time between now and the expiration time in minutes
+                //getFromTripSimulationCache the time between now and the expiration time in minutes
                 long expiresIn = Duration.between(LocalDateTime.now(), oneTimePassword.getExpiresAt()).toMinutes();
                 throw new OneTimePasswordExistsException("Valid OPT already exists.Please Use It Before It Expires", expiresIn);
             }else {
@@ -131,6 +131,18 @@ public class OneTimePasswordService extends TokenCredentialService implements IO
         return true;
     }
 
+
+
+    @Override
+    @Transactional
+    public void sendOTP(UUID id) {
+        var user = this.userRepository.findByIdOrThrow(id);
+        var otp = generateOTP(user);
+
+
+        this.multiEvenPublisher.publish(() -> new OtpEmailVerificationEvent(this,user, otp));
+
+    }
 
 
     @Override

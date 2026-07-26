@@ -1,7 +1,9 @@
 package org.tracker.ubus.ubus.Components.Trips.Trip.Service.Interface;
 
+
 import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Request.TripEndRequest;
 import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Request.TripRegisterCoordinates;
+import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Request.TripStartRequest;
 import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Response.ActiveTripResponse;
 
 import java.util.List;
@@ -9,15 +11,14 @@ import java.util.UUID;
 
 public interface ITripService {
 
-    void startTrip(UUID tripId);
+    void startTrip(TripStartRequest tripStartRequest);
 
-    void registerTrip(TripRegisterCoordinates tripRegisterCoordinates);
+    UUID registerTrip(TripRegisterCoordinates tripRegisterCoordinates);
 
     void endTrip(TripEndRequest endTripRequest);
 
-    void enterBus(UUID tripId);
+    int handleNfcTap(UUID tripId, String nfcCode);
 
-    void exitBus(UUID tripId);
 
     List<ActiveTripResponse> getActiveTrips();
 

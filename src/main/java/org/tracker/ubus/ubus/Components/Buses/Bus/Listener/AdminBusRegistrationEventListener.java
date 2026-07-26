@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.tracker.ubus.ubus.Components.Audit.AuditService;
-import org.tracker.ubus.ubus.Components.Buses.Bus.Events.AdminBusRegistrationEvent;
+import org.tracker.ubus.ubus.Components.Buses.Bus.Events.AdminBusRegistrationAuditEvent;
 
 
 @Slf4j
@@ -20,7 +20,7 @@ public class AdminBusRegistrationEventListener {
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void onAdminBusRegistrationEvent(AdminBusRegistrationEvent event) {
+    public void onAdminBusRegistrationEvent(AdminBusRegistrationAuditEvent event) {
         log.info("Received Transactional Admin Registration Event");
 
         log.info("Admin Registration Event running on Thread: {}", Thread.currentThread());

@@ -8,6 +8,8 @@ import org.tracker.ubus.ubus.Components.Users.User.DTOs.Requests.EditUserDTO;
 import org.tracker.ubus.ubus.Components.Users.User.DTOs.Responses.UserProfileResponse;
 import org.tracker.ubus.ubus.Components.Users.User.Service.Interface.IUserService;
 
+import java.util.UUID;
+
 /**
  * REST Controller for managing user operations.
  *
@@ -41,6 +43,7 @@ class UserController {
         return userService.viewProfile();
     }
 
+
     /**
      * Updates the current user's profile information.
      *
@@ -61,6 +64,7 @@ class UserController {
         return userService.editProfile(editUserDTO);
     }
 
+
     /**
      * Initiates a forgot password request by sending an OTP to the user's email.
      *
@@ -75,6 +79,7 @@ class UserController {
     public void forgotPassword(@RequestBody EditUserDTO editUserDTO) {
         userService.forgotPassword(editUserDTO.getEmail());
     }
+
 
     /**
      * Validates the OTP and changes the user's password.
@@ -93,10 +98,10 @@ class UserController {
         userService.changePassword(editUserDTO.getEmail(), editUserDTO.getNewPassword(), editUserDTO.getOtp());
     }
 
+
     /**
      *
      * Validates the password and deactivates account
-     *
      *       HTTP Method: PUT
      *       Endpoint: /users/deactivate-account
      * @param editUserDTO the user data containing the old password
@@ -106,5 +111,27 @@ class UserController {
     public void deactivateAccount(@RequestBody EditUserDTO editUserDTO) {
         userService.deactivateAccount(editUserDTO.getOldPassword());
     }
+
+    @ResponseStatus(HttpStatus.OK)
+    @PostMapping("/assign-nfcCode")
+    public void assignNfcCode(@RequestBody String nfcCode) {
+        userService.assignNfcCode(nfcCode);
+    }
+
+    @ResponseStatus(HttpStatus.OK)
+    @PostMapping("/admin-assign-nfcCode")
+    public void adminAssignNfcCode(@RequestBody String nfcCode, @PathVariable UUID userId) {
+        userService.adminAssignNfc(nfcCode, userId);
+    }
+
+    @ResponseStatus(HttpStatus.OK)
+    @GetMapping("/getNfcCode")
+    public String getNfcCode() {
+        return userService.getNfcCode();
+    }
+
+    @ResponseStatus(HttpStatus.OK)
+    @GetMapping("/hasTrip")
+    public boolean hasTrip(){return userService.hasTrip();}
 
 }

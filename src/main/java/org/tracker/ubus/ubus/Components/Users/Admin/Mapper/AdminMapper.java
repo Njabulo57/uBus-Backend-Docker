@@ -1,14 +1,13 @@
 package org.tracker.ubus.ubus.Components.Users.Admin.Mapper;
 
 
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
-import org.tracker.ubus.ubus.Components.Users.Admin.DTO.Response.DriverActivePage;
+import org.tracker.ubus.ubus.Components.Buses.Bus.Entity.Bus;
+import org.tracker.ubus.ubus.Components.Buses.Bus.Repository.Projections.DriverWithOrWithoutAssignmentView;
 import org.tracker.ubus.ubus.Components.Users.Admin.DTO.Response.DriverActiveResponseDTO;
+import org.tracker.ubus.ubus.Components.Users.Admin.DTO.Response.DriverBusResponse;
 import org.tracker.ubus.ubus.Components.Users.Admin.DTO.Response.DriverPendingResponseDTO;
 import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
-import org.tracker.ubus.ubus.Components.Users.User.Service.Impl.UserService;
-
 import java.util.Collection;
 import java.util.List;
 
@@ -23,23 +22,13 @@ public class AdminMapper {
     }
 
 
-    public DriverActivePage toDTO(Page<User> drivers) {
-
-        var activeDrivers = toActiveDrivers(drivers.getContent());
-
-        int totalPages = drivers.getTotalPages();
-        int pageNumber = drivers.getNumber();
-        int pageSize = drivers.getSize();
-        int totalElements = (int) drivers.getTotalElements();
-
-        return DriverActivePage.builder()
-                .drivers(activeDrivers)
-                .totalPages(totalPages)
-                .totalElements(totalElements)
-                .pageSize(pageSize)
-                .pageNumber(pageNumber)
-                .build();
+    public Collection<DriverActiveResponseDTO> toDTOs(Collection<DriverWithOrWithoutAssignmentView> views) {
+        return views.stream()
+                .map(this::toActiveDriverResponseDTO)
+                .toList();
     }
+
+
 
     public Collection<DriverActiveResponseDTO> toActiveDrivers(List<User> users) {
         return users.stream()
@@ -47,6 +36,37 @@ public class AdminMapper {
                 .toList();
     }
 
+    private DriverActiveResponseDTO toActiveDriverResponseDTO(DriverWithOrWithoutAssignmentView view) {
+
+        var driver = view.getDriver();
+        return DriverActiveResponseDTO.builder()
+                .driverId(driver.getId())
+                .firstName(driver.getFirstname())
+                .lastName(driver.getLastname())
+                .email(driver.getEmail())
+                .phoneNumber(driver.getPhoneNumber())
+                .isAssigned(view.getAssigned())
+                .busAssignedTo(view.getBus() != null ? toDTO(view.getBus()) : null)
+                .build();
+    }
+
+
+
+    private DriverBusResponse toDTO(Bus bus) {
+
+        var destinationsEnum = bus.getRoute() != null ? bus.getRoute().getDestinations() : null;
+        String[] destinationArray = null;
+
+        if(destinationsEnum != null) {
+            destinationArray = destinationsEnum.stream()
+                    .map(Enum::name)
+                    .toArray(String[]::new);
+        }
+        return DriverBusResponse.builder()
+                .busName(bus.getName())
+                .destinations(destinationArray)
+                .build();
+    }
 
     private DriverActiveResponseDTO toActiveDriverResponseDTO(User user) {
 

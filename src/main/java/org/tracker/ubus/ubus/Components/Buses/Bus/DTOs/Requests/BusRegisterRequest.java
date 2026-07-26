@@ -1,6 +1,10 @@
 package org.tracker.ubus.ubus.Components.Buses.Bus.DTOs.Requests;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.*;
+
+import java.util.Collection;
+import java.util.UUID;
 
 public record BusRegisterRequest(
 
@@ -27,21 +31,15 @@ public record BusRegisterRequest(
         @NotBlank(message = "Registration number is required")
         String registrationNumber,
 
-        @NotBlank(message = "Activity status is required")
-        @Pattern(regexp = "STATIONERY|LOADING PASSENGERS|ON TRIP|BREAK",
-                flags = Pattern.Flag.CASE_INSENSITIVE,
-                message = "Activity status is Invalid"
-        )
-        String activityStatus,
-
         @NotNull(message = "Capacity is required")
         @Positive(message = "Capacity must be Positive")
         Integer capacity,
 
-        @NotBlank(message = "To Route is required")
-        String toRoute
+        @Nullable
+        @Size(max = 2, message = "Drivers cannot exceed 2")
+        Collection<UUID> driverIds,
 
-
+        UUID busId
 ) {
 
 }

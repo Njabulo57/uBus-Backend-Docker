@@ -10,6 +10,7 @@ import org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.UserStatus;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Component
 public final class AuthMapper {
@@ -24,7 +25,7 @@ public final class AuthMapper {
                 .build();
     }
 
-    public RegisterSuccessfulResponse toRegisterDTO(UserRole userRole) {
+    public RegisterSuccessfulResponse toRegisterDTO(UserRole userRole, UUID id) {
 
         var message = "";
         if(userRole == UserRole.ADMIN)
@@ -35,6 +36,7 @@ public final class AuthMapper {
         final LocalDateTime nowed = LocalDateTime.now();
         return RegisterSuccessfulResponse.builder()
                 .role(userRole.getLabel())
+                .id(id)
                 .otpMessage(message)
                 .createdAt(nowed)
                 .build();

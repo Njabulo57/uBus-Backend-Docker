@@ -5,7 +5,7 @@ import lombok.*;
 import org.tracker.ubus.ubus.Components.Shared.Entities.TimeAuditableEntity;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Entity.Trip;
 import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
-import org.tracker.ubus.ubus.Components.Users.User.Enum.Destination;
+import org.tracker.ubus.ubus.Components.Trips.Trip.Enum.Destination;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.Route;
 
 import java.time.LocalDateTime;

@@ -33,7 +33,7 @@ public class DriverPhoneNumberValidator implements ConstraintValidator<DriverPho
     public boolean isValid(RegisterRequest value, ConstraintValidatorContext context) {
 
         var role = UserRole.DRIVER.getLabel();
-        if(role.equalsIgnoreCase(value.role())) //if the user role is driver it is mandatory to get their phone number
+        if(role.equalsIgnoreCase(value.role())) //if the user role is driver it is mandatory to getFromTripSimulationCache their phone number
             return value.phoneNumber() != null && !value.phoneNumber().isBlank();
         //for other roles its fine so we can move on
         return true;

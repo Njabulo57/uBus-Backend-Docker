@@ -17,7 +17,7 @@ public interface IBusService {
 
     void deleteBus(UUID busId);
 
-    void editBus(BusEditRequest request);
+    void editBus(BusRegisterRequest request);
 
     List<BusAdminViewResponse> viewBuses();
 }

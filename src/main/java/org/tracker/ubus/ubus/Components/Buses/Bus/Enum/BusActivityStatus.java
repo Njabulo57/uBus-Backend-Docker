@@ -9,6 +9,7 @@ public enum BusActivityStatus {
     OFFLINE("Offline"),// when on a trip and network connectivity is lost
     LOADING_PASSENGERS("Loading Passengers"),        // Ready for dispatch/passengers
     ON_TRIP("On Trip"),          // En route with passengers
+    STATIONERY("Stationery"),
     BREAK("Break");        // Driver break
 
     private final String label;

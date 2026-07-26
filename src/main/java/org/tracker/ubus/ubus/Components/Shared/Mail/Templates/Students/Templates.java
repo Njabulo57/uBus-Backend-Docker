@@ -35,7 +35,7 @@ public record Templates() {
         html.append("                    Your account is ready. You can now track UJ campus buses, check arrival times, and see where your bus is.\n");
         html.append("                </p>\n");
         html.append("                <p style=\"font-size: 16px; line-height: 1.6; color: #474747; margin: 0 0 32px 0;\">\n");
-        html.append("                    Log in to get started.\n");
+        html.append("                    Log in to getFromTripSimulationCache started.\n");
         html.append("                </p>\n");
         html.append("                <p style=\"font-size: 14px; color: #777777; margin: 32px 0 0 0;\">\n");
         html.append("                    Questions? Reach out to support.\n");

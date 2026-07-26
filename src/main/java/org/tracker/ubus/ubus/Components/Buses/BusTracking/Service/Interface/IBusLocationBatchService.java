@@ -7,9 +7,6 @@ import java.util.UUID;
 
 public interface IBusLocationBatchService {
 
+   void enqueue(DriverCurrentLocationMessage location);
 
-
-    DriverCurrentLocationResponse enqueue(DriverCurrentLocationMessage location);
-
-    void  endTrip(UUID tripId);
 }

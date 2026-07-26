@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * This controller provides RESTful endpoints for managing bus-specific operations.
+ * This controller provides endpoints for managing bus-specific operations.
  * It handles bus registration, updating activity status, deletion, editing of bus details, and retrieval of bus data.
  * All operations comply with specified validation constraints.
  *
@@ -114,7 +114,7 @@ public class BusController {
      */
     @PutMapping("/edit-bus/{busId}")
     @ResponseStatus(HttpStatus.OK)
-    public void editBus(@RequestBody BusEditRequest busEditRequest) {
+    public void editBus(@RequestBody BusRegisterRequest busEditRequest) {
         this.busService.editBus(busEditRequest);
     }
 

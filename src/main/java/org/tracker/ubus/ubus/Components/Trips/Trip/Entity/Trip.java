@@ -6,14 +6,14 @@ import lombok.*;
 import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Entity.BusAssignment;
 import org.tracker.ubus.ubus.Components.Shared.Entities.TimeAuditableEntity;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Enum.TripStatus;
-import org.tracker.ubus.ubus.Components.Trips.TripHistory.Entity.TripHistoryPoint;
-import org.tracker.ubus.ubus.Components.Trips.TripStop.Entity.TripStop;
 import org.tracker.ubus.ubus.Components.Trips.TripUser.Entity.TripUser;
+import org.tracker.ubus.ubus.Components.Trips.TripsSchedule.Entity.Schedule;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.Route;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
+
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -26,12 +26,16 @@ import java.util.UUID;
 public class Trip extends TimeAuditableEntity {
 
     @Id @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(nullable = false, updatable = false,  unique = true)
+    @Column(nullable = false, updatable = false, unique = true)
     private UUID id;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, updatable = false)
     private Route route;
+
+    @JoinColumn(updatable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Schedule schedule; // if this is referenced then its a normal trip, if not its from demand
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
@@ -52,6 +56,15 @@ public class Trip extends TimeAuditableEntity {
     @OneToMany(mappedBy = "trip", cascade = CascadeType.PERSIST, orphanRemoval = true)
     private final Set<TripUser> tripUsers = new HashSet<>();
 
-    @OneToMany(mappedBy = "trip", cascade = CascadeType.PERSIST, orphanRemoval = true)
-    private final Set<TripHistoryPoint> tripHistoryPoints = new HashSet<>();
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof Trip trip)) return false;
+        return Objects.equals(id, trip.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
+    }
 }

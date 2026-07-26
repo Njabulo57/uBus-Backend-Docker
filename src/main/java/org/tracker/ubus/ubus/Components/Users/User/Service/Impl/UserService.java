@@ -6,25 +6,27 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.tracker.ubus.ubus.Components.Auth.DTOs.Requests.EmailOtpRequest;
-import org.tracker.ubus.ubus.Components.Auth.DTOs.Requests.RegisterRequest;
 import org.tracker.ubus.ubus.Components.Auth.Events.OtpEmailVerificationEvent;
-import org.tracker.ubus.ubus.Components.Auth.Exception.External.DuplicateEmailException;
 import org.tracker.ubus.ubus.Components.Auth.Exception.External.InvalidCredentialsException;
 import org.tracker.ubus.ubus.Components.Auth.Service.Impl.AuthService;
 import org.tracker.ubus.ubus.Components.Buses.BusPreference.Repository.BusPreferenceRepository;
-import org.tracker.ubus.ubus.Components.EventHandler.Publisher.MultiEvenPublisher;
+import org.tracker.ubus.ubus.Components.Shared.EventHandler.Publisher.MultiEvenPublisher;
 import org.tracker.ubus.ubus.Components.OneTimePassword.DTOs.Internal.OtpInternalCarrier;
-import org.tracker.ubus.ubus.Components.OneTimePassword.DTOs.Requests.OtpValidationRequest;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Service.Impl.OneTimePasswordService;
+import org.tracker.ubus.ubus.Components.Trips.Trip.Enum.TripStatus;
+import org.tracker.ubus.ubus.Components.Trips.Trip.Repository.TripRepository;
+import org.tracker.ubus.ubus.Components.Trips.TripUser.Repository.TripUserRepository;
 import org.tracker.ubus.ubus.Components.Users.User.DTOs.Requests.EditUserDTO;
 import org.tracker.ubus.ubus.Components.Users.User.DTOs.Responses.UserProfileResponse;
 import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
+import org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.UserStatus;
 import org.tracker.ubus.ubus.Components.Users.User.Mapper.UserMapper;
 import org.tracker.ubus.ubus.Components.Users.User.Repository.UserRepository;
 import org.tracker.ubus.ubus.Components.Users.User.Service.Interface.IUserService;
 import org.tracker.ubus.ubus.Configuration.Security.UserPrincipal;
+
+import java.util.UUID;
 
 import static org.tracker.ubus.ubus.Components.Users.User.Enum.UserStatus.*;
 
@@ -34,12 +36,15 @@ import static org.tracker.ubus.ubus.Components.Users.User.Enum.UserStatus.*;
 public class UserService implements IUserService {
 
     private final UserMapper userMapper;
-    private final BusPreferenceRepository busPreferenceRepository;
-    private final UserRepository userRepository;
     private final AuthService authService;
-    private final PasswordEncoder passwordEncoder;
-    private final OneTimePasswordService  oneTimePasswordService;
     public final MultiEvenPublisher publisher;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final OneTimePasswordService oneTimePasswordService;
+    private final BusPreferenceRepository busPreferenceRepository;
+    private final TripUserRepository tripUserRepository;
+    private final TripRepository tripRepository;
+
 
     private User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -56,7 +61,11 @@ public class UserService implements IUserService {
 
         var busPreference = busPreferenceRepository.findAllByUser(user);
 
-        return this.userMapper.toDTO(user, busPreference);
+        var totalTrips = 0;
+        if(user.getRole() == UserRole.STAFF || user.getRole() == UserRole.STUDENT)
+            totalTrips = this.tripUserRepository.countByUser(user);
+
+        return this.userMapper.toDTO(user, busPreference, totalTrips);
     }
 
     @Transactional
@@ -91,8 +100,9 @@ public class UserService implements IUserService {
 
 
         userRepository.save(currentUser);
-        return this.userMapper.toDTO(currentUser, busPreferenceRepository.findAllByUser(currentUser));
+        return this.userMapper.toDTO(currentUser, busPreferenceRepository.findAllByUser(currentUser), 0);
     }
+
 
     @Override
     @Transactional
@@ -118,6 +128,7 @@ public class UserService implements IUserService {
         return true;
     }
 
+
     @Transactional
     public boolean changePassword(String email, String newPassword, String otp) {
        if(oneTimePasswordService.validateOTP(otp))
@@ -134,6 +145,7 @@ public class UserService implements IUserService {
        return true;
     }
 
+
     @Override
     public void deactivateAccount(String password) {
         User currentUser = getCurrentUser();
@@ -146,5 +158,39 @@ public class UserService implements IUserService {
                 throw new InvalidCredentialsException("Invalid password");
             }
         }
+    }
+
+    @Override
+    public void assignNfcCode(String nfcCode) {
+        User currentUser = getCurrentUser();
+        if(currentUser != null) {
+            if(currentUser.getNfcCode() != null && !currentUser.getNfcCode().isBlank()) {
+                throw new InvalidCredentialsException("NFC code already assigned");
+            }
+            currentUser.setNfcCode(nfcCode);
+            userRepository.save(currentUser);
+        } else {
+            throw new InvalidCredentialsException("User not found");
+        }
+    }
+
+    @Override
+    public void adminAssignNfc(String nfcCode, UUID userId) {
+        User user = userRepository.findByIdOrThrow(userId);
+        user.setNfcCode(nfcCode);
+        userRepository.save(user);
+    }
+
+    @Override
+    public String getNfcCode() {
+        var user = getCurrentUser();
+        return user.getNfcCode();
+    }
+
+    @Override
+    public boolean hasTrip() {
+        var user = getCurrentUser();
+        int activeTripCount = tripRepository.countActiveTripsByDriver(user);
+        return activeTripCount > 0;
     }
 }

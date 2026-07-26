@@ -1,6 +1,6 @@
 package org.tracker.ubus.ubus.Components.Users.PendingAdmin.Events;
 
-import org.tracker.ubus.ubus.Components.EventHandler.AbstractEvents.EmailEvent;
+import org.tracker.ubus.ubus.Components.Shared.EventHandler.AbstractEvents.EmailEvent;
 import org.tracker.ubus.ubus.Components.OneTimePassword.DTOs.Internal.OtpInternalCarrier;
 import org.tracker.ubus.ubus.Components.Shared.Mail.Templates.PendingAdmin.Templates;
 

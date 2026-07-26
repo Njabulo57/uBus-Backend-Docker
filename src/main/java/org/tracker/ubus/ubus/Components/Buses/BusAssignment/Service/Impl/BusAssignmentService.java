@@ -9,7 +9,7 @@ import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Events.BusAssignment
 import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Mappers.BusAssignmentMapper;
 import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Repository.BusAssignmentRepository;
 import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Service.Interface.IBusAssignmentService;
-import org.tracker.ubus.ubus.Components.EventHandler.Publisher.MultiEvenPublisher;
+import org.tracker.ubus.ubus.Components.Shared.EventHandler.Publisher.MultiEvenPublisher;
 import org.tracker.ubus.ubus.Components.Users.User.Repository.UserRepository;
 
 import java.util.UUID;

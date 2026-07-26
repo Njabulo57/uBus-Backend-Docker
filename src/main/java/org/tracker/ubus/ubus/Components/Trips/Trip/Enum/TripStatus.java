@@ -2,14 +2,15 @@ package org.tracker.ubus.ubus.Components.Trips.Trip.Enum;
 
 import lombok.Getter;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Exceptions.TripStatusNotFoundException;
-
 import java.util.stream.Stream;
 
 @Getter
 public enum TripStatus {
 
+    CREATED("CREATED"),
     IN_PROGRESS("In Progress"),
-    COMPLETE("Complete");
+    COMPLETE("Complete"),
+    CANCELLED("Cancelled");
 
     private final String label;
 

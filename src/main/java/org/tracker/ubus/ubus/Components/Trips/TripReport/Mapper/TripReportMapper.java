@@ -19,8 +19,6 @@ public class TripReportMapper {
     public TripReport toEntity(Trip trip, User user) {
 
 
-        var toCampus = trip.getRoute().getToDestination();
-        var fromCampus = trip.getRoute().getFromDestination();
 
         Predicate<TripUser> isStudent = tripUser -> tripUser.getUser()
                 .getRole().equals(UserRole.STUDENT);
@@ -33,8 +31,8 @@ public class TripReportMapper {
                 .trip(trip)
                 .generatedBy(user)
                 .route(trip.getRoute())
-                .fromDestination(toCampus)
-                .toDestination(fromCampus)
+                .fromDestination(null)
+                .toDestination(null)
                 .departureTime(trip.getDepartureTime())
                 .arrivalTime(trip.getUpdatedAt())
 

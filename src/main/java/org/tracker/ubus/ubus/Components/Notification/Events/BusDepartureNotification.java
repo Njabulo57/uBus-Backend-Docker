@@ -20,9 +20,6 @@ public final class BusDepartureNotification extends Notification {
 
     public BusDepartureNotification(Queue<UUID> userToNotify, Route route) {
 
-        this.fromCampus = route.getFromDestination().getLabel();
-        this.toCampus = route.getToDestination().getLabel();
-
         constructMessage();
         this.setUserToNotify(userToNotify);
 

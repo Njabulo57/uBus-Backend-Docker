@@ -7,5 +7,5 @@ import lombok.Builder;
 public record BusAssignedResponse(String busName, String busModel,
                                   String busRegistrationPlate, String busStatus,
                                   String busRoute, String schedule,
-                                  String busType, int capacity) {
+                                  String busType, String destinations, int capacity) {
 }

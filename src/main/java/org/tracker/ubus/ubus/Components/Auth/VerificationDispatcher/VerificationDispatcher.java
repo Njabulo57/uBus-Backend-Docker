@@ -3,7 +3,7 @@ package org.tracker.ubus.ubus.Components.Auth.VerificationDispatcher;
 import org.springframework.stereotype.Component;
 import org.tracker.ubus.ubus.Components.Auth.Events.OtpEmailVerificationEvent;
 import org.tracker.ubus.ubus.Components.Auth.Service.Interface.AuthTokenGenerationService;
-import org.tracker.ubus.ubus.Components.EventHandler.Publisher.MultiEvenPublisher;
+import org.tracker.ubus.ubus.Components.Shared.EventHandler.Publisher.MultiEvenPublisher;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Exceptions.OneTimePasswordExistsException;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Service.Interface.IOneTimePasswordService;
 import org.tracker.ubus.ubus.Components.Users.User.Entity.User;

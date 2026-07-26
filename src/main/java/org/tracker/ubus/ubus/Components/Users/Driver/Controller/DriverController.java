@@ -43,7 +43,7 @@ public class DriverController {
      * @return a {@link BusAssignedResponse} object containing details about the assigned bus,
      *         such as bus name, model, registration plate, status, route, schedule,
      *         type, and capacity. If no bus is assigned, the response may contain null or empty values.
-     * {drivers/get-assigned-bus}
+     * {drivers/getFromTripSimulationCache-assigned-bus}
      */
     @GetMapping("/get-assigned-bus")
     public BusAssignedResponse getDriverAssignedBus() {

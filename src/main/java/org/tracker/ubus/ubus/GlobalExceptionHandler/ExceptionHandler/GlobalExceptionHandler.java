@@ -31,7 +31,7 @@ public class GlobalExceptionHandler {
 
         //error message fields
         LocalDateTime now = LocalDateTime.now();
-        String message =this.getFirstErrorMessage(ex); //get the first error field message
+        String message =this.getFirstErrorMessage(ex); //getFromTripSimulationCache the first error field message
 
         final ErrorResponse errorResponse = ErrorResponse.builder()
                 .statusCode(statusCode)
@@ -58,6 +58,7 @@ public class GlobalExceptionHandler {
         String className = e.getClass().getSimpleName();
         String errorMessage = e.getMessage();
         log.error("Caught {}\n.Error:{} \n Trace:", className, errorMessage, e);
+        log.error("Status Code {}", e.getHttpStatus());
 
 
         var httpStatus = e.getHttpStatus();

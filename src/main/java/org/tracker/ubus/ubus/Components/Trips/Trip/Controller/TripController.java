@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Request.TripEndRequest;
 import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Request.TripRegisterCoordinates;
+import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Request.TripStartRequest;
 import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Response.ActiveTripResponse;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Service.Interface.ITripService;
 
@@ -22,18 +23,18 @@ public class TripController {
 
     @ResponseStatus(HttpStatus.CREATED)
     @RequestMapping("/register-bus-trip")
-    public void registerTrip(@RequestBody TripRegisterCoordinates tripRegisterCoordinates) {
-        this.tripService.registerTrip(tripRegisterCoordinates);
+    public UUID registerTrip(@RequestBody TripRegisterCoordinates tripRegisterCoordinates) {
+        return this.tripService.registerTrip(tripRegisterCoordinates);
     }
 
 
-    @RequestMapping("/start-trip/{tripId}")
-    public void startTrip(@PathVariable final UUID tripId) {
-        this.tripService.startTrip(tripId);
+    @PostMapping("/start-trip")
+    public void startTrip(@RequestBody TripStartRequest tripStartRequest) {
+        this.tripService.startTrip(tripStartRequest);
     }
 
 
-    @RequestMapping("/end-trip")
+    @PostMapping("/end-trip")
     public void endTrip(@RequestBody TripEndRequest endRequest) {
         this.tripService.endTrip(endRequest);
     }
@@ -48,5 +49,12 @@ public class TripController {
     @GetMapping("/get-trip/{tripId}")
     public ActiveTripResponse getActiveTrip(@PathVariable final UUID tripId) {
         return this.tripService.getActiveTrip(tripId);
+    }
+
+
+    @ResponseStatus(HttpStatus.OK)
+    @PostMapping("/handle-tap/{tripId}")
+    public int handleNfcTap(@PathVariable final UUID tripId, @RequestBody String nfcCode) {
+        return this.tripService.handleNfcTap(tripId, nfcCode);
     }
 }

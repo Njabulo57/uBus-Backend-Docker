@@ -12,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 import org.tracker.ubus.ubus.Components.Jwt.JwtService.JwtService;
+import org.tracker.ubus.ubus.Configuration.Security.UserPrincipal;
 
 /**
  * The {@code RequestTokenExtractor} class provides functionality for extracting
@@ -53,20 +54,24 @@ public class RequestTokenExtractor {
         String username = jwtService.extractUsername(token);
 
         //check from their username if they exist and build a security object out of them
-        final UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
         boolean isTokenValid = jwtService.validateToken(token, userDetails);
 
-        if (isTokenValid)
+
+        if (isTokenValid) {
+            var userPrincipal = (UserPrincipal) userDetails;
+            userPrincipal.setJwtToken(token);
             return new UsernamePasswordAuthenticationToken(userDetails,
                     null,
                     userDetails.getAuthorities());
+        }
 
         throw new RuntimeException("Invalid Token");
     }
 
 
     /**
-     * Extracts a Bearer token from the "Authorization" header of the provided HTTP request.
+     * Extracts a Bearer token from the request param header of the provided HTTP request.
      *
      * @param request the {@link ServerHttpRequest} object containing the HTTP request details.
      * @return the extracted Bearer token as a {@link String}.
@@ -75,10 +80,16 @@ public class RequestTokenExtractor {
      */
     public String extractTokenFromAuthHeaderRequest(ServerHttpRequest request) {
 
-        String authHeader = request.getHeaders().getFirst("Authorization");
-        if (authHeader != null && authHeader.startsWith("Bearer "))
-            return authHeader.substring(7);
-        throw new RuntimeException("Invalid Token");
+        String query = request.getURI().getQuery();
+        if (query != null) {
+            String[] params = query.split("&");
+            for (String param : params)
+                if (param.startsWith("token="))
+                    return param.substring(6); // Remove "token=" prefix
+
+
+        }
+        throw new RuntimeException("Token not found in request");
     }
 
 

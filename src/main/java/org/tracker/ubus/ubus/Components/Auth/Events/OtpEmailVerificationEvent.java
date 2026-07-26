@@ -2,7 +2,7 @@ package org.tracker.ubus.ubus.Components.Auth.Events;
 
 
 import lombok.Getter;
-import org.tracker.ubus.ubus.Components.EventHandler.AbstractEvents.EmailEvent;
+import org.tracker.ubus.ubus.Components.Shared.EventHandler.AbstractEvents.EmailEvent;
 import org.tracker.ubus.ubus.Components.OneTimePassword.DTOs.Internal.OtpInternalCarrier;
 import org.tracker.ubus.ubus.Components.Shared.Mail.Templates.Auth.OtpTemplate;
 import org.tracker.ubus.ubus.Components.Users.User.Entity.User;

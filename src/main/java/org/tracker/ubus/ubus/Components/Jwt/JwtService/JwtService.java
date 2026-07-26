@@ -49,7 +49,7 @@ public class JwtService {
 
         return Jwts.builder()
                 .expiration(new Date(System.currentTimeMillis() + duration)) // expanding life-time with the duration
-                .issuedAt(new Date(System.currentTimeMillis())) // get the current date
+                .issuedAt(new Date(System.currentTimeMillis())) // getFromTripSimulationCache the current date
                 .claims(claims)
                 .subject(userDetails.getUsername())
                 .signWith(secretKeyObject)
@@ -73,7 +73,7 @@ public class JwtService {
 
         return Jwts.builder()
                 .expiration(new Date(System.currentTimeMillis() + duration)) // expanding life-time with the duration
-                .issuedAt(new Date(System.currentTimeMillis())) // get the current date
+                .issuedAt(new Date(System.currentTimeMillis())) // getFromTripSimulationCache the current date
                 .claims(claims)
                 .subject(userDetails.getEmail())
                 .signWith(secretKeyObject)
@@ -95,7 +95,7 @@ public class JwtService {
 
         return Jwts.builder()
                 .expiration(new Date(System.currentTimeMillis() + duration)) // expanding life-time with the duration
-                .issuedAt(new Date(System.currentTimeMillis())) // get the current date
+                .issuedAt(new Date(System.currentTimeMillis())) // getFromTripSimulationCache the current date
                 .claims(claims)
                 .subject(user.getEmail())
                 .signWith(secretKeyObject)

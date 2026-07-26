@@ -100,7 +100,11 @@ public class AuthService extends BaseService implements IAuthService {
         if(needsVerification(savedUser))
             this.verificationDispatcher.dispatchRegistrationOTP(savedUser);
 
-        return this.authMapper.toRegisterDTO(savedUser.getRole());
+        var id = savedUser.getId();
+        if(userRole == ADMIN)
+            id = null;
+
+        return this.authMapper.toRegisterDTO(savedUser.getRole(), id);
     }
 
 
@@ -277,7 +281,7 @@ public class AuthService extends BaseService implements IAuthService {
             throw new InvalidCredentialsException("Invalid Credentials");
 
 
-        //get the onefold password for the admin
+        //getFromTripSimulationCache the onefold password for the admin
         var oneTimePassword = this.oneTimePasswordRepository.findByPendingAdmin(userEntity.getEmail());
         if(!invitation.equals(oneTimePassword.getOtp()))
             throw new InvalidCredentialsException("Invalid Credentials");

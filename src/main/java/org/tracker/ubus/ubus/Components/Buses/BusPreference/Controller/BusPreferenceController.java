@@ -6,10 +6,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.tracker.ubus.ubus.Components.Buses.BusPreference.DTO.Request.BusPreferenceDTO;
+import org.tracker.ubus.ubus.Components.Buses.BusPreference.DTO.Response.BusPrefView;
 import org.tracker.ubus.ubus.Components.Buses.BusPreference.DTO.Response.BusPreferenceResponse;
 import org.tracker.ubus.ubus.Components.Buses.BusPreference.Entity.BusPreference;
 import org.tracker.ubus.ubus.Components.Buses.BusPreference.Service.Interface.IBusPreferenceService;
+import org.tracker.ubus.ubus.Components.Trips.Trip.Enum.Destination;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.Route;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * REST Controller for managing bus route preferences.
@@ -40,10 +45,11 @@ public class BusPreferenceController {
      *      *           SWC_TO_DFC, DFC_TO_SWC, APK_TO_APB_JBS, JBS_TO_APB_APK)
      */
     @PostMapping("/add")
-    public ResponseEntity<BusPreferenceResponse> addBusPreference(@RequestBody BusPreferenceDTO busPreferenceDTO)
+    @ResponseStatus(HttpStatus.CREATED)
+    public ResponseEntity<Void> addBusPreference(@RequestBody List<BusPreferenceDTO> busPreferenceDTO)
     {
-        BusPreferenceResponse busPreferenceResponse = busPreferenceService.addPreference(busPreferenceDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(busPreferenceResponse);
+        busPreferenceService.addPreference(busPreferenceDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(null);
     }
 
     /**
@@ -74,11 +80,12 @@ public class BusPreferenceController {
      *         - route: The updated Route enum value
      */
     @PutMapping("/edit")
+    @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<BusPreferenceResponse> editPreference(@RequestBody BusPreferenceDTO busPreferenceDTO)
     {
 
-        BusPreferenceResponse busPreferenceResponse = busPreferenceService.editPreference(busPreferenceDTO);
-        return ResponseEntity.status(HttpStatus.OK).body(busPreferenceResponse);
+        busPreferenceService.editPreference(busPreferenceDTO);
+        return ResponseEntity.status(HttpStatus.OK).body(null);
     }
 
     /**
@@ -91,9 +98,22 @@ public class BusPreferenceController {
      * @return ResponseEntity with no content (HTTP 204)
      */
     @DeleteMapping("/delete")
-    public ResponseEntity<BusPreference> deletePreference(@RequestBody BusPreferenceDTO busPreferenceDTO)
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<BusPreferenceResponse> deletePreference(@RequestBody BusPreferenceDTO busPreferenceDTO)
     {
         busPreferenceService.deletePreference(busPreferenceDTO);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
+    }
+
+
+    @GetMapping("/all")
+    public BusPrefView[] getAllBusPreferences() {
+        return busPreferenceService.getAllBusPreferences();
+    }
+
+
+    @PostMapping("/has-preferences")
+    public boolean hasPreferences() {
+        return busPreferenceService.hasBusPreference();
     }
 }

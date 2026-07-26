@@ -9,6 +9,7 @@ import org.tracker.ubus.ubus.Components.Buses.Bus.Entity.Bus;
 import org.tracker.ubus.ubus.Components.Buses.Bus.Enum.BusActivityStatus;
 import org.tracker.ubus.ubus.Components.Buses.Bus.Enum.BusOperationalStatus;
 import org.tracker.ubus.ubus.Components.Buses.Bus.Enum.BusType;
+import org.tracker.ubus.ubus.Components.Buses.Bus.Repository.Projections.BusWithAssignmentView;
 import org.tracker.ubus.ubus.Components.Buses.Bus.Repository.Projections.DriverWithOrWithoutAssignmentView;
 
 import java.util.List;
@@ -22,14 +23,14 @@ public class BusMapper {
 
         BusType busType = BusType.fromLabel(request.type());
         BusOperationalStatus busOperationalStatus = BusOperationalStatus.fromLabel(request.operationalStatus());
-        BusActivityStatus busActivityStatus = BusActivityStatus.fromLabel(request.activityStatus());
         return Bus.builder()
                 .name(request.name())
                 .model(request.model())
+                .registrationNumber(request.registrationNumber())
                 .capacity(request.capacity())
                 .type(busType)
                 .operationalStatus(busOperationalStatus)
-                .activityStatus(busActivityStatus)
+                .activityStatus(BusActivityStatus.STATIONERY)
                 .isActive(true)
                 .build();
 
@@ -68,7 +69,7 @@ public class BusMapper {
                 .build();
     }
 
-    public List<BusAdminViewResponse> toDTOs(List<DriverWithOrWithoutAssignmentView> views) {
+    public List<BusAdminViewResponse> toDTOs(List<BusWithAssignmentView> views) {
 
         return views.stream()
                 .map(this::toDTO)
@@ -76,7 +77,7 @@ public class BusMapper {
     }
 
 
-    private BusAdminViewResponse toDTO(DriverWithOrWithoutAssignmentView view) {
+    private BusAdminViewResponse toDTO(BusWithAssignmentView view) {
 
         var bus = view.getBus();
         var type = bus.getType().getLabel();

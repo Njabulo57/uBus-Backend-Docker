@@ -10,7 +10,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole;
-import org.tracker.ubus.ubus.Components.Users.User.Enum.UserStatus;
 import org.tracker.ubus.ubus.Components.Users.User.Repository.UserRepository;
 
 import java.util.ArrayList;
@@ -34,9 +33,9 @@ public class UserTestDataGenerator implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
 
     // Defaults — override via application.properties or CLI args
-    @Value("${seed.users.students:2000}") private int defaultStudents;
+    @Value("${seed.users.students:200}") private int defaultStudents;
     @Value("${seed.users.admins:50}")    private int defaultAdmins;
-    @Value("${seed.users.staff:700}")    private int defaultStaff;
+    @Value("${seed.users.staff:150}")    private int defaultStaff;
     @Value("${seed.users.drivers:100}")   private int defaultDrivers;
     @Value("${seed.users.force:false}")  private boolean defaultForce;
     @Value("${seed.users.super-admin:20}")   private int defaultSuperAdmin;
@@ -53,6 +52,9 @@ public class UserTestDataGenerator implements CommandLineRunner {
             log.info("Users already exist, skipping. Pass --force=true to seed anyway.");
             return;
         }
+
+        if(userRepository.count() >0)
+            return;
 
         log.info("Seeding -> students={}, admins={}, staff={}, drivers={} (total {})",
                 c.students, c.admins, c.staff, c.drivers, c.total());
@@ -86,24 +88,28 @@ public class UserTestDataGenerator implements CommandLineRunner {
     private User student(int n, String pwd) {
         return base(pwd, STUDENT)
                 .email("2024" + String.format("%05d", n) + "@student.uj.ac.za")
+                .status(ACTIVE)  // Students are ACTIVE
                 .build();
     }
 
     private User admin(int n, String pwd) {
         return base(pwd, ADMIN)
                 .email(String.format("admin%03d@admin.uj.ac.za", n))
+                .status(ACTIVE)  // Admins are ACTIVE
                 .build();
     }
 
     private User staff(int n, String pwd) {
         return base(pwd, STAFF)
                 .email(String.format("staff%03d@staff.uj.ac.za", n))
+                .status(ACTIVE)  // Staff are ACTIVE
                 .build();
     }
 
     private User driver(int n, String pwd) {
         return base(pwd, DRIVER)
                 .email(String.format("driver%03d@driver.uj.ac.za", n))
+                .status(ACTIVE)
                 .build();
     }
 
@@ -113,24 +119,14 @@ public class UserTestDataGenerator implements CommandLineRunner {
                 .lastname(faker.name().lastName())
                 .password(pwd)
                 .phoneNumber(saPhone())
-                .role(role)
-                .status(randomStatus(role));
+                .role(role);
     }
 
     public User superAdmin(int n, String pwd) {
         return base(pwd, SUPER_ADMIN)
                 .email(String.format("super-admin%04d@Ubus.uj.ac.za", n))
+                .status(ACTIVE)
                 .build();
-    }
-
-    private UserStatus randomStatus(UserRole role) {
-        UserStatus[] s = switch (role) {
-            case STUDENT      -> new UserStatus[]{EMAIL_APPROVAL_PENDING, ACTIVE};
-            case DRIVER       -> new UserStatus[]{ADMIN_APPROVAL_PENDING, ACTIVE};
-            case ADMIN, STAFF -> new UserStatus[]{ACTIVE, INACTIVE};
-            case SUPER_ADMIN  -> new UserStatus[]{ACTIVE};
-        };
-        return s[ThreadLocalRandom.current().nextInt(s.length)];
     }
 
     private String saPhone() {

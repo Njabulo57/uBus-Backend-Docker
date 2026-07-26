@@ -1,6 +1,8 @@
 package org.tracker.ubus.ubus.Configuration.Security;
 
 
+import lombok.Getter;
+import lombok.Setter;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
@@ -19,12 +21,15 @@ import java.util.Collection;
  * It wraps a {@code User} entity and provides the necessary methods to retrieve user-related
  * information required for security operations.
  */
+@Getter
+@Setter
 public class UserPrincipal implements UserDetails {
 
     // this reference is kept to avoid having to recreate the user from a db sql call again
     private final User user;
     private int issuedCount;
     private final Collection<GrantedAuthority> authorities =new ArrayList<>();
+    private String jwtToken;
 
     public UserPrincipal(User user) {
         this.user = user;

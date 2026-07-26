@@ -14,7 +14,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.tracker.ubus.ubus.Components.Jwt.JwtService.JwtService;
 import org.tracker.ubus.ubus.Components.Shared.FilterHandlers.RequestTokenExtractor;
 import org.tracker.ubus.ubus.Components.Shared.FilterHandlers.ResponseWriter;
 import org.tracker.ubus.ubus.Components.TokenBlacklist.Service.Impl.BlacklistedTokenService;
@@ -56,4 +55,9 @@ public class JwtFilter extends OncePerRequestFilter {
     }
 
 
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        var path = request.getRequestURI();
+        return path.contains("/auth/") || path.contains("/one-time-password/");
+    }
 }

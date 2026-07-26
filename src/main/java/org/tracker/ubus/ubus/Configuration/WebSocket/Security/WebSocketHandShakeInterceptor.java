@@ -92,5 +92,6 @@ public class WebSocketHandShakeInterceptor implements HandshakeInterceptor{
     @Override
     public void afterHandshake(
             @NonNull ServerHttpRequest request, @Nonnull ServerHttpResponse response,
-            @NonNull WebSocketHandler wsHandler, @Nullable Exception exception) {}
+            @NonNull WebSocketHandler wsHandler, @Nullable Exception exception) {
+    }
 }

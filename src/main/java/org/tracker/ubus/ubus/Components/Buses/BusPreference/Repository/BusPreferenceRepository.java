@@ -38,5 +38,27 @@ public interface BusPreferenceRepository extends JpaRepository<BusPreference, UU
 
     BusPreference findByUserAndRoute(User currentUser, Route oldRoute);
 
+    @Query("""
+        SELECT b FROM BusPreference b
+        LEFT JOIN FETCH b.busUserPrefDestinations
+        WHERE b.user = :user
+    """)
     List<BusPreference> findAllByUser(User user);
+
+
+    @Query("""
+        SELECT DISTINCT bp FROM BusPreference bp
+        JOIN FETCH bp.user u
+        JOIN FETCH bp.busUserPrefDestinations
+    """)
+    List<BusPreference> findUsersWithPreferences();
+
+
+    @Query("""
+        SELECT bs FROM BusPreference bs
+        LEFT JOIN FETCH bs.busUserPrefDestinations
+    """)
+    List<BusPreference> findAllPreferences();
+
+    boolean existsByUser(User user);
 }

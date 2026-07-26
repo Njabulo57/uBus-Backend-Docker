@@ -6,6 +6,6 @@ import org.tracker.ubus.ubus.GlobalExceptionHandler.Exeption.ExternalBusinessExc
 
 public final class OneTimePasswordExpiredException extends ExternalBusinessException {
     public OneTimePasswordExpiredException(String message) {
-        super(message, HttpStatus.CONFLICT);
+        super(message, HttpStatus.BAD_REQUEST);
     }
 }

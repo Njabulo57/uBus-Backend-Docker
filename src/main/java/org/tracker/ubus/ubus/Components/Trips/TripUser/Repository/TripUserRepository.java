@@ -7,17 +7,34 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Entity.Trip;
+import org.tracker.ubus.ubus.Components.Trips.Trip.Enum.TripStatus;
 import org.tracker.ubus.ubus.Components.Trips.TripUser.Entity.TripUser;
+import org.tracker.ubus.ubus.Components.Trips.TripUser.Enum.TripUserStatus;
 import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface TripUserRepository extends JpaRepository<TripUser, UUID> {
 
 
+    TripUser findByTripAndUser(Trip trip, User user);
+
+    List<TripUser> findAllByTripAndStatus(Trip trip, TripUserStatus status);
+
+
     int countByTrip(Trip trip);
+
+    @Query("""
+        SELECT COUNT(tu) FROM TripUser tu
+        LEFT JOIN tu.trip t
+        WHERE tu.user = :user
+        AND t.status = 'COMPLETE'
+    """)
+    int countByUser(User user);
 
     @Query("""
         SELECT DISTINCT tu FROM TripUser tu
@@ -35,5 +52,15 @@ public interface TripUserRepository extends JpaRepository<TripUser, UUID> {
     """)
     List<TripUser> findByTrip(@Param("tripParam") Trip trip);
 
+
     List<UUID> findUserIdsByTrip(Trip trip);
+
+
+    List<TripUser> findAllByCreatedAtAfterAndIsFirstTrip(LocalDateTime dateTime, boolean isFirst);
+    List<TripUser> findAllByCreatedAtAfterAndStatus(LocalDateTime dateTime, TripUserStatus status);
+
+    List<TripUser> findAllByIsFirstTrip(boolean b);
+
+    List<TripUser> findAllByStatus(TripUserStatus tripUserStatus);
+    List<TripUser> findAllByCreatedAtAfter(LocalDateTime dateTime);
 }

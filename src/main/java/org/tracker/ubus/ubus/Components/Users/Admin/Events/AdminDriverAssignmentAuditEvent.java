@@ -3,7 +3,7 @@ package org.tracker.ubus.ubus.Components.Users.Admin.Events;
 import lombok.Getter;
 import org.tracker.ubus.ubus.Components.Audit.Enum.AuditType;
 import org.tracker.ubus.ubus.Components.Buses.Bus.Events.AdminCRAUDAuditEvent;
-import org.tracker.ubus.ubus.Components.EventHandler.AbstractEvents.AuditEvent;
+import org.tracker.ubus.ubus.Components.Shared.EventHandler.AbstractEvents.AuditEvent;
 import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
 
 import java.time.LocalDateTime;

@@ -6,10 +6,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import org.tracker.ubus.ubus.AnnotationProcessing.Annotations.AdminInvitationCodeRequired;
-import org.tracker.ubus.ubus.AnnotationProcessing.Annotations.DriverPhoneRequired;
 
 
-@DriverPhoneRequired
+
 @AdminInvitationCodeRequired
 public record RegisterRequest(
 

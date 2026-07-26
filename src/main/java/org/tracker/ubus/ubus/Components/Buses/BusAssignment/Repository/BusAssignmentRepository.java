@@ -21,6 +21,8 @@ public interface BusAssignmentRepository  extends JpaRepository<BusAssignment, U
     long countByBus(Bus bus);
 
 
+    void deleteByBusId(UUID busId);
+
     @Query("""
         SELECT COUNT(ba) FROM BusAssignment ba
         WHERE ba.bus.id = :busId AND ba.bus.isActive = TRUE
@@ -28,6 +30,7 @@ public interface BusAssignmentRepository  extends JpaRepository<BusAssignment, U
     long countByBusId(UUID busId);
 
 
+    Optional<BusAssignment> findByBusAndDriver(Bus bus, User user);
 
     @Query("""
         SELECT ba FROM BusAssignment ba
@@ -38,11 +41,15 @@ public interface BusAssignmentRepository  extends JpaRepository<BusAssignment, U
     Optional<BusAssignment> findByDriver(@Param("driverId") UUID driverId);
 
 
+    Optional<BusAssignment> findByBusAndDriverSchedule(Bus bus, DriverSchedule schedule);
+
+
     boolean existsByBusAndDriverSchedule(Bus bus, DriverSchedule schedule);
 
     boolean existsByDriver(User DRIVER);
 
 
+    void deleteByBus(Bus bus);
 
     default BusAssignment findByDriverOrThrow(User driver) {
         return this.findByDriver(driver.getId())
@@ -53,4 +60,10 @@ public interface BusAssignmentRepository  extends JpaRepository<BusAssignment, U
         return this.findByDriver(id)
                 .orElseThrow(() -> new BusAssignmentNotFoundException("Driver not assigned to any bus"));
     }
+
+    default BusAssignment findByBusAndDriverOrThrow(Bus bus, User driver) {
+        return this.findByBusAndDriver(bus, driver)
+                .orElseThrow(() -> new BusAssignmentNotFoundException("Driver not assigned to any bus"));
+    }
+
 }

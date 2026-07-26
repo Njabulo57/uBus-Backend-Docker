@@ -4,7 +4,7 @@ package org.tracker.ubus.ubus.Components.Users.PendingAdmin.Service.Impl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.tracker.ubus.ubus.Components.Auth.Service.Interface.AuthTokenGenerationService;
-import org.tracker.ubus.ubus.Components.EventHandler.Publisher.MultiEvenPublisher;
+import org.tracker.ubus.ubus.Components.Shared.EventHandler.Publisher.MultiEvenPublisher;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Service.Interface.IOneTimePasswordService;
 import org.tracker.ubus.ubus.Components.Shared.Entities.BaseService;
 import org.tracker.ubus.ubus.Components.Users.PendingAdmin.DTO.Response.PendingAdminResponse;

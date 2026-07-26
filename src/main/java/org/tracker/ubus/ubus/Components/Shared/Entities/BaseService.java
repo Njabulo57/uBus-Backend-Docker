@@ -45,4 +45,15 @@ public abstract class BaseService {
                 .getAuthentication().getPrincipal();
     }
 
+
+    protected final String getUserJwtToken() {
+        var user = (UserPrincipal) SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getPrincipal();
+
+        assert user != null;
+        return user.getJwtToken();
+    }
+
+
 }

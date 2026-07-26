@@ -1,152 +1,176 @@
 package org.tracker.ubus.ubus.Components.Buses.BusTracking.Service.Impl;
 
-import jakarta.annotation.PreDestroy;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
-import org.tracker.ubus.ubus.Components.Buses.BusTracking.DTO.Requests.DriverCurrentLocationMessage;
-import org.tracker.ubus.ubus.Components.Buses.BusTracking.DTO.Responses.DriverCurrentLocationResponse;
-import org.tracker.ubus.ubus.Components.Buses.BusTracking.Mappers.BusTrackingMapper;
-import org.tracker.ubus.ubus.Components.Buses.BusTracking.Service.Interface.IBusLocationBatchService;
-import org.tracker.ubus.ubus.Components.Trips.Trip.Entity.Trip;
-import org.tracker.ubus.ubus.Components.Trips.Trip.Repository.TripRepository;
-import org.tracker.ubus.ubus.Components.Trips.TripHistory.Repository.TripHistoryRepository;
-
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
+import com.github.benmanes.caffeine.cache.Cache;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+import org.tracker.ubus.ubus.Components.Buses.BusTracking.Handlers.DefaultRouteServiceCacheHandler;
+import org.tracker.ubus.ubus.Components.Buses.BusTracking.DTO.Requests.DriverCurrentLocationMessage;
+import org.tracker.ubus.ubus.Components.Buses.BusTracking.DTO.Responses.DriverCurrentLocationResponse;
+import org.tracker.ubus.ubus.Components.Buses.BusTracking.Event.Socket.BusTrackingLocationDeliveryEvent;
+import org.tracker.ubus.ubus.Components.Buses.BusTracking.Mappers.BusTrackingMapper;
+import org.tracker.ubus.ubus.Components.Buses.BusTracking.Service.Interface.IBusLocationBatchService;
+import org.tracker.ubus.ubus.Components.Shared.EventHandler.Publisher.MultiEvenPublisher;
+import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Response.DelayStatus;
+import org.tracker.ubus.ubus.Components.Trips.Trip.Entity.Trip;
+import org.tracker.ubus.ubus.Components.Trips.Trip.Enum.Destination;
+import org.tracker.ubus.ubus.Components.Trips.Trip.Repository.TripRepository;
+import org.tracker.ubus.ubus.Components.Trips.Trip.Util.EtaCalculator;
+import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
+
+import java.time.format.DateTimeFormatter;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class BusLocationBatchService implements IBusLocationBatchService {
 
-    private static final int MAX_QUEUE_SIZE = 5_000;
-    private static final int FLUSH_BATCH_SIZE = 800;
-    private static final long FLUSH_INTERVAL_MS = 300_000; // 5 minutes
+    private static final long ETA_UPDATE_INTERVAL_MS = 1500;
+    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("H:mm a");
 
-
-    private final BusTrackingMapper busTrackingMapper;
-    private final TripHistoryRepository tripHistoryRepository;
     private final TripRepository tripRepository;
+    private final BusTrackingMapper busTrackingMapper;
+    private final MultiEvenPublisher multiEvenPublisher;
+    private final DefaultRouteServiceCacheHandler defaultRouteServiceCacheHandler;
 
-    private final ConcurrentMap<UUID, BlockingQueue<DriverCurrentLocationMessage>> busQueues;
-    private final ConcurrentMap<UUID, AtomicBoolean> busFlushing;
-    private final ConcurrentMap<UUID, Trip> busTripCache;
+    private final Cache<UUID, Trip> tripCache;
+    private final Cache<UUID, DelayStatus> latestBusEtaCache;
+
+    private final ConcurrentMap<UUID, ConcurrentLinkedDeque<DriverCurrentLocationMessage>> busQueues;
+
 
 
     @Override
-    public DriverCurrentLocationResponse enqueue(DriverCurrentLocationMessage msg) {
-        var tripEntity = this.tripRepository.findByIdOrThrow(msg.tripId());
-        var bus = tripEntity.getBusAssignment().getBus();
-        var busId = bus.getId();
+    public void enqueue(DriverCurrentLocationMessage msg) {
+        var tripEntity = this.tripCache.get(msg.tripId(),
+                this.tripRepository::findByIdOrThrow);
 
-        var queue = busQueues.computeIfAbsent(busId,
-                id -> new LinkedBlockingQueue<>(MAX_QUEUE_SIZE));
-
-        // Cache the trip for this bus
-        busTripCache.computeIfAbsent(busId, k -> tripEntity);
-
-
-        var busLocationToDistribute = this.busTrackingMapper.toDTO(tripEntity);
-        if (queue.offer(msg)) {
-            // Only check size if we might need to flush
-            if (queue.size() >= FLUSH_BATCH_SIZE)
-                flushBus(busId, "BATCH_FULL");
-            return busLocationToDistribute;
-        }
-
-        // Queue full. dropping oldest and adding new
-        queue.poll();
+        var queue = busQueues.computeIfAbsent(tripEntity.getId(),
+                id -> new ConcurrentLinkedDeque<>());
         queue.offer(msg);
-        log.warn("Bus {}: queue full, dropped oldest location", busId);
-
-        return busLocationToDistribute;
-    }
-
-    @Override
-    public void endTrip(UUID tripId) {
-        // Find bus for this trip and flush
-        var trip = tripRepository.findByIdOrThrow(tripId);
-        var busId = trip.getBusAssignment().getBus().getId();
-        flushBus(busId, "TRIP_END");
-        // Clean up after ending the trip
-
-        busQueues.remove(busId);
-        busFlushing.remove(busId);
-        busTripCache.remove(busId);
     }
 
 
-    @Scheduled(fixedDelay = FLUSH_INTERVAL_MS)
-    protected void scheduledSweep() {
-
-        for (Map.Entry<UUID, BlockingQueue<DriverCurrentLocationMessage>> entry : busQueues.entrySet()) {
-            UUID busId = entry.getKey();
-            BlockingQueue<DriverCurrentLocationMessage> q = entry.getValue();
-
-            if (!q.isEmpty())
-                flushBus(busId, "INTERVAL");
-
-        }
-    }
-
-    @PreDestroy
-    protected void shutdown() {
-        log.info("Shutdown: flushing {} buses", busQueues.size());
-        this.busQueues.forEach((busId, q)
-                -> flushBus(busId, "SHUTDOWN"));
+    @Scheduled(fixedDelay = ETA_UPDATE_INTERVAL_MS)
+    protected void scheduledETAUpdate() {
+       this.shareEtaInformation();
     }
 
 
-    private void flushBus(UUID busId, String reason) {
-        AtomicBoolean flushing = busFlushing.computeIfAbsent(busId,
-                id -> new AtomicBoolean(false));
+    private DriverCurrentLocationResponse buildDriverLocationResponse(Trip trip, DriverCurrentLocationMessage msg) {
 
-        // Only one flusher per bus
-        if (!flushing.compareAndSet(false, true)) {
-            log.debug("Bus {}: flush skipped ({}), another in progress", busId, reason);
-            return;
+        var schedule = trip.getSchedule();
+        var tripId = trip.getId();
+        var route = trip.getRoute();
+
+        var currentPos = DefaultRouteServiceCacheHandler.of(msg);
+
+        // Get the route destinations
+        List<Destination> routeDestinations = route.getDestinations();
+
+        // Get the current destination index from the message
+        int currentDestIndex = msg.currentDestIndex();
+        var currentDest = routeDestinations.get(currentDestIndex);
+
+        // Find the next destination that is different from current
+        int nextIndex = (currentDestIndex + 1) % routeDestinations.size();
+        Destination nextDest = routeDestinations.get(nextIndex);
+
+        // Skip if same as current
+        while (nextDest == routeDestinations.get(currentDestIndex)) {
+            nextIndex = (nextIndex + 1) % routeDestinations.size();
+            nextDest = routeDestinations.get(nextIndex);
         }
 
+        // Calculate remaining distance from current position to the next destination
+        double remainingDistance = this.defaultRouteServiceCacheHandler
+                .getRemainingDistanceToDestination(route,
+                        routeDestinations.get(currentDestIndex),
+                        nextDest,
+                        currentPos);
 
-        var q = busQueues.get(busId);
-        if (q.isEmpty())
+        // Calculate ETA based on remaining distance and current speed
+        var eta = EtaCalculator.calculateETA(remainingDistance, msg.speed());
+
+        // Use schedule's arrival time or estimated time to reach next destination
+        var delayStatus = EtaCalculator.containsDelay(schedule.getArrivalTime(), eta);
+        this.latestBusEtaCache.put(tripId, delayStatus);
+        var formattedETA = eta.format(formatter);
+
+        if(msg.isMadeIt())
+            this.busQueues.get(tripId)
+                    .clear();
+
+        return this.busTrackingMapper.toDTO(trip, msg, formattedETA, delayStatus, currentDest, nextDest);
+    }
+
+    private DriverCurrentLocationResponse buildUIDriverLocationResponse(Trip trip, DriverCurrentLocationMessage msg) {
+        var schedule = trip.getSchedule();
+        var tripId = trip.getId();
+        var route = trip.getRoute();
+
+        // Get from and to destinations directly from schedule
+        var from = schedule.getFromDestination();
+        var to = schedule.getToDestination();
+
+        var currentPos = DefaultRouteServiceCacheHandler.of(msg);
+
+        // Calculate remaining distance from current position to the destination (to)
+        double remainingDistance = this.defaultRouteServiceCacheHandler
+                .getRemainingDistanceToDestination(route, from, to, currentPos);
+
+        // Calculate ETA based on remaining distance and current speed
+        var eta = EtaCalculator.calculateETA(remainingDistance, msg.speed());
+
+        // Use schedule's arrival time or estimated time to reach destination
+        var delayStatus = EtaCalculator.containsDelay(schedule.getArrivalTime(), eta);
+        this.latestBusEtaCache.put(tripId, delayStatus);
+        var formattedETA = eta.format(formatter);
+
+        if(msg.isMadeIt())
+            this.busQueues.get(tripId).clear();
+
+        return this.busTrackingMapper.toDTO(trip, msg, formattedETA, delayStatus, from, to);
+    }
+
+
+    private void shareEtaInformation() {
+        if(this.busQueues.isEmpty())
             return;
 
+        var locations = this.busQueues.entrySet()
+                .stream()
+                .filter(queue -> !queue.getValue().isEmpty())
+                .filter(queue -> queue.getValue().peekLast() != null)
+                .filter(queue -> queue.getValue()
+                        .peekLast().speed() > 0)
 
-        // Drain all messages
-        List<DriverCurrentLocationMessage> drained = new ArrayList<>();
-        int drainedCount = q.drainTo(drained);
+                .map(entry -> {
+                    var trip = this.tripCache.getIfPresent(entry.getKey());
 
-        if (drainedCount == 0)
-            return;
+                    log.info("Sending location for trip {}", trip.getId());
+                    if(trip == null) throw new IllegalStateException("Trip Ended");
 
-        // Get cached trip
-        Trip trip = busTripCache.get(busId);
-        log.debug("Bus {}: saving {} locations ({})", busId, drainedCount, reason);
+                    var queue = entry.getValue();
+                    var lastMsg = queue.peekLast();
 
-        // Save to database
-        var entities = busTrackingMapper.toEntities(drained, trip);
+                    if(lastMsg.currentDestIndex() != -5)
+                        return this.buildDriverLocationResponse(trip, lastMsg);
+                    else
+                        return this.buildUIDriverLocationResponse(trip, lastMsg);
 
+                }).filter(Objects::nonNull)
+                .toArray(DriverCurrentLocationResponse[]::new);
 
-        try
-        {
-            tripHistoryRepository.saveAll(entities);
-            log.info("Bus {}: saved {} locations", busId, drainedCount);
-        } catch (Exception e) {
-            log.error("Bus {}: failed to save locations", busId, e);
-        } finally {
-            flushing.set(false);
-        }
+        if(locations.length > 0)
+            this.multiEvenPublisher.publish(() -> new BusTrackingLocationDeliveryEvent(this, locations));
     }
 }

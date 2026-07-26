@@ -1,7 +1,7 @@
 package org.tracker.ubus.ubus.Components.Buses.BusAssignment.Events;
 
 import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Entity.BusAssignment;
-import org.tracker.ubus.ubus.Components.EventHandler.AbstractEvents.EmailEvent;
+import org.tracker.ubus.ubus.Components.Shared.EventHandler.AbstractEvents.EmailEvent;
 import org.tracker.ubus.ubus.Components.Shared.Mail.Templates.Bus.BusAssignmentTemplate;
 
 

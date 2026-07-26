@@ -6,8 +6,9 @@ import org.tracker.ubus.ubus.Components.Buses.Bus.Enum.BusActivityStatus;
 import org.tracker.ubus.ubus.Components.Buses.Bus.Enum.BusOperationalStatus;
 import org.tracker.ubus.ubus.Components.Buses.Bus.Enum.BusType;
 import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Entity.BusAssignment;
-import org.tracker.ubus.ubus.Components.Buses.BusRoute.Entity.BusRoute;
 import org.tracker.ubus.ubus.Components.Shared.Entities.TimeAuditableEntity;
+import org.tracker.ubus.ubus.Components.Users.User.Enum.Route;
+
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -41,6 +42,10 @@ public class Bus extends TimeAuditableEntity {
     @Column(nullable = false)
     private int capacity;
 
+    @Column
+    @Enumerated(EnumType.STRING)
+    private Route route;
+
 
     @Column(nullable = false, unique = true)
     private String registrationNumber;
@@ -65,8 +70,6 @@ public class Bus extends TimeAuditableEntity {
     @Builder.Default
     private Set<BusAssignment> busAssignments = new HashSet<>();
 
-    @OneToOne(mappedBy = "bus")
-    private BusRoute busRoute;
 
     @Override
     public boolean equals(Object o) {
