@@ -16,9 +16,12 @@ import org.tracker.ubus.ubus.Components.Trips.Trip.Repository.TripRepository;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Enum.Destination;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
 import static org.tracker.ubus.ubus.Components.Buses.Bus.Enum.BusActivityStatus.LOADING_PASSENGERS;
 import static org.tracker.ubus.ubus.Components.Buses.Bus.Enum.BusActivityStatus.STATIONERY;
 
@@ -48,13 +51,17 @@ public class BusAndTripSimulationController {
         }
         isInitialized = true;
 
-        LocalDate today = LocalDate.of(2026, 7, 25);
+        LocalDate today = LocalDate.of(2026, 7, 24);
 
         var allTrips = this.tripRepository.findByStatus(TripStatus.IN_PROGRESS)
                 .stream()
                 .filter(trip -> isTripToday(trip, today))
-                .filter(trip -> isWithinHours(4, trip.getDepartureTime()))
+                .filter(this::isWithinNoonAndMorning)
                 .filter(trip -> !trip.getSchedule().isCompleted())
+                .collect(Collectors.groupingBy(Trip::getRoute))
+                .values()
+                .stream()
+                .map(List::getFirst)
                 .toList();
 
         var tripCacheValues = allTrips.stream()
@@ -263,4 +270,15 @@ public class BusAndTripSimulationController {
     private boolean isWithinHours(int hours, LocalDateTime time) {
         return time.isAfter(LocalDateTime.now().minusHours(hours));
     }
-}
+
+
+    private boolean isWithinNoonAndMorning(Trip trip) {
+        var morning = LocalTime.of(10, 30);
+        return trip.getDepartureTime()
+                .toLocalTime()
+                .isAfter(morning) &&
+                trip.getDepartureTime()
+                .toLocalTime()
+                .isBefore(LocalTime.of(12, 0));
+    }
+ }

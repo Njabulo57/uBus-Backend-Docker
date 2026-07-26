@@ -238,18 +238,24 @@ public class TripService extends BaseService implements ITripService {
     @Override
     public List<ActiveTripResponse> getActiveTrips() {
 
-        LocalDate today = LocalDate.of(2026, 7, 25);
+        LocalDate today = LocalDate.of(2026, 7, 24);
         LocalTime noon = LocalTime.of(12, 0); // 12:00 AM
         LocalTime morningThreshold = LocalTime.of(9, 30); // 9:30 AM
+
 
 
         var allTrips = this.tripRepository.findByStatus(TripStatus.IN_PROGRESS)
                 .stream()
                 .filter(trip -> isTripToday(trip, today))
-                .filter(trip -> isWithinHours(4, trip.getDepartureTime()))
+                .filter(this::isWithinNoonAndMorning)
                 .filter(trip -> !trip.getSchedule().isCompleted())
+                .collect(Collectors.groupingBy(Trip::getRoute))
+                .values()
+                .stream()
+                .map(List::getFirst)
                 .map(this::mapToActiveTripResponse)
                 .toList();
+
 
 
         return allTrips;
@@ -327,5 +333,16 @@ public class TripService extends BaseService implements ITripService {
         var firstName = user.getFirstname();
         var firstNameInitialCapitalized = Character.toUpperCase(firstName.charAt(0));
         return firstNameInitialCapitalized + ". " + user.getLastname();
+    }
+
+
+    private boolean isWithinNoonAndMorning(Trip trip) {
+        var morning = LocalTime.of(10, 30);
+        return trip.getDepartureTime()
+                .toLocalTime()
+                .isAfter(morning) &&
+                trip.getDepartureTime()
+                        .toLocalTime()
+                        .isBefore(LocalTime.of(12, 0));
     }
 }
