@@ -18,7 +18,10 @@ public class TripCacheManager {
 
 
     public Collection<Trip> getAll() {
-        var tripCacheList = this.tripCache.asMap().values().stream().toList();
+        var tripCacheList = this.tripCache.asMap()
+                .values()
+                .stream()
+                .toList();
         var demonstationTrips = this.tripCollectionMapCache.values()
                 .stream()
                 .map(Map::keySet)

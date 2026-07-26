@@ -51,17 +51,12 @@ public class BusAndTripSimulationController {
         }
         isInitialized = true;
 
-        LocalDate today = LocalDate.of(2026, 7, 24);
+        LocalDate today = LocalDate.of(2026, 7, 23);
 
         var allTrips = this.tripRepository.findByStatus(TripStatus.IN_PROGRESS)
                 .stream()
                 .filter(trip -> isTripToday(trip, today))
                 .filter(this::isWithinNoonAndMorning)
-                .filter(trip -> !trip.getSchedule().isCompleted())
-                .collect(Collectors.groupingBy(Trip::getRoute))
-                .values()
-                .stream()
-                .map(List::getFirst)
                 .toList();
 
         var tripCacheValues = allTrips.stream()

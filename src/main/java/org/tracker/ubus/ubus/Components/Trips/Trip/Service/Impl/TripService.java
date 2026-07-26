@@ -238,7 +238,7 @@ public class TripService extends BaseService implements ITripService {
     @Override
     public List<ActiveTripResponse> getActiveTrips() {
 
-        LocalDate today = LocalDate.of(2026, 7, 24);
+        LocalDate today = LocalDate.of(2026, 7, 23);
         LocalTime noon = LocalTime.of(12, 0); // 12:00 AM
         LocalTime morningThreshold = LocalTime.of(9, 30); // 9:30 AM
 
@@ -248,11 +248,6 @@ public class TripService extends BaseService implements ITripService {
                 .stream()
                 .filter(trip -> isTripToday(trip, today))
                 .filter(this::isWithinNoonAndMorning)
-                .filter(trip -> !trip.getSchedule().isCompleted())
-                .collect(Collectors.groupingBy(Trip::getRoute))
-                .values()
-                .stream()
-                .map(List::getFirst)
                 .map(this::mapToActiveTripResponse)
                 .toList();
 
