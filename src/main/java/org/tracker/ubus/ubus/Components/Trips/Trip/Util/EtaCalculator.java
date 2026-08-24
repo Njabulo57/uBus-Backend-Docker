@@ -41,9 +41,7 @@ public record EtaCalculator() {
 
 
     public static LocalTime calculateETA(double distanceMeters, double speedKmh) {
-        if (speedKmh <= 0) {
-            return LocalTime.now().plusHours(1); // Default 1 hour if stopped
-        }
+
 
         // Convert speed to meters per second
         double speedMps = (speedKmh * 1000) / 3600;

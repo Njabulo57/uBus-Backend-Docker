@@ -40,18 +40,6 @@ public class TripController {
     }
 
 
-    @GetMapping("/get-active-trips")
-    public List<ActiveTripResponse> getActiveTrips() {
-        return this.tripService.getActiveTrips();
-    }
-
-
-    @GetMapping("/get-trip/{tripId}")
-    public ActiveTripResponse getActiveTrip(@PathVariable final UUID tripId) {
-        return this.tripService.getActiveTrip(tripId);
-    }
-
-
     @ResponseStatus(HttpStatus.OK)
     @PostMapping("/handle-tap/{tripId}")
     public int handleNfcTap(@PathVariable final UUID tripId, @RequestBody String nfcCode) {

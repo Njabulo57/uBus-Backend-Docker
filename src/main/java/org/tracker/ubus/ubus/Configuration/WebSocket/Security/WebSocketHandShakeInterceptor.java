@@ -14,7 +14,13 @@ import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 import org.tracker.ubus.ubus.Components.Shared.FilterHandlers.RequestTokenExtractor;
 import org.tracker.ubus.ubus.Components.Shared.FilterHandlers.ResponseWriter;
+import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
+import org.tracker.ubus.ubus.Configuration.Security.UserPrincipal;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+
 
 
 /**
@@ -38,6 +44,7 @@ public class WebSocketHandShakeInterceptor implements HandshakeInterceptor{
 
     private final ResponseWriter responseWriter;
     private final RequestTokenExtractor requestTokenExtractor;
+    private final Map<String, List<User>> connectedUsers; //grabs all the connected users
 
     /**
      * Intercepts the WebSocket handshake request to authenticate and validate the
@@ -70,6 +77,12 @@ public class WebSocketHandShakeInterceptor implements HandshakeInterceptor{
             var authentication = this.requestTokenExtractor.validateToken(token);
             attributes.put("userPrincipal", authentication.getPrincipal());
             attributes.put("token", token);
+
+            var userPrincipal = (UserPrincipal) authentication.getPrincipal();
+            assert userPrincipal != null;
+
+            this.connectedUsers.computeIfAbsent("",(k)-> new ArrayList<>())
+                    .add(userPrincipal.getUser());
             return true;
         }catch (ExpiredJwtException e){
             this.responseWriter.write(response, "Session Expired", HttpStatus.UNAUTHORIZED);

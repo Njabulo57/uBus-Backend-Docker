@@ -32,15 +32,12 @@ public interface BusPreferenceRepository extends JpaRepository<BusPreference, UU
                                 String.format("No BusPreference found for User %s", userId)));
     }
 
-    boolean existsByUserAndRoute(User user, Route route);
-
     int countByUser(User user);
 
-    BusPreference findByUserAndRoute(User currentUser, Route oldRoute);
+
 
     @Query("""
         SELECT b FROM BusPreference b
-        LEFT JOIN FETCH b.busUserPrefDestinations
         WHERE b.user = :user
     """)
     List<BusPreference> findAllByUser(User user);
@@ -49,14 +46,12 @@ public interface BusPreferenceRepository extends JpaRepository<BusPreference, UU
     @Query("""
         SELECT DISTINCT bp FROM BusPreference bp
         JOIN FETCH bp.user u
-        JOIN FETCH bp.busUserPrefDestinations
     """)
     List<BusPreference> findUsersWithPreferences();
 
 
     @Query("""
         SELECT bs FROM BusPreference bs
-        LEFT JOIN FETCH bs.busUserPrefDestinations
     """)
     List<BusPreference> findAllPreferences();
 

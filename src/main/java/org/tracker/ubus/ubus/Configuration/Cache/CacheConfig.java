@@ -2,19 +2,38 @@ package org.tracker.ubus.ubus.Configuration.Cache;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.tracker.ubus.ubus.Components.Buses.BusTracking.DTO.Internal.LatLon;
 import org.tracker.ubus.ubus.Components.Route.DTOs.Internal.RouteSegmentKey;
 import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Response.DelayStatus;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Entity.Trip;
-
+import org.tracker.ubus.ubus.Components.Trips.TripsSchedule.DTOs.Responses.ScheduleBaseInformation;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+
+@EnableCaching
 @Configuration
 public class CacheConfig {
+
+
+    @Bean
+    public CacheManager generalPurposeCache() {
+        var cacheManager = new CaffeineCacheManager();
+        cacheManager.setCaffeine(Caffeine.newBuilder()
+                .expireAfterWrite(60, TimeUnit.MINUTES)
+                .maximumSize(5)
+                .recordStats()
+        );
+        return cacheManager;
+    }
+
 
 
     /**
@@ -53,7 +72,8 @@ public class CacheConfig {
                 .build();
     }
 
-    @Bean Cache<UUID, Trip> tripCache() {
+    @Bean
+    public Cache<UUID, Trip> tripCache() {
         return Caffeine.newBuilder()
                 .maximumSize(1_000)
                 .expireAfterWrite(70, TimeUnit.HOURS)

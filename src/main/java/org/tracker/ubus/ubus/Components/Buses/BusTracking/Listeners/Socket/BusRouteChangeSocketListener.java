@@ -23,8 +23,6 @@ public class BusRouteChangeSocketListener extends AbstractSocketListener<Collect
     @Async
     @EventListener
     public void onBusRouteChange(BusRouteChangeEvent event) {
-        log.info("Bus Route Change Event received");
-        log.info("Sending Bus Route Change Event to Socket on Thread: {}", Thread.currentThread());
         var tripId = event.getTrip().getId();
         var coordinates = event.getCoordinates();
 

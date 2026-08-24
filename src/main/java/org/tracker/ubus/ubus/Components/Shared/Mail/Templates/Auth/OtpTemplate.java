@@ -1,8 +1,9 @@
 package org.tracker.ubus.ubus.Components.Shared.Mail.Templates.Auth;
+import org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole;
 
 public final class OtpTemplate {
 
-    public static String otpEmailTemplate(String personName, String otp, int expiryMinutes) {
+    public static String otpEmailTemplate(String personName, String otp, UserRole role, int expiryMinutes) {
 
         System.err.println("Expiry in " + expiryMinutes + " minutes");
         return new StringBuilder("<!DOCTYPE html>\n")
@@ -25,7 +26,7 @@ public final class OtpTemplate {
                 .append("        <tr>\n")
                 .append("            <td style=\"padding: 20px 40px 40px 40px;\">\n")
                 .append("                <h1 style=\"font-size: 36px; font-weight: 800; color: #000000; line-height: 1.1; margin: 0 0 24px 0; letter-spacing: -0.04em;\">\n")
-                .append("                    Hi ").append(personName).append(",<br/>Verify your email to start riding.\n")
+                .append("                    Hi ").append(personName).append(",<br/>Verify your ").append(role.getLabel()).append(" email to start riding.\n")
                 .append("                </h1>\n")
                 .append("                <p style=\"font-size: 16px; line-height: 1.6; color: #474747; margin: 0 0 32px 0;\">\n")
                 .append("                    To complete your registration at the transit hub, enter the following code on the sign-up screen.\n")

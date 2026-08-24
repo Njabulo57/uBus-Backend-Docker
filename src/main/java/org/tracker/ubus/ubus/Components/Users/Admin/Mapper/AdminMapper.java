@@ -9,6 +9,7 @@ import org.tracker.ubus.ubus.Components.Users.Admin.DTO.Response.DriverBusRespon
 import org.tracker.ubus.ubus.Components.Users.Admin.DTO.Response.DriverPendingResponseDTO;
 import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 
 @Component
@@ -25,6 +26,7 @@ public class AdminMapper {
     public Collection<DriverActiveResponseDTO> toDTOs(Collection<DriverWithOrWithoutAssignmentView> views) {
         return views.stream()
                 .map(this::toActiveDriverResponseDTO)
+                .sorted(Comparator.comparing(DriverActiveResponseDTO::lastName))
                 .toList();
     }
 
@@ -33,6 +35,7 @@ public class AdminMapper {
     public Collection<DriverActiveResponseDTO> toActiveDrivers(List<User> users) {
         return users.stream()
                 .map(this::toActiveDriverResponseDTO)
+                .sorted(Comparator.comparing(DriverActiveResponseDTO::lastName))
                 .toList();
     }
 

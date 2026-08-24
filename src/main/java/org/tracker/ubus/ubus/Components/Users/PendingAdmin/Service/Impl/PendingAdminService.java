@@ -4,7 +4,7 @@ package org.tracker.ubus.ubus.Components.Users.PendingAdmin.Service.Impl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.tracker.ubus.ubus.Components.Auth.Service.Interface.AuthTokenGenerationService;
-import org.tracker.ubus.ubus.Components.Shared.EventHandler.Publisher.MultiEvenPublisher;
+import org.tracker.ubus.ubus.Components.Shared.EventHandler.Publisher.MultiEventPublisher;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Service.Interface.IOneTimePasswordService;
 import org.tracker.ubus.ubus.Components.Shared.Entities.BaseService;
 import org.tracker.ubus.ubus.Components.Users.PendingAdmin.DTO.Response.PendingAdminResponse;
@@ -24,7 +24,7 @@ import java.util.Collection;
 public class PendingAdminService extends BaseService implements IPendingAdminService {
 
     private final UserRepository userRepository;
-    private final MultiEvenPublisher multiEvenPublisher;
+    private final MultiEventPublisher multiEventPublisher;
     private final PendingAdminMapper pendingAdminMapper;
     private final PendingAdminRepository pendingAdminRepository;
     private final AuthTokenGenerationService authTokenGenerationService;
@@ -32,11 +32,11 @@ public class PendingAdminService extends BaseService implements IPendingAdminSer
 
     public PendingAdminService(UserRepository userRepository, PendingAdminRepository pendingAdminRepository,
                                IOneTimePasswordService authTokenGenerationService,
-                               MultiEvenPublisher multiEvenPublisher, PendingAdminMapper pendingAdminMapper) {
+                               MultiEventPublisher multiEventPublisher, PendingAdminMapper pendingAdminMapper) {
         this.userRepository = userRepository;
         this.pendingAdminRepository = pendingAdminRepository;
         this.authTokenGenerationService = authTokenGenerationService;
-        this.multiEvenPublisher = multiEvenPublisher;
+        this.multiEventPublisher = multiEventPublisher;
         this.pendingAdminMapper = pendingAdminMapper;
     }
 
@@ -73,7 +73,7 @@ public class PendingAdminService extends BaseService implements IPendingAdminSer
         this.pendingAdminRepository.save(pendingAdmin); //save the pending admin entity
 
         log.info("Email Verification sent to {}", email);
-        multiEvenPublisher.publish(() -> new PendingAdminAdditionEvent(this, email, otpCarrier));
+        multiEventPublisher.publish(() -> new PendingAdminAdditionEvent(this, email, otpCarrier));
     }
 
 

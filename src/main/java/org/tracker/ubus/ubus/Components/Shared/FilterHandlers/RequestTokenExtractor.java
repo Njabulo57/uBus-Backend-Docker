@@ -86,8 +86,6 @@ public class RequestTokenExtractor {
             for (String param : params)
                 if (param.startsWith("token="))
                     return param.substring(6); // Remove "token=" prefix
-
-
         }
         throw new RuntimeException("Token not found in request");
     }

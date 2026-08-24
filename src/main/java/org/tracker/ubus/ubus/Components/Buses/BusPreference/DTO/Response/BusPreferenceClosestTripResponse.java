@@ -8,5 +8,8 @@ import java.util.UUID;
 
 @Builder
 public record BusPreferenceClosestTripResponse(String eta, String distance,
-                                               Destination from, Destination to, String busName,DelayStatus delayStatus, int stops, UUID tripId) {
+                                               String from, String to, String busName,
+                                               DelayStatus delayStatus, int stops,
+                                               UUID tripId, int progress,
+                                               int totalSeatsAvailable, int totalSeats, String minutesLeft) {
 }

@@ -1,27 +1,26 @@
 package org.tracker.ubus.ubus.Components.Buses.BusTracking.Handlers;
 
 import com.github.benmanes.caffeine.cache.Cache;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.tracker.ubus.ubus.Components.Buses.BusTracking.DTO.Internal.LatLon;
 import org.tracker.ubus.ubus.Components.Route.DTOs.Internal.RouteSegmentKey;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Util.TripMathUtil;
-import org.tracker.ubus.ubus.Configuration.HttpClient.Service.RouteService;
+import org.tracker.ubus.ubus.Configuration.ExternalClients.OpenRouteService.Service.OpenRouteService;
 
 import java.util.List;
 
 @Component
 public class ChangedRouteServiceCacheHandler {
 
-    private final RouteService routeService;
+    private final OpenRouteService openRouteService;
     private final Cache<RouteSegmentKey, List<LatLon>> changedRouteCache;
 
     public ChangedRouteServiceCacheHandler(@Qualifier("changedBusRouteCoordinatesCache") Cache<RouteSegmentKey,
-            List<LatLon>> changedRouteCache, RouteService routeService) {
+            List<LatLon>> changedRouteCache, OpenRouteService openRouteService) {
 
         this.changedRouteCache = changedRouteCache;
-        this.routeService = routeService;
+        this.openRouteService = openRouteService;
     }
 
     public static boolean isBusOffRoute(List<LatLon> route, LatLon currentPosition, double thresholdMeters) {
@@ -43,7 +42,7 @@ public class ChangedRouteServiceCacheHandler {
         var endLat = key.to().getLat();
         var endLng = key.to().getLng();
 
-        var route = this.routeService.getRoute(startLat, startLng, endLat, endLng);
+        var route = this.openRouteService.getRoute(startLat, startLng, endLat, endLng);
         var latLongRoute = of(route);
         changedRouteCache.put(key, latLongRoute);
 

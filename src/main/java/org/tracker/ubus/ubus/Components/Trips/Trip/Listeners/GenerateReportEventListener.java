@@ -14,8 +14,8 @@ import org.tracker.ubus.ubus.Components.Trips.TripReport.Repository.TripReportRe
 @RequiredArgsConstructor
 public class GenerateReportEventListener {
 
-    private final TripReportRepository tripReportRepository;
     private final TripReportMapper tripReportMapper;
+    private final TripReportRepository tripReportRepository;
 
 
     @Async

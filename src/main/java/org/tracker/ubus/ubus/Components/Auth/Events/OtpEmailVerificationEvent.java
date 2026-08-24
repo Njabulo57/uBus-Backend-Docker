@@ -27,8 +27,9 @@ public class OtpEmailVerificationEvent extends EmailEvent {
     @Override
     protected String constructHtmlBody() {
         String personName = user.getFirstname() + " " + user.getLastname();
+        var role = user.getRole();
         String otp = getInternalCarrier().opt();
         int expiry = getInternalCarrier().expiry();
-        return OtpTemplate.otpEmailTemplate(personName,otp, expiry); //we will call a string representation of the email here
+        return OtpTemplate.otpEmailTemplate(personName,otp, role, expiry); //we will call a string representation of the email here
     }
 }

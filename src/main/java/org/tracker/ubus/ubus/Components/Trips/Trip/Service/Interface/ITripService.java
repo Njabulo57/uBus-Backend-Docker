@@ -19,8 +19,4 @@ public interface ITripService {
 
     int handleNfcTap(UUID tripId, String nfcCode);
 
-
-    List<ActiveTripResponse> getActiveTrips();
-
-    ActiveTripResponse getActiveTrip(UUID tripId);
 }

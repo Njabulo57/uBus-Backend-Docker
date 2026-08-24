@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.tracker.ubus.ubus.Components.Audit.Service.TokenCredentialService;
 import org.tracker.ubus.ubus.Components.Auth.Events.OtpEmailVerificationEvent;
-import org.tracker.ubus.ubus.Components.Shared.EventHandler.Publisher.MultiEvenPublisher;
+import org.tracker.ubus.ubus.Components.Shared.EventHandler.Publisher.MultiEventPublisher;
 import org.tracker.ubus.ubus.Components.OneTimePassword.DTOs.Internal.OtpInternalCarrier;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Entity.OneTimePassword;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Events.WelcomeEmailEvent;
@@ -45,7 +45,7 @@ public class OneTimePasswordService extends TokenCredentialService implements IO
     private int adminExpiryDuration;
 
     private final UserRepository userRepository;
-    private final MultiEvenPublisher multiEvenPublisher;
+    private final MultiEventPublisher multiEventPublisher;
     private final PendingAdminRepository pendingAdminRepository;
     private final OneTimePasswordGenerator oneTimePasswordGenerator;
     private final OneTimePasswordRepository oneTimePasswordRepository;
@@ -124,7 +124,7 @@ public class OneTimePasswordService extends TokenCredentialService implements IO
             // Update user status to ACTIVE
             user.setStatus(UserStatus.ACTIVE);
             userRepository.save(user);
-            multiEvenPublisher.publish(() -> new WelcomeEmailEvent(this, user));
+            multiEventPublisher.publish(() -> new WelcomeEmailEvent(this, user));
         }
         // Delete the used OTP
         this.oneTimePasswordRepository.delete(oneTimePassword);
@@ -140,7 +140,7 @@ public class OneTimePasswordService extends TokenCredentialService implements IO
         var otp = generateOTP(user);
 
 
-        this.multiEvenPublisher.publish(() -> new OtpEmailVerificationEvent(this,user, otp));
+        this.multiEventPublisher.publish(() -> new OtpEmailVerificationEvent(this,user, otp));
 
     }
 

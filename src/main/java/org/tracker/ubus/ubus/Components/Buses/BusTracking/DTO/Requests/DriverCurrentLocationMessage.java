@@ -12,13 +12,14 @@ public record DriverCurrentLocationMessage(UUID tripId , double latitude,
                                            double longitude, double speed,
                                            LocalTime eta,
                                            LocalDateTime timePosted, String route, String busName,
-                                           boolean isMadeIt, int currentDestIndex) {
+                                           boolean isMadeIt, int currentDestIndex, boolean isSimulated) {
 
 
     public static DriverCurrentLocationMessage of(double lat, double lon) {
         return DriverCurrentLocationMessage.builder()
                 .latitude(lat)
                 .longitude(lon)
+                .speed(0)
                 .build();
 
     }

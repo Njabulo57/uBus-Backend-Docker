@@ -10,6 +10,7 @@ import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.UserStatus;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -29,6 +30,11 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmailAndStatus(String email, UserStatus status);
 
 
+    int countByCreatedAtAfter(LocalDateTime createdAt);
+    int countByCreatedAtBefore(LocalDateTime createdAtBefore);
+    int countByRoleAndCreatedAtAfter(UserRole userRole, LocalDateTime dateTime);
+
+
     @Query("SELECT u FROM User u WHERE u.status = :status AND u.role = :role")
     Page<User> findByStatusAndRole(UserStatus status, UserRole role, Pageable pageable);
 
@@ -46,6 +52,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     boolean existsByEmail(String email);
 
+    int countByRole(UserRole userRole);
 
     default User findByEmailOrThrow(String email) throws UserNotFoundException {
         return this.findByEmail(email)
@@ -62,5 +69,6 @@ public interface UserRepository extends JpaRepository<User, UUID> {
                 .orElseThrow(() -> new UserNotFoundException("User not found with nfcCode: " + nfcCode));
 
     }
+
 
 }

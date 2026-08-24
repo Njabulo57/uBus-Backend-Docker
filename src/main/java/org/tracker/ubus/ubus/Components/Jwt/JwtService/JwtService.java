@@ -1,7 +1,6 @@
 package org.tracker.ubus.ubus.Components.Jwt.JwtService;
 
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -49,7 +48,7 @@ public class JwtService {
 
         return Jwts.builder()
                 .expiration(new Date(System.currentTimeMillis() + duration)) // expanding life-time with the duration
-                .issuedAt(new Date(System.currentTimeMillis())) // getFromTripSimulationCache the current date
+                .issuedAt(new Date(System.currentTimeMillis()))
                 .claims(claims)
                 .subject(userDetails.getUsername())
                 .signWith(secretKeyObject)
@@ -95,7 +94,7 @@ public class JwtService {
 
         return Jwts.builder()
                 .expiration(new Date(System.currentTimeMillis() + duration)) // expanding life-time with the duration
-                .issuedAt(new Date(System.currentTimeMillis())) // getFromTripSimulationCache the current date
+                .issuedAt(new Date(System.currentTimeMillis()))
                 .claims(claims)
                 .subject(user.getEmail())
                 .signWith(secretKeyObject)

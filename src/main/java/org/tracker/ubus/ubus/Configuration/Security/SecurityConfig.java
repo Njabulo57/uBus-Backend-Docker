@@ -83,6 +83,11 @@ public class SecurityConfig {
                         .requestMatchers("/trips/get-trip/")
                             .hasAnyRole(DRIVER.getLabel(), ADMIN.getLabel(), SUPER_ADMIN.getLabel())
 
+                        .requestMatchers("/reports/**")
+                        .hasAnyRole(DRIVER.getLabel(), ADMIN.getLabel(), SUPER_ADMIN.getLabel())
+
+                        .requestMatchers("/numTripReports/**")
+                        .hasAnyRole(ADMIN.getLabel(), SUPER_ADMIN.getLabel())
 
                         .requestMatchers("/web-socket/**").permitAll()
 
@@ -90,13 +95,17 @@ public class SecurityConfig {
                         .requestMatchers("/admins/**")
                         .hasAnyRole(ADMIN.getLabel(), SUPER_ADMIN.getLabel())
 
+                        .requestMatchers("/tripLate/**")
+                        .hasRole(DRIVER.getLabel())
+
                         .requestMatchers("/schedules/**")
-                            .hasAnyRole(DRIVER.getLabel(), ADMIN.getLabel(), SUPER_ADMIN.getLabel())
+                            .hasAnyRole(DRIVER.getLabel(), ADMIN.getLabel(),
+                                    SUPER_ADMIN.getLabel())
 
 
                         .requestMatchers("/pending-admins/**")
-                        .hasRole(SUPER_ADMIN.getLabel())
-                        .requestMatchers("/simulation/**").hasRole(DRIVER.getLabel())
+                            .hasRole(SUPER_ADMIN.getLabel())
+
                         .anyRequest().authenticated()
         );
         return http;

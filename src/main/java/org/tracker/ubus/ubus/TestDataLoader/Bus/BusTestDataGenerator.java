@@ -61,41 +61,69 @@ public class BusTestDataGenerator implements CommandLineRunner {
     public void run(String... args) throws Exception {
         if (busRepository.count() == 0) {
             log.info("🚀 =============================================");
-            log.info("🚀 CREATING BUSES WITH OPTIONAL ROUTES");
+            log.info("🚀 CREATING BUSES WITH ROUTES");
             log.info("🚀 =============================================");
             long startTime = System.currentTimeMillis();
 
             List<BusDefinition> busDefinitions = new ArrayList<>();
 
-            // ===== ROUTE 1 BUSES: DFC 1-7 (7 buses with route) =====
-            for (int i = 1; i <= 7; i++) {
-                BusType busType = (i <= 4) ? BusType.ELECTRIC : BusType.COMBUSTION;
-                busDefinitions.add(new BusDefinition("DFC " + i, Route.ROUTE_1, busType));
+            // ============================================
+            // ROUTE 1: DFC ↔ APB ↔ APK (7-10 buses)
+            // ============================================
+            int route1Count = 7 + secureRandom.nextInt(4); // 7-10
+            for (int i = 1; i <= route1Count; i++) {
+                BusType type = (i % 2 == 0) ? BusType.ELECTRIC : BusType.COMBUSTION;
+                busDefinitions.add(new BusDefinition(
+                        "DFC-APK " + i,
+                        Route.ROUTE_1,
+                        type
+                ));
             }
 
-            // ===== ROUTE 2 BUSES: SWC 1-7 (7 buses with route) =====
-            for (int i = 1; i <= 7; i++) {
-                BusType busType = (i <= 4) ? BusType.COMBUSTION : BusType.ELECTRIC;
-                busDefinitions.add(new BusDefinition("SWC " + i, Route.ROUTE_2, busType));
+            // ============================================
+            // ROUTE 2: SWC ↔ APK ↔ APB (7-10 buses)
+            // ============================================
+            int route2Count = 7 + secureRandom.nextInt(4); // 7-10
+            for (int i = 1; i <= route2Count; i++) {
+                BusType type = (i % 2 == 0) ? BusType.ELECTRIC : BusType.COMBUSTION;
+                busDefinitions.add(new BusDefinition(
+                        "SWC-APB " + i,
+                        Route.ROUTE_2,
+                        type
+                ));
             }
 
-            // ===== ROUTE JBS BUSES: JBS 1-7 (7 buses with route) =====
-            for (int i = 1; i <= 7; i++) {
-                BusType busType = (i <= 3) ? BusType.COMBUSTION : BusType.ELECTRIC;
-                busDefinitions.add(new BusDefinition("JBS " + i, Route.ROUTE_JBS, busType));
+            // ============================================
+            // ROUTE 3: SWC ↔ DFC (7-10 buses)
+            // ============================================
+            int route3Count = 7 + secureRandom.nextInt(4); // 7-10
+            for (int i = 1; i <= route3Count; i++) {
+                BusType type = (i % 2 == 0) ? BusType.ELECTRIC : BusType.COMBUSTION;
+                busDefinitions.add(new BusDefinition(
+                        "SWC-DFC " + i,
+                        Route.ROUTE_3,
+                        type
+                ));
             }
 
-            // ===== UNASSIGNED BUSES (route = null): 4 spare buses =====
-            for (int i = 1; i <= 4; i++) {
-                BusType busType = (i <= 2) ? BusType.ELECTRIC : BusType.COMBUSTION;
-                busDefinitions.add(new BusDefinition("SPARE " + i, null, busType));
+            // ============================================
+            // ROUTE JBS: APK ↔ APB ↔ JBS (7-10 buses)
+            // ============================================
+            int routeJbsCount = 7 + secureRandom.nextInt(4); // 7-10
+            for (int i = 1; i <= routeJbsCount; i++) {
+                BusType type = (i % 2 == 0) ? BusType.ELECTRIC : BusType.COMBUSTION;
+                busDefinitions.add(new BusDefinition(
+                        "APK-JBS " + i,
+                        Route.ROUTE_JBS,
+                        type
+                ));
             }
 
             log.info("📊 Total buses: {}", busDefinitions.size());
-            log.info("   🚌 DFC 1-7   → Route 1 (7 buses)");
-            log.info("   🚌 SWC 1-7   → Route 2 (7 buses)");
-            log.info("   🚌 JBS 1-7   → Route JBS (7 buses)");
-            log.info("   🚌 SPARE 1-4 → No route assigned (4 buses)");
+            log.info("   🚌 ROUTE_1 (DFC-APK): {} buses", route1Count);
+            log.info("   🚌 ROUTE_2 (SWC-APB): {} buses", route2Count);
+            log.info("   🚌 ROUTE_3 (SWC-DFC): {} buses", route3Count);
+            log.info("   🚌 ROUTE_JBS (APK-JBS): {} buses", routeJbsCount);
 
             try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
                 List<CompletableFuture<Void>> futures = new ArrayList<>();
@@ -112,8 +140,6 @@ public class BusTestDataGenerator implements CommandLineRunner {
             long elapsed = System.currentTimeMillis() - startTime;
             log.info("🎉 =============================================");
             log.info("✅ COMPLETED! Saved {} buses in {} ms", savedCount.get(), elapsed);
-            log.info("   🚌 With route assigned: {}", busDefinitions.stream().filter(b -> b.primaryRoute != null).count());
-            log.info("   🚌 Without route (SPARE): {}", busDefinitions.stream().filter(b -> b.primaryRoute == null).count());
             log.info("🎉 =============================================");
         } else {
             log.info("✅ Buses already exist - skipping data generation");
@@ -128,17 +154,17 @@ public class BusTestDataGenerator implements CommandLineRunner {
                     .model(BUS_MODELS[faker.random().nextInt(BUS_MODELS.length)])
                     .capacity(30 + faker.random().nextInt(41))
                     .type(busType)
-                    .route(primaryRoute) // Can be null for spare buses
-                    .operationalStatus(getRandomOperationalStatus())
+                    .route(primaryRoute)
+                    .operationalStatus(BusOperationalStatus.OPERATIONAL)  // ALL OPERATIONAL
                     .activityStatus(getRandomActivityStatus())
-                    .isActive(faker.random().nextBoolean())
+                    .isActive(true)
                     .build();
 
             busRepository.save(bus);
             int saved = savedCount.incrementAndGet();
 
-            if (saved % 5 == 0) {
-                log.info("📊 Progress: {}/{} buses saved", saved, 25);
+            if (saved % 5 == 0 || saved == busRepository.count()) {
+                log.info("📊 Progress: {}/{} buses saved", saved, 28);
             }
         });
     }
@@ -154,24 +180,8 @@ public class BusTestDataGenerator implements CommandLineRunner {
         }
     }
 
-    private BusOperationalStatus getRandomOperationalStatus() {
-        int random = faker.random().nextInt(100);
-        if (random < 70) {
-            return BusOperationalStatus.OPERATIONAL;
-        } else if (random < 85) {
-            return BusOperationalStatus.MAINTENANCE;
-        } else {
-            return BusOperationalStatus.OUT_OF_SERVICE;
-        }
-    }
-
     private BusActivityStatus getRandomActivityStatus() {
-        BusActivityStatus[] statuses = { LOADING_PASSENGERS,
-                ON_TRIP,         // En route with passengers
-                STATIONERY,
-                BREAK
-        };
-        // Driver break}
+        BusActivityStatus[] statuses = { LOADING_PASSENGERS, ON_TRIP, STATIONERY, BREAK };
         return statuses[faker.random().nextInt(statuses.length)];
     }
 

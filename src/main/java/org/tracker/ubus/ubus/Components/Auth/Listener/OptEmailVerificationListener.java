@@ -28,9 +28,8 @@ public class OptEmailVerificationListener {
         var header = otpEmailVerificationEvent.getHeader();
         var body = otpEmailVerificationEvent.getBody();
 
-        log.debug("About to commence the email sending process");
+        log.debug("About to commence the email sending process on {}", Thread.currentThread());
         this.emailService.sendHtmlEmail(savedUser.getEmail(), header, body);
-
         log.debug("Sent Otp Email Verification Event");
     }
 

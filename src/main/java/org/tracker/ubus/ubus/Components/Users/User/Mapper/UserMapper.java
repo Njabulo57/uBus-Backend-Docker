@@ -16,9 +16,7 @@ public class UserMapper {
 
     public UserProfileResponse toDTO(User user, List<BusPreference> busPreferences, int completedTrips) {
 
-        List<String> stringPreferences = busPreferences.stream()
-                .map(busPreference -> busPreference.getRoute().getLabel())
-                .toList();
+        List<String> stringPreferences = List.of();
 
 
         if(user.getRole() == UserRole.STUDENT || user.getRole() == UserRole.STAFF)

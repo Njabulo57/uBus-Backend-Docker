@@ -28,9 +28,9 @@ public final class AuthMapper {
     public RegisterSuccessfulResponse toRegisterDTO(UserRole userRole, UUID id) {
 
         var message = "";
-        if(userRole == UserRole.ADMIN)
+        if(userRole == UserRole.ADMIN || userRole == UserRole.DRIVER)
             message = "Successfully Registered";
-        else
+        if(userRole == UserRole.STUDENT || userRole == UserRole.STAFF)
             message = "OTP sent to your email";
 
         final LocalDateTime nowed = LocalDateTime.now();

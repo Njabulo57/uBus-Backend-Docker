@@ -3,9 +3,8 @@ package org.tracker.ubus.ubus.Components.Trips.TripLunch.Entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.tracker.ubus.ubus.Components.Buses.Bus.Entity.Bus;
 import org.tracker.ubus.ubus.Components.Shared.Entities.TimeAuditableEntity;
-import org.tracker.ubus.ubus.Components.Trips.TripsSchedule.Entity.Schedule;
-
 import java.time.LocalTime;
 import java.util.UUID;
 
@@ -24,7 +23,8 @@ public class TripLunch extends TimeAuditableEntity {
     private LocalTime time;
 
 
+
     @JoinColumn(nullable = false)
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    private Schedule schedule;
+    private Bus bus;
 }

@@ -9,4 +9,9 @@ import java.util.Map;
 
 @Builder
 public record BusPreferenceResponse(List<BusPrefView> busPreferences) {
+
+    public static BusPreferenceResponse of(List<BusPrefView> busPreferences) {
+        return BusPreferenceResponse.builder().busPreferences(busPreferences)
+                .build();
+    }
 }

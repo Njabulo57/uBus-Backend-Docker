@@ -33,28 +33,31 @@ public class UserTestDataGenerator implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
 
     // Defaults — override via application.properties or CLI args
-    @Value("${seed.users.students:200}") private int defaultStudents;
-    @Value("${seed.users.admins:50}")    private int defaultAdmins;
-    @Value("${seed.users.staff:150}")    private int defaultStaff;
+    @Value("${seed.users.students:55000}") private int defaultStudents;
+    @Value("${seed.users.admins:5}")    private int defaultAdmins;
+    @Value("${seed.users.staff:4500}")    private int defaultStaff;
     @Value("${seed.users.drivers:100}")   private int defaultDrivers;
     @Value("${seed.users.force:false}")  private boolean defaultForce;
-    @Value("${seed.users.super-admin:20}")   private int defaultSuperAdmin;
+    @Value("${seed.users.super-admin:2}")   private int defaultSuperAdmin;
 
     @Override
-    public void run(String... args) {
+    public void run(String... args) throws Exception {
+
+        log.info("Seeding users");
         Counts c = Counts.from(args, defaultStudents, defaultAdmins, defaultStaff, defaultDrivers, defaultForce);
 
         if (c.total() == 0) {
             log.info("Seeder: all counts are 0, nothing to do");
             return;
         }
-        if (!c.force && userRepository.count() > 0) {
+        if (!c.force && userRepository.count() > 0 && userRepository.count() < 54999) {
             log.info("Users already exist, skipping. Pass --force=true to seed anyway.");
             return;
         }
 
-        if(userRepository.count() >0)
+        if (userRepository.count() > 54999) {
             return;
+        }
 
         log.info("Seeding -> students={}, admins={}, staff={}, drivers={} (total {})",
                 c.students, c.admins, c.staff, c.drivers, c.total());
@@ -122,7 +125,7 @@ public class UserTestDataGenerator implements CommandLineRunner {
                 .role(role);
     }
 
-    public User superAdmin(int n, String pwd) {
+    private User superAdmin(int n, String pwd) {
         return base(pwd, SUPER_ADMIN)
                 .email(String.format("super-admin%04d@Ubus.uj.ac.za", n))
                 .status(ACTIVE)

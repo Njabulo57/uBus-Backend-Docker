@@ -3,9 +3,10 @@ package org.tracker.ubus.ubus.Components.Buses.BusAssignment.Enum;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Exceptions.Internal.DriverScheduleNotFoundException;
-
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Collection;
+import java.util.List;
 import java.util.stream.Stream;
 
 @Getter
@@ -23,6 +24,9 @@ public enum DriverSchedule {
     private final LocalTime endTime;
 
 
+    private final static List<DriverSchedule> asList = List.of(DriverSchedule.values());
+    private final static Collection<DriverSchedule> asCollection = List.of(DriverSchedule.values());
+
 
     public static DriverSchedule fromLabel(String label) {
         return Stream.of(DriverSchedule.values())
@@ -30,6 +34,14 @@ public enum DriverSchedule {
                 .findFirst()
                 .orElseThrow(() -> new DriverScheduleNotFoundException("DriverSchedule not found. Provided label: " + label));
 
+    }
+
+    public static List<DriverSchedule> asList() {
+        return asList;
+    }
+
+    public static Collection<DriverSchedule> asCollection() {
+        return asCollection;
     }
 
     @Override

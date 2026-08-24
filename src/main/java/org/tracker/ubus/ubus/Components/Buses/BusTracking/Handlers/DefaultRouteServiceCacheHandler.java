@@ -35,11 +35,6 @@ public class DefaultRouteServiceCacheHandler {
         return index == destinations.size() - 1 ? null : destinations.get(index + 1);
     }
 
-    public Destination getPreviousDestination(Route route, Destination destination) {
-        var destinations = List.copyOf(route.getDestinations());
-        var index = destinations.indexOf(destination);
-        return index == 0 ? null : destinations.get(index - 1);
-    }
 
 
 
@@ -58,7 +53,7 @@ public class DefaultRouteServiceCacheHandler {
     public double getSegmentRemainingDistance(Route route, Destination currentDest, LatLon currentPosition) {
         var nextDest = getNextDestination(route, currentDest);
         if(nextDest == null)
-            return 0;
+            throw new IllegalStateException("Next Destination is null for route " + route.getLabel() + " and current destination " + currentDest);
 
         var segmentCoordinates = getRouteSegmentCoordinates(route, currentDest, nextDest);
         var closestPointIndex = getClosestPoint(segmentCoordinates, currentPosition);

@@ -6,7 +6,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
-import org.tracker.ubus.ubus.Components.Audit.AuditService;
+import org.tracker.ubus.ubus.Components.Audit.Service.AuditService;
 import org.tracker.ubus.ubus.Components.Buses.Bus.Events.AdminBusRegistrationAuditEvent;
 
 

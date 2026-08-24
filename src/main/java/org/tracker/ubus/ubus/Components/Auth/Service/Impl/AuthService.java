@@ -98,7 +98,7 @@ public class AuthService extends BaseService implements IAuthService {
 
         //check if the user requires verification
         if(needsVerification(savedUser))
-            this.verificationDispatcher.dispatchRegistrationOTP(savedUser);
+            this.verificationDispatcher.dispatchVerification(savedUser);
 
         var id = savedUser.getId();
         if(userRole == ADMIN)
@@ -123,7 +123,7 @@ public class AuthService extends BaseService implements IAuthService {
                 .orElseThrow(() -> new AccountNotFoundException("Account Doesn't Exist"));
 
         switch(user.getStatus()) {
-            case EMAIL_APPROVAL_PENDING -> this.verificationDispatcher.dispatchRegistrationOTP(user);
+            case EMAIL_APPROVAL_PENDING -> this.verificationDispatcher.dispatchVerification(user);
             case ACTIVE -> throw new RuntimeException("User is already verified");
             case INACTIVE -> throw new AccountLockedException("Account is disabled. Contact support.");
         }
@@ -200,7 +200,7 @@ public class AuthService extends BaseService implements IAuthService {
      * @return true if the user's status is EMAIL_APPROVAL_PENDING, false otherwise
      */
     private boolean needsVerification(User user) {
-        return user.getStatus() == EMAIL_APPROVAL_PENDING;
+        return user.getStatus() == EMAIL_APPROVAL_PENDING || user.getStatus() == ADMIN_APPROVAL_PENDING;
     }
 
 

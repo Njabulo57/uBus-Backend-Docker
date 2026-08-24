@@ -12,6 +12,7 @@ import org.tracker.ubus.ubus.Components.Buses.Bus.Enum.BusType;
 import org.tracker.ubus.ubus.Components.Buses.Bus.Repository.Projections.BusWithAssignmentView;
 import org.tracker.ubus.ubus.Components.Buses.Bus.Repository.Projections.DriverWithOrWithoutAssignmentView;
 
+import java.util.Comparator;
 import java.util.List;
 
 
@@ -73,6 +74,7 @@ public class BusMapper {
 
         return views.stream()
                 .map(this::toDTO)
+                .sorted(Comparator.comparing(BusAdminViewResponse::busName))
                 .toList();
     }
 

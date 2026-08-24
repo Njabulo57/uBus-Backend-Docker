@@ -8,13 +8,10 @@ import org.springframework.web.bind.annotation.*;
 import org.tracker.ubus.ubus.Components.Buses.BusPreference.DTO.Request.BusPreferenceDTO;
 import org.tracker.ubus.ubus.Components.Buses.BusPreference.DTO.Response.BusPrefView;
 import org.tracker.ubus.ubus.Components.Buses.BusPreference.DTO.Response.BusPreferenceResponse;
-import org.tracker.ubus.ubus.Components.Buses.BusPreference.Entity.BusPreference;
 import org.tracker.ubus.ubus.Components.Buses.BusPreference.Service.Interface.IBusPreferenceService;
-import org.tracker.ubus.ubus.Components.Trips.Trip.Enum.Destination;
-import org.tracker.ubus.ubus.Components.Users.User.Enum.Route;
 
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * REST Controller for managing bus route preferences.
@@ -99,15 +96,14 @@ public class BusPreferenceController {
      */
     @DeleteMapping("/delete")
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<BusPreferenceResponse> deletePreference(@RequestBody BusPreferenceDTO busPreferenceDTO)
-    {
+    public ResponseEntity<BusPreferenceResponse> deletePreference(@RequestBody BusPreferenceDTO busPreferenceDTO) {
         busPreferenceService.deletePreference(busPreferenceDTO);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
     }
 
 
     @GetMapping("/all")
-    public BusPrefView[] getAllBusPreferences() {
+    public Collection<BusPrefView> getAllBusPreferences() {
         return busPreferenceService.getAllBusPreferences();
     }
 

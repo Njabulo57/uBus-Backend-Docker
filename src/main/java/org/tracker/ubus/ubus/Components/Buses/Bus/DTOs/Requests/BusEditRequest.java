@@ -3,9 +3,11 @@ package org.tracker.ubus.ubus.Components.Buses.Bus.DTOs.Requests;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 
+import java.util.UUID;
+
 public record BusEditRequest(
 
-        String id,
+        UUID id,
 
         String name,
 

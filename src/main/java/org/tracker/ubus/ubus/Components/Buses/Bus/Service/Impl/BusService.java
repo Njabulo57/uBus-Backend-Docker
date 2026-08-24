@@ -11,6 +11,7 @@ import org.tracker.ubus.ubus.Components.Buses.Bus.Entity.Bus;
 import org.tracker.ubus.ubus.Components.Buses.Bus.Enum.BusActivityStatus;
 import org.tracker.ubus.ubus.Components.Buses.Bus.Enum.BusOperationalStatus;
 import org.tracker.ubus.ubus.Components.Buses.Bus.Enum.BusType;
+import org.tracker.ubus.ubus.Components.Buses.Bus.Events.AdminBusAssignmentRemovalEvent;
 import org.tracker.ubus.ubus.Components.Buses.Bus.Events.AdminBusDeletionAuditEvent;
 import org.tracker.ubus.ubus.Components.Buses.Bus.Exceptions.BusInformationMismatchException;
 import org.tracker.ubus.ubus.Components.Buses.Bus.Exceptions.DuplicateDriverAssignmentException;
@@ -21,11 +22,14 @@ import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Entity.BusAssignment
 import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Enum.DriverSchedule;
 import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Mappers.BusAssignmentMapper;
 import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Repository.BusAssignmentRepository;
-import org.tracker.ubus.ubus.Components.Shared.EventHandler.Publisher.MultiEvenPublisher;
+import org.tracker.ubus.ubus.Components.Buses.BusOperationalHistory.Entity.BusOperationalHistory;
+import org.tracker.ubus.ubus.Components.Buses.BusOperationalHistory.Repository.BusOperationalHistoryRepository;
+import org.tracker.ubus.ubus.Components.Shared.EventHandler.Publisher.MultiEventPublisher;
 import org.tracker.ubus.ubus.Components.Shared.Entities.BaseService;
-import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
 import org.tracker.ubus.ubus.Components.Users.User.Repository.UserRepository;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -40,9 +44,10 @@ public class BusService extends BaseService implements IBusService {
     private final BusMapper busMapper;
     private final BusRepository busRepository;
     private final UserRepository userRepository;
-    private final MultiEvenPublisher multiEvenPublisher;
+    private final MultiEventPublisher multiEventPublisher;
     private final BusAssignmentMapper busAssignmentMapper;
     private final BusAssignmentRepository busAssignmentRepository;
+    private final BusOperationalHistoryRepository busOperationalHistoryRepository;
 
 
     @Override
@@ -65,14 +70,16 @@ public class BusService extends BaseService implements IBusService {
         return busRegisterResponse;
     }
 
+
     @Override
-    public void editBusActivityStatus(String busId, String activityStatus) {
+    public void editBusActivityStatus(UUID busId, String activityStatus) {
 
         var activityStatusEnum = BusActivityStatus.fromLabel(activityStatus);
-        var bus = this.busRepository.findByIdOrThrow(UUID.fromString(busId));
+        var bus = this.busRepository.findByIdOrThrow(busId);
         bus.setActivityStatus(activityStatusEnum); // save the new status
         this.busRepository.save(bus);
     }
+
 
     @Override
     @Transactional
@@ -80,18 +87,61 @@ public class BusService extends BaseService implements IBusService {
 
 
         var bus = this.busRepository.findByIdOrThrow(busId);
-
         if(!bus.isActive())
             throw new IllegalStateException("Bus is already deleted");
-
 
         this.busAssignmentRepository.deleteByBus(bus); //delete all bus assignments
         bus.setActive(false); //soft delete the bus
         this.busRepository.save(bus);
 
         var admin = this.getCurrentUser();
-        multiEvenPublisher.publish(() -> new AdminBusDeletionAuditEvent(this, admin, bus));
+        multiEventPublisher.publish(() -> new AdminBusDeletionAuditEvent(this, admin, bus));
     }
+
+
+    @Override
+    public List<BusAdminViewResponse> viewBuses() {
+        var busesAssignedAndNot = this.busRepository.findAllBusesWithAssignment();
+        return this.busMapper.toDTOs(busesAssignedAndNot);
+    }
+
+
+    @Transactional
+    @Override
+    public void editOperationalStatus(BusEditRequest busEditRequest) {
+
+
+        var bus = this.busRepository.findByIdOrThrow(busEditRequest.id());
+        var operationalStatus = BusOperationalStatus.fromLabel(busEditRequest.operationalStatus());
+        bus.setOperationalStatus(operationalStatus);
+
+        BusOperationalHistory busOperationalHistory = BusOperationalHistory.builder()
+                .bus(bus)
+                .busOperationalStatus(operationalStatus)
+                .dateOperated(LocalDate.now())
+                .build();
+
+
+        this.busOperationalHistoryRepository.save(busOperationalHistory);
+
+        if(bus.getOperationalStatus() == BusOperationalStatus.OUT_OF_SERVICE) {
+
+            var busName = bus.getName();
+            var busAssignments = this.busAssignmentRepository.findByBusName(busName);
+
+
+            //getting the list of drivers from the given assignment
+            var drivers = busAssignments.stream()
+                    .map(BusAssignment::getDriver)
+                    .toList();
+
+
+            this.busAssignmentRepository.deleteByBus(bus);
+            this.multiEventPublisher.publish(() -> new AdminBusAssignmentRemovalEvent(this, bus, drivers));
+        }
+        this.busRepository.save(bus);
+    }
+
 
     @Override
     @Transactional
@@ -120,12 +170,6 @@ public class BusService extends BaseService implements IBusService {
         }
     }
 
-    @Override
-    public List<BusAdminViewResponse> viewBuses() {
-        var busesAssignedAndNot = this.busRepository.findAllBusesWithAssignment();
-        return this.busMapper.toDTOs(busesAssignedAndNot);
-    }
-
 
     private void validateBusConstraints(Bus bus)
             throws BusInformationMismatchException {
@@ -149,7 +193,7 @@ public class BusService extends BaseService implements IBusService {
     }
 
 
-    public void saveBusAssignment(Collection<UUID> driverIds, Bus bus)
+    private void saveBusAssignment(Collection<UUID> driverIds, Bus bus)
             throws DuplicateDriverAssignmentException {
 
         var drivers = this.userRepository.findByIdIn(driverIds);

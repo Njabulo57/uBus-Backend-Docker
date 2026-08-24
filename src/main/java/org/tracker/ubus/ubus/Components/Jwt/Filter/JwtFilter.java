@@ -11,7 +11,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.tracker.ubus.ubus.Components.Shared.FilterHandlers.RequestTokenExtractor;
@@ -43,7 +42,6 @@ public class JwtFilter extends OncePerRequestFilter {
             }
 
             try {
-
                 var authToken = this.requestTokenExtractor.validateToken(token);
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             } catch (ExpiredJwtException e) {

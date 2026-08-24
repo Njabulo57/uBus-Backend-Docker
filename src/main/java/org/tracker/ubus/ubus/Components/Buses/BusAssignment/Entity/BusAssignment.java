@@ -16,11 +16,25 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "bus_assignment", indexes = {
-        @Index(name = "idx_bus_assignment_bus", columnList = "bus_id"),
-        @Index(name = "idx_bus_assignment_driver", columnList = "driver_id"),
-        @Index(name = "idx_bus_assignment_schedule", columnList = "driver_schedule")
-})
+@Table(name = "bus_assignment",
+        indexes = {
+                @Index(name = "idx_bus_assignment_bus", columnList = "bus_id"),
+                @Index(name = "idx_bus_assignment_driver", columnList = "driver_id"),
+                @Index(name = "idx_bus_assignment_schedule", columnList = "driver_schedule")
+        },
+        uniqueConstraints = {
+                // This ensures a bus can only have one assignment per driver schedule (shift)
+                @UniqueConstraint(
+                        name = "uk_bus_assignment_bus_schedule",
+                        columnNames = {"bus_id", "driver_schedule"}
+                ),
+                // This ensures a driver can only have one assignment per driver schedule (shift)
+                @UniqueConstraint(
+                        name = "uk_bus_assignment_driver_schedule",
+                        columnNames = {"driver_id", "driver_schedule"}
+                )
+        }
+)
 public class BusAssignment extends TimeAuditableEntity {
 
     @Id
@@ -37,6 +51,7 @@ public class BusAssignment extends TimeAuditableEntity {
     private Bus bus;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private DriverSchedule driverSchedule;
 
     @Override

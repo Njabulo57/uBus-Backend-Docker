@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.tracker.ubus.ubus.Components.Buses.BusPreference.DTO.Request.BusPreferenceDTO;
@@ -14,211 +13,129 @@ import org.tracker.ubus.ubus.Components.Buses.BusPreference.DTO.Response.BusPref
 import org.tracker.ubus.ubus.Components.Buses.BusPreference.DTO.Response.BusPreferenceClosestTripResponse;
 import org.tracker.ubus.ubus.Components.Buses.BusPreference.DTO.Response.BusPreferenceResponse;
 import org.tracker.ubus.ubus.Components.Buses.BusPreference.Entity.BusPreference;
-import org.tracker.ubus.ubus.Components.Buses.BusPreference.Events.BusPreferenceSuscriberAllTripsEvent;
-import org.tracker.ubus.ubus.Components.Buses.BusPreference.Events.BusPreferenceSuscriberEvent;
-import org.tracker.ubus.ubus.Components.Buses.BusPreference.Exceptions.BusPreferenceNotFoundException;
+import org.tracker.ubus.ubus.Components.Buses.BusPreference.Events.BusPreferenceSubscriberAllTripsEvent;
+import org.tracker.ubus.ubus.Components.Buses.BusPreference.Events.BusPreferenceSubscriberEvent;
+import org.tracker.ubus.ubus.Components.Buses.BusPreference.Exceptions.BusPreferenceMaximumException;
 import org.tracker.ubus.ubus.Components.Buses.BusPreference.Mapper.BusPreferenceMapper;
 import org.tracker.ubus.ubus.Components.Buses.BusPreference.Repository.BusPreferenceRepository;
 import org.tracker.ubus.ubus.Components.Buses.BusPreference.Service.Interface.IBusPreferenceService;
-import org.tracker.ubus.ubus.Components.Buses.BusTracking.DTO.Internal.LatLon;
-import org.tracker.ubus.ubus.Components.Buses.BusTracking.DTO.Requests.DriverCurrentLocationMessage;
-import org.tracker.ubus.ubus.Components.Buses.BusTracking.Handlers.DefaultRouteServiceCacheHandler;
-import org.tracker.ubus.ubus.Components.Buses.BusUserPreferenceDentination.Repository.BusUserPrefDestinationRepository;
-import org.tracker.ubus.ubus.Components.Shared.EventHandler.Publisher.MultiEvenPublisher;
+import org.tracker.ubus.ubus.Components.Shared.Entities.BaseService;
+import org.tracker.ubus.ubus.Components.Shared.EventHandler.Publisher.MultiEventPublisher;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Enum.Destination;
 import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.Route;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.UserStatus;
 import org.tracker.ubus.ubus.Components.Users.User.Repository.UserRepository;
-import org.tracker.ubus.ubus.Configuration.Security.UserPrincipal;
+import org.tracker.ubus.ubus.Configuration.WebSocket.Monitor.WebSocketSubscriptionMonitor;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.stream.Collectors;
 
-import static org.tracker.ubus.ubus.Components.Users.User.Enum.UserStatus.ACTIVE;
 
 
 @Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class BusPreferenceService implements IBusPreferenceService {
+public class BusPreferenceService extends BaseService implements IBusPreferenceService {
 
     @Autowired
     private BusPreferenceRepository repository;
-
     private final UserRepository userRepository;
+
     private final BusPreferenceMapper busPreferenceMapper;
-    private final MultiEvenPublisher multiEvenPublisher;
+    private final MultiEventPublisher multiEventPublisher;
+
+    private static final int TOTAL_PREFERENCE_BUSES_TO_SHOW = 2;
+
+    private static final String PREFERENCE_SOCKET_CONNECTION = "/topic/bus-preference-suscriber/";
+    private static final String ALL_TRIPS_SOCKET_CONNECTION = "/topic/bus-preference-suscriber-all-trips/";
 
 
-    private final DefaultRouteServiceCacheHandler defaultRouteServiceCacheHandler;
     private final BusPreferenceTripLoader busPreferenceTripLoader;
 
-    private final BusUserPrefDestinationRepository busUserPrefDestinationRepository;
-
     private final ConcurrentHashMap<User, BusPreferenceClosestTripResponse> busPreferenceCache;
-    private final ConcurrentHashMap<User, BusPreference> preferencesCache;
-    private final ConcurrentHashMap<UUID, ConcurrentLinkedDeque<DriverCurrentLocationMessage>> busQueues;
 
+    private final WebSocketSubscriptionMonitor webSocketSubscriptionMonitor;
 
-    private final Set<User> allUsers;
-
-
+    private final List<User> users = new ArrayList<>();
 
     @PostConstruct
     protected void init() {
 
-        var allPreferences = this.repository.findAllPreferences();
-        allPreferences.forEach(preference -> {
+        var activeStatus = UserStatus.ACTIVE;
+        var roles = List.of(UserRole.STAFF, UserRole.STUDENT);
+        var allStudentsAndStaff =userRepository.findByRoleInAndStatus(roles,  activeStatus);
 
-            this.preferencesCache.put(preference.getUser(),
-                    preference);
-        });
+        this.users.addAll(allStudentsAndStaff);
     }
-
 
     @Override
     public void addPreference(List<BusPreferenceDTO> busPreferenceDTOs) {
 
-        if (busPreferenceDTOs.isEmpty() || busPreferenceDTOs.size() > 3)
-            return;
+        Map<Destination, Destination> routeMap = new HashMap<>();
+        User user = getCurrentUser();
+        List<BusPreference> busPreferences = repository.findAllByUser(user);
+        if(busPreferences.size() >= 3)
+            throw new BusPreferenceMaximumException("You can only have up to 3 preferences");
 
-        var user = getCurrentUser();
-        var routesToSave = new HashSet<Route>();
-
-        // First, collect all unique routes from all combinations
-        busPreferenceDTOs.forEach(pref -> {
-            var from = Destination.valueOf(pref.getFrom());
-            var to = Destination.valueOf(pref.getTo());
-
-            if (from.equals(to))
-                throw new BusPreferenceNotFoundException("From and To cannot be the same");
-
-            var destinationArray = new Destination[]{from, to};
-            var routes = Route.findRouteByDestinations(destinationArray);
-            routesToSave.addAll(routes);
-        });
-
-        // Then save each route once
-        for (var route : routesToSave) {
-            if (repository.existsByUserAndRoute(user, route))
-                continue;
-
-            var busPreference = this.busPreferenceMapper.toEntity(user, route);
-            var savedPreference = this.repository.save(busPreference);
-            this.repository.flush();
-
-            // Save all destination combinations for this route
-            busPreferenceDTOs.forEach(pref -> {
-                var from = Destination.valueOf(pref.getFrom());
-                var to = Destination.valueOf(pref.getTo());
-                var destArray = new Destination[]{from, to};
-                var routesForPref = Route.findRouteByDestinations(destArray);
-
-                if (routesForPref.contains(route)) {
-                    var busUserPrefDestination = this.busPreferenceMapper.toEntity(user, savedPreference, to, from);
-                    this.busUserPrefDestinationRepository.save(busUserPrefDestination);
+        for(BusPreferenceDTO busPreferenceDTO : busPreferenceDTOs) {
+            boolean toBeAdded = true;
+            Destination from = Destination.valueOf(busPreferenceDTO.getFrom());
+            Destination to = Destination.valueOf(busPreferenceDTO.getTo());
+            for(BusPreference busPreference : busPreferences) {
+                if (busPreference.getFromDestination() == from && busPreference.getToDestination() == to) {
+                    toBeAdded = false;
+                    break;
                 }
-            });
-            this.preferencesCache.put(user, savedPreference);
+
+            }
+            for(Map.Entry<Destination, Destination> entry: routeMap.entrySet()) {
+                if(entry.getKey() == from && entry.getValue() == to) {
+                    toBeAdded = false;
+                    break;
+                }
+            }
+            if(toBeAdded)
+                routeMap.put(from, to);
+
         }
+        for(Map.Entry<Destination, Destination> entry: routeMap.entrySet()) {
+            BusPreference busPreference = BusPreference.builder().
+                    user(user).
+                    fromDestination(entry.getKey()).
+                    toDestination(entry.getValue()).
+                    build();
+            repository.save(busPreference);
+        }
+
+
     }
 
 
+    @Transactional
     @Override
     public void editPreference(BusPreferenceDTO busPreferenceDTO) {
-        var user = getCurrentUser();
-        var oldFrom = Destination.valueOf(busPreferenceDTO.getOldFrom());
-        var oldTo = Destination.valueOf(busPreferenceDTO.getOldTo());
-        var newFrom = Destination.valueOf(busPreferenceDTO.getFrom());
-        var newTo = Destination.valueOf(busPreferenceDTO.getTo());
-
-        if (oldFrom.equals(newFrom) && oldTo.equals(newTo))
-            throw new BusPreferenceNotFoundException("No changes detected");
-
-        // Delete old preference
-        var oldRoutes = Route.findRouteByDestinations(oldFrom, oldTo);
-        for (var route : oldRoutes) {
-            var busPreference = this.repository.findByUserAndRoute(user, route);
-            if (busPreference != null) {
-                var toRemove = busPreference.getBusUserPrefDestinations().stream()
-                        .filter(dest -> dest.getFromDestination() == oldFrom && dest.getToDestination() == oldTo)
-                        .findFirst()
-                        .orElse(null);
-
-                if (toRemove != null) {
-                    busPreference.removeBusUserPrefDestination(toRemove);
-                    this.busUserPrefDestinationRepository.delete(toRemove);
-                    this.busUserPrefDestinationRepository.flush();
-
-                    if (busPreference.getBusUserPrefDestinations().isEmpty()) {
-                        this.repository.delete(busPreference);
-                        this.repository.flush();
-                        this.preferencesCache.remove(user);
-                    } else {
-                        this.repository.save(busPreference);
-                    }
-                    this.busPreferenceCache.remove(user);
-                }
-            }
-        }
-
-        // Add new preference
-        var newRoutes = Route.findRouteByDestinations(newFrom, newTo);
-        for (var route : newRoutes) {
-            if (!repository.existsByUserAndRoute(user, route)) {
-                var busPreference = this.busPreferenceMapper.toEntity(user, route);
-                var savedPreference = this.repository.save(busPreference);
-                this.repository.flush();
-
-                var busUserPrefDestination = this.busPreferenceMapper.toEntity(user, savedPreference, newTo, newFrom);
-                this.busUserPrefDestinationRepository.save(busUserPrefDestination);
-
-                this.preferencesCache.put(user, savedPreference);
-            }
-        }
+        deletePreference(busPreferenceDTO);
+        addPreference(List.of(busPreferenceDTO));
     }
+
 
 
     @Override
     public void deletePreference(BusPreferenceDTO busPreferenceDTO) {
-        var user = getCurrentUser();
-        var from = Destination.valueOf(busPreferenceDTO.getFrom());
-        var to = Destination.valueOf(busPreferenceDTO.getTo());
+        User user = getCurrentUser();
+        List<BusPreference> busPreferences = repository.findAllByUser(user);
+        for(BusPreference busPreference : busPreferences) {
 
-        var routes = Route.findRouteByDestinations(from, to);
-
-        for (var route : routes) {
-            var busPreference = this.repository.findByUserAndRoute(user, route);
-            if (busPreference != null) {
-                // Find the specific destination to remove
-                var toRemove = busPreference.getBusUserPrefDestinations().stream()
-                        .filter(dest -> dest.getFromDestination() == from && dest.getToDestination() == to)
-                        .findFirst()
-                        .orElse(null);
-
-                if (toRemove != null) {
-                    // Remove from the collection
-                    busPreference.removeBusUserPrefDestination(toRemove);
-                    // Delete the destination from database
-                    this.busUserPrefDestinationRepository.delete(toRemove);
-                    this.busUserPrefDestinationRepository.flush();
-
-                    // If no destinations left, delete the preference
-                    if (busPreference.getBusUserPrefDestinations().isEmpty()) {
-                        this.repository.delete(busPreference);
-                        this.repository.flush();
-                        this.preferencesCache.remove(user);
-                    }
-                    this.busPreferenceCache.remove(user);
-                }
+            if(busPreference.getFromDestination() == Destination.valueOf(busPreferenceDTO.getFrom()) &&
+                    busPreference.getToDestination() == Destination.valueOf(busPreferenceDTO.getTo())) {
+                repository.delete(busPreference);
             }
         }
     }
+
 
     @Override
     public BusPreferenceResponse viewPreferences() {
@@ -228,15 +145,20 @@ public class BusPreferenceService implements IBusPreferenceService {
         var preferences = this.repository.findAllByUser(user);
 
         var allPreferences = preferences.stream()
-                .flatMap(preference -> preference.getBusUserPrefDestinations().stream())
+                .map(pref -> new BusPrefView(pref.getFromDestination(),
+                        pref.getToDestination())
+                )
                 .toList();
-        return busPreferenceMapper.toResponse(allPreferences);
+        ;
 
+
+        return BusPreferenceResponse
+                .of(allPreferences);
     }
 
 
     @Override
-    public BusPrefView[] getAllBusPreferences() {
+    public Collection<BusPrefView> getAllBusPreferences() {
         return Route.getAllValidDestinationCombinations();
     }
 
@@ -248,65 +170,57 @@ public class BusPreferenceService implements IBusPreferenceService {
     }
 
 
-    @Scheduled(fixedDelay = 5_000)
+    @Scheduled(fixedDelay = 3_000)
     protected void checkBusDistanceToUsers() {
 
-        if (!this.preferencesCache.isEmpty())
-            this.showAllTripsByPreference(); //shows trips coming to the user's destinations
-        this.showAllTrips();
-    }
+        this.showAllTripsByPreference(); //shows trips coming to the user's destinations
 
-    private User getCurrentUser() {
-        UserPrincipal principal = (UserPrincipal) Objects.requireNonNull(SecurityContextHolder.getContext()
-                        .getAuthentication())
-                .getPrincipal();
-        return Objects.requireNonNull(principal).getUser();
+        //if no one is connected to the endpoint dealing with preferences
+        if(this.users.isEmpty())
+            return;
+        this.showAllTrips();
+
+
     }
 
 
     private void showAllTripsByPreference() {
         var usersWithPreferences = this.repository.findUsersWithPreferences();
+
         var nearestBusesByUserPreference = this.busPreferenceTripLoader
-                .findNearestBusForUserPreference(usersWithPreferences);
+                .getNearestBusesToPreference(TOTAL_PREFERENCE_BUSES_TO_SHOW,
+                        usersWithPreferences);
 
-        for (var entry : nearestBusesByUserPreference.entrySet()) {
-            var user = entry.getKey();
-            var userNearestBuses = entry.getValue();
+        for(var userPrefNearestBus: nearestBusesByUserPreference) {
 
-            for(var nearestBusByPref: userNearestBuses ) {
-                this.multiEvenPublisher.publish(() ->
-                        new BusPreferenceSuscriberEvent(this, user, nearestBusByPref));
-            }
-
-
+            var user = userPrefNearestBus.user();
+            this.multiEventPublisher.publish(() ->
+                    new BusPreferenceSubscriberEvent(this, user, userPrefNearestBus, 0));
         }
+
     }
+
 
     private void showAllTrips() {
 
-        var roles = List.of(UserRole.STUDENT, UserRole.STAFF);
-        var allUsers = this.userRepository.findByRoleInAndStatus(roles, ACTIVE); //getFromTripSimulationCache all users from the database
         var allNearestTripsMap = this.busPreferenceTripLoader.getNearestTripsToTheirDestination();
-
 
         for (var entry : allNearestTripsMap.entrySet()) {
             var nearestTripToDest = entry.getValue();
 
             for (var destTrip : nearestTripToDest.entrySet()) {
                 var closetTripInfo = destTrip.getValue();
-                var trip = closetTripInfo.trip();
-                var eta = closetTripInfo.eta();
-                var distance = closetTripInfo.distance();
+                var trip = closetTripInfo.getTrip();
+                var eta = closetTripInfo.getEta();
+                var distance = closetTripInfo.getDistance();
+                var progress = closetTripInfo.getProgress();
 
-                var delayStatus = closetTripInfo.delayStatus();
-                this.multiEvenPublisher.publish(()->
-                        new BusPreferenceSuscriberAllTripsEvent(this, allUsers, trip,
-                                eta, distance, delayStatus));
+                var delayStatus = closetTripInfo.getDelayStatus();
+                this.multiEventPublisher.publish(()->
+                        new BusPreferenceSubscriberAllTripsEvent(this, users, trip,
+                                eta, distance, delayStatus, progress));
             }
         }
 
     }
-
-
-
 }

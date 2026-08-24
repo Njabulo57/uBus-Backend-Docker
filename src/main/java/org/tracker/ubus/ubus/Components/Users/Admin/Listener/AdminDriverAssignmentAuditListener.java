@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.tracker.ubus.ubus.Components.Users.Admin.Events.AdminDriverAssignmentAuditEvent;
-import org.tracker.ubus.ubus.Components.Audit.AuditService;
+import org.tracker.ubus.ubus.Components.Audit.Service.AuditService;
 
 @Slf4j
 @Component

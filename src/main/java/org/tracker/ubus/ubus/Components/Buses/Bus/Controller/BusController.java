@@ -29,6 +29,7 @@ public class BusController {
 
     private final IBusService busService;
 
+
     /**
      * Registers a new bus in the system.
      *
@@ -113,7 +114,7 @@ public class BusController {
      * Response Code: 200 OK
      */
     @PutMapping("/edit-bus/{busId}")
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void editBus(@RequestBody BusRegisterRequest busEditRequest) {
         this.busService.editBus(busEditRequest);
     }
@@ -132,6 +133,20 @@ public class BusController {
     @GetMapping("/view-buses")
     public List<BusAdminViewResponse> viewBuses() {
         return busService.viewBuses();
+    }
+
+
+    /**
+     * Edits the operational status of a bus.
+     * @param busEditRequest the request containing the bus ID and the new operational status.
+     * busOperationalStatus: OPERATIONAL|MAINTENANCE|OUT OF SERVICE
+     * id: the unique identifier of the bus to be edited.
+     * {busses/edit-bus-operational-status}
+     * HTTP Method: PUT
+     */
+    @PutMapping("/edit-bus-operational-status")
+    public void editBusOperationalStatus(BusEditRequest busEditRequest) {
+        this.busService.editOperationalStatus(busEditRequest);
     }
 
 }

@@ -11,8 +11,6 @@ import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 @Component
 public class BusDisconnectEvent {
 
-
-    @Async
     @EventListener
     public void onDisconnect(SessionDisconnectEvent event) {
         log.info("Bus Disconnected");

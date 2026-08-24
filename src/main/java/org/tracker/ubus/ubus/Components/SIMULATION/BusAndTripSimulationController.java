@@ -1,43 +1,45 @@
 package org.tracker.ubus.ubus.Components.SIMULATION;
 
-import com.github.benmanes.caffeine.cache.Cache;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Component;
+import org.tracker.ubus.ubus.Components.Buses.BusOperationalHistory.Enum.Priority;
+import org.tracker.ubus.ubus.Components.Buses.BusOperationalHistory.Repository.BusOperationalHistoryRepository;
 import org.tracker.ubus.ubus.Components.Buses.BusTracking.DTO.Internal.LatLon;
 import org.tracker.ubus.ubus.Components.Buses.BusTracking.DTO.Requests.DriverCurrentLocationMessage;
 import org.tracker.ubus.ubus.Components.Buses.BusTracking.Handlers.DefaultRouteServiceCacheHandler;
-import org.tracker.ubus.ubus.Components.Buses.BusTracking.Service.Interface.IBusLocationBatchService;
+import org.tracker.ubus.ubus.Components.Buses.BusTracking.Service.Interface.IBusLocationTrackingService;
+import org.tracker.ubus.ubus.Components.Trips.Trip.CacheManager.TripCacheManager;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Entity.Trip;
-import org.tracker.ubus.ubus.Components.Trips.Trip.Enum.TripStatus;
-import org.tracker.ubus.ubus.Components.Trips.Trip.Repository.TripRepository;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Enum.Destination;
+import org.tracker.ubus.ubus.Components.Users.User.Enum.Route;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import static java.util.stream.Collectors.toList;
 import static org.tracker.ubus.ubus.Components.Buses.Bus.Enum.BusActivityStatus.LOADING_PASSENGERS;
 import static org.tracker.ubus.ubus.Components.Buses.Bus.Enum.BusActivityStatus.STATIONERY;
 
 @Slf4j
-@RestController
+@Component
 @RequiredArgsConstructor
 public class BusAndTripSimulationController {
 
-    private final TripRepository tripRepository;
-    private final IBusLocationBatchService busLocationBatchService;
+    private final SimulatedTrips simulatedTrips;
+    private final IBusLocationTrackingService busLocationBatchService;
     private final DefaultRouteServiceCacheHandler defaultRouteServiceCacheHandler;
 
     private static final Random random = new Random();
-    private static final long SIMULATION_INTERVAL_MS = 1500;
+    private static final long SIMULATION_INTERVAL_MS = 800;
 
-    private final Cache<UUID, Trip> tripCache;
+
+    private BusOperationalHistoryRepository busOperationalHistoryRepository;
+    private final TripCacheManager tripCacheManager;
     private final Map<UUID, BusSimulationState> busStates = new ConcurrentHashMap<>();
     private final Set<UUID> loadingPassengersSent = ConcurrentHashMap.newKeySet();
 
@@ -46,32 +48,20 @@ public class BusAndTripSimulationController {
     @PostConstruct
     protected void init() {
         if (isInitialized) {
-            log.info("Simulation already running - skipping re-init");
             return;
         }
         isInitialized = true;
 
-        LocalDate today = LocalDate.of(2026, 7, 23);
-
-        var allTrips = this.tripRepository.findByStatus(TripStatus.IN_PROGRESS)
-                .stream()
-                .filter(trip -> isTripToday(trip, today))
-                .filter(this::isWithinNoonAndMorning)
-                .toList();
-
+        var allTrips = new ArrayList<Trip>();
         var tripCacheValues = allTrips.stream()
                 .collect(Collectors.toMap(Trip::getId, trip -> trip));
 
-        tripCacheValues.forEach((id, trip) -> {
-            var bus = trip.getBusAssignment().getBus();
-            log.info("Trip {} {} found for simulation", id, bus.getName());
-        });
-        this.tripCache.putAll(tripCacheValues);
+        this.tripCacheManager.putAllInTripSimulationCache(tripCacheValues);
 
-        if (tripCache.estimatedSize() == 0) {
+        if (this.tripCacheManager.estimatedTripSimulationCacheSize() == 0) {
             log.warn("No trips found for today");
         } else {
-            log.info("Initialized {} trips for simulation", tripCache.estimatedSize());
+            log.info("Initialized {} trips for simulation", tripCacheManager.estimatedTripSimulationCacheSize());
 
             allTrips.forEach(trip -> {
                 var bus = trip.getBusAssignment().getBus();
@@ -88,29 +78,38 @@ public class BusAndTripSimulationController {
     @Scheduled(fixedRate = SIMULATION_INTERVAL_MS)
     protected void simulateTrips() {
         try {
-            if (this.tripCache.estimatedSize() == 0) {
+            if (this.tripCacheManager.estimatedTotal() == 0)
                 return;
-            }
 
-            var allTrips = this.tripCache.asMap()
-                    .values()
-                    .stream()
-                    .toList();
+            var allTrips = this.tripCacheManager.getAll();
 
             for (Trip trip : allTrips) {
                 try {
                     UUID tripId = trip.getId();
-                    var bus = trip.getBusAssignment().getBus();
-                    var activityStatus = bus.getActivityStatus();
 
+                    var bus = trip.getBusAssignment().getBus();
+
+                    var activityStatus = bus.getActivityStatus();
                     if (activityStatus == LOADING_PASSENGERS ||
                             activityStatus == STATIONERY) {
-                        log.debug("Trip {} skipping simulation - bus is {}",
-                                trip.getBusAssignment().getBus().getName(), activityStatus);
+                        this.sendStationaryLocation(trip);
                         continue;
                     }
 
-                    BusSimulationState state = busStates.computeIfAbsent(tripId,
+                    //var today = LocalDate.now();
+//                    var operations = this.busOperationalHistoryRepository.findByBusAndPriorityAndDateOperated(bus,
+//                            Priority.CRITICAL, today);
+
+
+//                    for(var operation : operations)
+//                        if(operation.getBus().equals(bus))
+//                            this.sendStationaryLocation(trip);
+
+
+
+
+
+                    var state = busStates.computeIfAbsent(tripId,
                             id -> new BusSimulationState());
 
                     simulateBusMovement(trip, state);
@@ -128,7 +127,8 @@ public class BusAndTripSimulationController {
     }
 
     private void sendLoadingPassengerLocation(Trip trip) {
-        var schedule = trip.getSchedule();
+        var schedule = trip.getScheduleLegBusAssignment()
+                .getScheduleLeg();
         var from = schedule.getFromDestination();
         var route = trip.getRoute().getLabel();
 
@@ -142,138 +142,204 @@ public class BusAndTripSimulationController {
                 .busName(trip.getBusAssignment() != null && trip.getBusAssignment().getBus() != null
                         ? trip.getBusAssignment().getBus().getName()
                         : "Unknown")
-                .currentDestIndex(-5) // -5 indicates UI mode (uses from/to from schedule)
+                .isSimulated(trip.isFromSimulation())
                 .build();
 
         busLocationBatchService.enqueue(locationMessage);
     }
 
     private void simulateBusMovement(Trip trip, BusSimulationState state) {
-        var schedule = trip.getSchedule();
+        var schedule = trip.getScheduleLegBusAssignment()
+                .getScheduleLeg();
         var route = trip.getRoute();
-        var busName = trip.getBusAssignment().getBus().getName();
 
-        // Get all destinations in the route
-        List<Destination> destinations = route.getDestinations();
-        if (destinations == null || destinations.isEmpty()) {
+
+        // Check if bus should be stopped
+        if (shouldBusStop(state)) {
+            sendLocationUpdate(trip, state.lastLat, state.lastLng, 0,
+                    false);
+            state.stoppedFrames++;
+            return;
+        }
+
+        List<Destination> destinations = route.getUniqueStops();
+        if (destinations.isEmpty()) {
             log.warn("No destinations found for route: {}", route.getLabel());
             return;
         }
 
-        // Initialize - start at the 'from' destination
         if (!state.isInitialized) {
             Destination from = schedule.getFromDestination();
-            int startIndex = destinations.indexOf(from);
-            if (startIndex != -1) {
-                state.currentDestIndex = startIndex;
-            } else {
-                state.currentDestIndex = 0;
-            }
+            state.currentDestIndex = destinations.indexOf(from);
+
+            if (state.currentDestIndex == -1)
+                throw new IllegalStateException("From destination not found in route destinations");
+
+
             state.isInitialized = true;
-            log.info("Trip {} initialized at destination index {} ({})",
-                    busName, state.currentDestIndex, destinations.get(state.currentDestIndex));
+            state.lastLat = from.getLat();
+            state.lastLng = from.getLng();
         }
 
-        // Get current destination
-        Destination currentDest = destinations.get(state.currentDestIndex);
+        var from = schedule.getFromDestination();
+        var nextDest = schedule.getToDestination();
 
-        // Calculate next destination index (loop around)
-        int nextDestIndex = (state.currentDestIndex + 1) % destinations.size();
+        // Get coordinates for the segment
+        List<LatLon> segmentCoordinates = null;
 
-        // Skip if same as current (shouldn't happen but just in case)
-        while (destinations.get(nextDestIndex) == currentDest) {
-            nextDestIndex = (nextDestIndex + 1) % destinations.size();
+        while (segmentCoordinates == null || segmentCoordinates.isEmpty()) {
+            try {
+                segmentCoordinates = this.defaultRouteServiceCacheHandler
+                        .getRouteSegmentCoordinates(route, from, nextDest);
+                if (segmentCoordinates != null && !segmentCoordinates.isEmpty()) {
+                    break;
+                }
+            } catch (Exception e) {
+                log.warn("No coordinates for {} -> {}, trying next", from, nextDest);
+            }
+
+            // Move to next destination
+            int currentIndex = destinations.indexOf(nextDest);
+            int nextIndex = (currentIndex + 1) % destinations.size();
+
+            while (destinations.get(nextIndex).equals(nextDest)) {
+                nextIndex = (nextIndex + 1) % destinations.size();
+            }
+
+            from = nextDest;
+            nextDest = destinations.get(nextIndex);
+            schedule.setFromDestination(from);
+            schedule.setToDestination(nextDest);
         }
 
-        Destination nextDest = destinations.get(nextDestIndex);
-
-        // Get coordinates for the segment from current to next destination
-        List<LatLon> segmentCoordinates = this.defaultRouteServiceCacheHandler
-                .getRouteSegmentCoordinates(route, currentDest, nextDest);
-
-        if (segmentCoordinates == null || segmentCoordinates.isEmpty()) {
-            log.warn("No coordinates found for segment from {} to {}", currentDest, nextDest);
-            return;
-        }
-
-        String routeName = route.getLabel();
         double speed = random.nextDouble() * 10 + 20;
 
-        // If we've reached the end of the segment, move to next destination
+
         if (state.currentIndex >= segmentCoordinates.size() - 1) {
-            // Move to next destination
-            state.currentDestIndex = nextDestIndex;
+
+            if(!trip.isFromSimulation())
+                return;
+
+            Destination currentDest = destinations.get(state.currentDestIndex);
+            var nextDestToGo = this.getNextDestination(destinations, state.currentDestIndex);
+
+            // Update schedule with new destinations
+            schedule.setFromDestination(currentDest);
+            schedule.setToDestination(nextDestToGo);
+
+            state.currentDestIndex = destinations.indexOf(nextDestToGo);
             state.currentIndex = 0;
+            state.stoppedFrames = 0;
+            state.lastLat = currentDest.getLat();
+            state.lastLng = currentDest.getLng();
 
-            log.debug("Trip {} moved to next destination: {} (index {})",
-                    busName, destinations.get(state.currentDestIndex), state.currentDestIndex);
-
-            // Send location at the new destination
-            Destination newDest = destinations.get(state.currentDestIndex);
-            sendLocationUpdate(trip, newDest.getLat(), newDest.getLng(), 0, routeName, state.currentDestIndex);
+            sendLocationUpdate(trip, currentDest.getLat(), currentDest.getLng(), 0, true);
             return;
         }
 
         // Move to next coordinate
         state.currentIndex++;
         LatLon nextPoint = segmentCoordinates.get(state.currentIndex);
+        state.lastLat = nextPoint.lat();
+        state.lastLng = nextPoint.lon();
 
-        // Send location update with current destination index
-        sendLocationUpdate(trip, nextPoint.lat(), nextPoint.lon(), speed, routeName, state.currentDestIndex);
+        double actualSpeed = speed * (0.7 + random.nextDouble() * 0.6);
+        sendLocationUpdate(trip, nextPoint.lat(), nextPoint.lon(), actualSpeed, false);
     }
 
-    private boolean isTripToday(Trip trip, LocalDate today) {
-        LocalDateTime departureTime = trip.getDepartureTime();
-        if (departureTime == null) {
-            return false;
+    private boolean shouldBusStop(BusSimulationState state) {
+        // If already stopped, check if it's time to move again
+        if (state.isStopped) {
+            state.stoppedFrames++;
+            // Randomly decide to start moving after 2-10 frames
+            if (state.stoppedFrames > random.nextInt(8) + 2) {
+                state.isStopped = false;
+                state.stoppedFrames = 0;
+                return false;
+            }
+            return true;
         }
-        LocalDate tripDate = departureTime.toLocalDate();
-        return tripDate.equals(today);
+
+        // Random chance to stop (5% chance each frame)
+        if (random.nextDouble() < 0.05) {
+            state.isStopped = true;
+            state.stoppedFrames = 0;
+            return true;
+        }
+
+        return false;
     }
 
-    private void sendLocationUpdate(Trip trip, double lat, double lng, double speed, String route, int currentDestIndex) {
-        var locationMessage = DriverCurrentLocationMessage.builder()
+    private void sendLocationUpdate(Trip trip, double lat, double lng, double speed, boolean isMadeIt) {
+        var locationBuilder = DriverCurrentLocationMessage.builder()
                 .tripId(trip.getId())
                 .latitude(lat)
                 .longitude(lng)
                 .speed(speed)
                 .timePosted(LocalDateTime.now())
-                .route(route)
                 .busName(trip.getBusAssignment() != null && trip.getBusAssignment().getBus() != null
                         ? trip.getBusAssignment().getBus().getName()
                         : "Unknown")
-                .currentDestIndex(currentDestIndex)
-                .build();
+                .isSimulated(trip.isFromSimulation());
 
+        if (trip.isFromSimulation())
+            locationBuilder
+                    .isMadeIt(isMadeIt);
+
+
+        var locationMessage = locationBuilder.build();
         busLocationBatchService.enqueue(locationMessage);
     }
 
-    private void cleanupCache(List<Trip> activeTrips) {
+    private void cleanupCache(Collection<Trip> activeTrips) {
         List<UUID> activeTripIds = activeTrips.stream()
                 .map(Trip::getId)
                 .toList();
 
-        busStates.keySet().removeIf(id -> !activeTripIds.contains(id));
+        busStates.keySet()
+                .removeIf(id -> !activeTripIds.contains(id));
     }
 
     private static class BusSimulationState {
-        int currentIndex = 0;        // Current position within the segment coordinates
-        int currentDestIndex = 0;    // Current destination index in the route
+        int currentIndex = 0;
+        int currentDestIndex = 0;
         boolean isInitialized = false;
+        boolean isStopped = false;
+        int stoppedFrames = 0;
+        double lastLat = 0;
+        double lastLng = 0;
     }
 
-    private boolean isWithinHours(int hours, LocalDateTime time) {
-        return time.isAfter(LocalDateTime.now().minusHours(hours));
+
+    private Destination getNextDestination(List<Destination> destinations, int currentIndex) {
+
+        if (currentIndex >= destinations.size() - 1)
+            return destinations.getFirst();
+        else
+            return destinations.get(currentIndex + 1);
     }
 
 
-    private boolean isWithinNoonAndMorning(Trip trip) {
-        var morning = LocalTime.of(10, 30);
-        return trip.getDepartureTime()
-                .toLocalTime()
-                .isAfter(morning) &&
-                trip.getDepartureTime()
-                .toLocalTime()
-                .isBefore(LocalTime.of(12, 0));
+    private void sendStationaryLocation(Trip trip) {
+        var schedule = trip.getScheduleLegBusAssignment()
+                .getScheduleLeg();
+        var from = schedule.getFromDestination();
+        var route = trip.getRoute().getLabel();
+        var busName = trip.getBusAssignment() != null && trip.getBusAssignment().getBus() != null
+                ? trip.getBusAssignment().getBus().getName()
+                : "Unknown";
+
+        var locationMessage = DriverCurrentLocationMessage.builder()
+                .tripId(trip.getId())
+                .latitude(from.getLat())
+                .longitude(from.getLng())
+                .speed(0)
+                .timePosted(LocalDateTime.now())
+                .route(route)
+                .busName(busName)
+                .isSimulated(trip.isFromSimulation())
+                .build();
+
+        busLocationBatchService.enqueue(locationMessage);
     }
- }
+}

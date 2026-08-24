@@ -9,7 +9,7 @@ import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Events.BusAssignment
 import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Mappers.BusAssignmentMapper;
 import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Repository.BusAssignmentRepository;
 import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Service.Interface.IBusAssignmentService;
-import org.tracker.ubus.ubus.Components.Shared.EventHandler.Publisher.MultiEvenPublisher;
+import org.tracker.ubus.ubus.Components.Shared.EventHandler.Publisher.MultiEventPublisher;
 import org.tracker.ubus.ubus.Components.Users.User.Repository.UserRepository;
 
 import java.util.UUID;
@@ -21,7 +21,7 @@ public class BusAssignmentService implements IBusAssignmentService {
 
 
     private final BusRepository busRepository;
-    private final MultiEvenPublisher publisher;
+    private final MultiEventPublisher publisher;
     private final UserRepository userRepository;
     private static final int maximumBusAssignments = 2;
     private final BusAssignmentMapper busAssignmentMapper;

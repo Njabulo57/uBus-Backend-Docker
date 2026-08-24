@@ -11,7 +11,10 @@ import org.tracker.ubus.ubus.Components.Buses.Bus.Enum.BusType;
 import org.tracker.ubus.ubus.Components.Buses.Bus.Exceptions.BusNotFoundException;
 import org.tracker.ubus.ubus.Components.Buses.Bus.Repository.Projections.BusWithAssignmentView;
 import org.tracker.ubus.ubus.Components.Buses.Bus.Repository.Projections.DriverWithOrWithoutAssignmentView;
+import org.tracker.ubus.ubus.Components.Users.User.Enum.Route;
 
+import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -19,6 +22,15 @@ import java.util.UUID;
 @Repository
 public interface BusRepository extends JpaRepository<Bus, UUID> {
 
+    int countByCreatedAtBefore(LocalDateTime dateTime);
+
+    int countByIsActiveTrue();
+
+    int countByOperationalStatusInAndIsActiveTrue(Collection<BusOperationalStatus> operationalStatus);
+
+    int countByRouteInAndIsActiveTrue(Collection<Route> route);
+
+    List<Bus> findByOperationalStatusAndIsActiveTrue(BusOperationalStatus operationalStatus);
 
     Optional<Bus> findByName(String name);
 
@@ -34,6 +46,12 @@ public interface BusRepository extends JpaRepository<Bus, UUID> {
     List<Bus> findByType(BusType type);
 
 
+    @Query("""
+        SELECT b FROM Bus b
+        WHERE b.id IN :ids
+        AND b.isActive = true
+    """)
+    List<Bus> findInAndIsActiveTrue(@Param("ids") Collection<UUID> ids);
 
     List<Bus> findAllByIsActiveTrue();
 
@@ -93,5 +111,6 @@ public interface BusRepository extends JpaRepository<Bus, UUID> {
         return this.findByName(name)
                 .orElseThrow(() -> new BusNotFoundException("Bus with name : " + name + " not found."));
     }
+
 
 }

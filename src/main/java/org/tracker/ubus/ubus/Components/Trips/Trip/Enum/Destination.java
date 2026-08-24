@@ -12,23 +12,23 @@ import java.util.stream.Stream;
 public enum Destination {
 
     APK("Auckland Park Kingsway Campus",
-            -26.181614, 27.999092, 70,
+            -26.181614, 27.999092, 150,
             new double[]{27.999092, -26.181614}),
 
     JBS("Johannesburg Business School",
-            -26.183036, 28.008553, 95,
+            -26.183036, 28.008553, 150,
             new double[]{28.008553, -26.183036}),
 
     APB("Auckland Park Bunting Road Campus",
-            -26.188306, 28.014347, 70,
-            new double[]{28.014347, -26.188306}),
+            -26.189757, 28.015343, 150,
+            new double[]{28.015343, -26.189757}),
 
     DFC("Doornfontein Campus",
-            -26.194294, 28.056403, 65,
+            -26.194294, 28.056403, 150,
             new double[]{28.056403, -26.194294}),
 
     SWC("Soweto Campus",
-            -26.260356, 27.924478, 55,
+            -26.260356, 27.924478, 150,
             new double[]{27.924478, -26.260356});
 
     private final String label;
@@ -79,13 +79,22 @@ public enum Destination {
                 .orElse(null);
     }
 
-    public static Destination findDestinationByCoordinatesOrThrow(double lat, double lng)
+    public static Destination validateLocationByCoordinatesOrThrow(double lat, double lng)
             throws DestinationNotFoundException {
         return Stream.of(Destination.values())
                 .filter(d -> d.isWithinRadius(lat, lng))
                 .findFirst()
                 .orElseThrow(() ->
                         new DestinationNotFoundException("Not at a valid campus location"));
+    }
+
+    public static void validateLocationByCoordinatesOrThrow(double lat, double lng, Destination destination)
+            throws DestinationNotFoundException {
+        Stream.of(Destination.values())
+                .filter(d -> d.isWithinRadius(lat, lng) && d.equals(destination))
+                .findFirst()
+                .orElseThrow(() ->
+                        new DestinationNotFoundException("Not at a valid campus location.Should Be at " + destination));
     }
 
     public static Destination findCampusByCoordinates(double lat, double lng) {

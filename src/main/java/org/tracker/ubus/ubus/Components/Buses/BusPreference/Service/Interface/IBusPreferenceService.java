@@ -5,17 +5,18 @@ import org.tracker.ubus.ubus.Components.Buses.BusPreference.DTO.Response.BusPref
 import org.tracker.ubus.ubus.Components.Buses.BusPreference.DTO.Response.BusPreferenceResponse;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Enum.Destination;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 public interface IBusPreferenceService {
-    public void addPreference(List<BusPreferenceDTO> busPreferenceDTO);
-    public void editPreference(BusPreferenceDTO busPreferenceDTO);
-    public void deletePreference(BusPreferenceDTO busPreferenceDTO);
-    public BusPreferenceResponse viewPreferences();
+    void addPreference(List<BusPreferenceDTO> busPreferenceDTO);
+    void editPreference(BusPreferenceDTO busPreferenceDTO);
+    void deletePreference(BusPreferenceDTO busPreferenceDTO);
+    BusPreferenceResponse viewPreferences();
 
 
-    BusPrefView[] getAllBusPreferences();
+    Collection<BusPrefView> getAllBusPreferences();
 
     boolean hasBusPreference();
 }

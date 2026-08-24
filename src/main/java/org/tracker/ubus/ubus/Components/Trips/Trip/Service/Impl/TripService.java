@@ -3,48 +3,42 @@ package org.tracker.ubus.ubus.Components.Trips.Trip.Service.Impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.tracker.ubus.ubus.Components.Attendence.AttendanceManager;
 import org.tracker.ubus.ubus.Components.Buses.Bus.Entity.Bus;
 import org.tracker.ubus.ubus.Components.Buses.Bus.Enum.BusActivityStatus;
 import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Entity.BusAssignment;
 import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Repository.BusAssignmentRepository;
 import org.tracker.ubus.ubus.Components.Buses.Bus.Repository.DatabaseAccessLayer.BusRepository;
-import org.tracker.ubus.ubus.Components.Buses.BusTracking.DTO.Responses.DriverCurrentLocationResponse;
-import org.tracker.ubus.ubus.Components.Buses.BusTracking.Event.Socket.BusTrackingLocationDeliveryEvent;
-import org.tracker.ubus.ubus.Components.Shared.EventHandler.Publisher.MultiEvenPublisher;
+import org.tracker.ubus.ubus.Components.Buses.BusTracking.BusTrackingTripManager.BusTrackingCoOrdinatesManager;
+import org.tracker.ubus.ubus.Components.Shared.EventHandler.Publisher.MultiEventPublisher;
 import org.tracker.ubus.ubus.Components.Shared.Entities.BaseService;
 import org.tracker.ubus.ubus.Components.Trips.Trip.CacheManager.TripCacheManager;
 import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Request.TripEndRequest;
 import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Request.TripRegisterCoordinates;
 import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Request.TripStartRequest;
-import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Response.ActiveTripResponse;
 import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Response.TripUserOnTappedOutCardEvent;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Entity.Trip;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Enum.Destination;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Enum.TripStatus;
-import org.tracker.ubus.ubus.Components.Trips.Trip.Events.TripBusActivityStatusChangeEvent;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Events.TripUserOnTappedCardEvent;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Repository.TripRepository;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Service.Interface.ITripService;
 import org.tracker.ubus.ubus.Components.Trips.Trip.TripMapper.TripMapper;
-import org.tracker.ubus.ubus.Components.Trips.Trip.Util.EtaCalculator;
-import org.tracker.ubus.ubus.Components.Trips.Trip.Util.TripDriverScheduleGetter;
+import org.tracker.ubus.ubus.Components.Trips.Trip.Util.TripDriverScheduleManager;
 import org.tracker.ubus.ubus.Components.Trips.TripUser.Entity.TripUser;
 import org.tracker.ubus.ubus.Components.Trips.TripUser.Enum.TripUserStatus;
 import org.tracker.ubus.ubus.Components.Trips.TripUser.Mapper.TripUserMapper;
 import org.tracker.ubus.ubus.Components.Trips.TripUser.Repository.TripUserRepository;
-import org.tracker.ubus.ubus.Components.Trips.TripsSchedule.Repository.ScheduleRepository;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
 import org.tracker.ubus.ubus.Components.Users.User.Repository.UserRepository;
 
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
+
+
 
 import static org.tracker.ubus.ubus.Components.Buses.Bus.Enum.BusActivityStatus.LOADING_PASSENGERS;
-import static org.tracker.ubus.ubus.Components.Buses.Bus.Enum.BusActivityStatus.ON_TRIP;
+import static org.tracker.ubus.ubus.Components.Trips.TripUser.Enum.TripUserStatus.CONTINUED_TO_NEXT;
 
 
 @Service
@@ -53,19 +47,21 @@ public class TripService extends BaseService implements ITripService {
 
 
     private final TripMapper tripMapper;
+    private final Set<UUID> busProximityStatus;
+    private final MultiEventPublisher multiEventPublisher;
+
     private final TripUserMapper tripUserMapper;
     private final TripCacheManager tripCacheManager;
-    private final MultiEvenPublisher multiEvenPublisher;
+    private final AttendanceManager attendanceManager;
+    private final TripDriverScheduleManager tripDriverScheduleManager;
+    private final BusTrackingCoOrdinatesManager busTrackingCoOrdinatesManager;
 
-    private final TripDriverScheduleGetter tripDriverScheduleGetter;
 
     private final BusRepository busRepository;
     private final TripRepository tripRepository;
     private final UserRepository userRepository;
     private final TripUserRepository tripUserRepository;
-    private final ScheduleRepository scheduleRepository;
     private final BusAssignmentRepository busAssignmentRepository;
-
 
 
 
@@ -84,12 +80,7 @@ public class TripService extends BaseService implements ITripService {
 
         this.busRepository.save(bus);
         this.tripRepository.save(trip);
-
-        this.multiEvenPublisher.publish(() ->
-                new TripBusActivityStatusChangeEvent(this, tripId, ON_TRIP)
-        );
-
-        this.tripCacheManager.putInTripDemonstrationCache(trip); //savig the bus state to cache
+        this.tripCacheManager.putInTripDemonstrationCache(trip); //saving the bus state to cache
     }
 
 
@@ -104,48 +95,33 @@ public class TripService extends BaseService implements ITripService {
         bus.setActivityStatus(LOADING_PASSENGERS); //set the bus activity status to LOADING_PASSENGERS
         this.busRepository.save(bus); //save the new bus state
 
-        Trip lastTrip = tripRepository.findLatestTripByBusAssignment(busAssigment);
-        var schedule = this.tripDriverScheduleGetter.getDriverCurrentScheduleOrThrow(busAssigment);
+
+        var scheduleLegBusAssignment = this.tripDriverScheduleManager.getDriverCurrentScheduleOrThrow(busAssigment);
+        var scheduleLeg = scheduleLegBusAssignment.getScheduleLeg();
+
 
         var lat = tripRegisterCoordinates.latitude();
         var lng = tripRegisterCoordinates.longitude();
 
         //validating if the where the driver is located is the same as the trip's starting location
-        var driverLocation = Destination.findDestinationByCoordinatesOrThrow(lat, lng);
+        Destination.validateLocationByCoordinatesOrThrow(lat, lng, scheduleLeg.getFromDestination());
 
-        if (!schedule.getFromDestination().equals(driverLocation))
-            throw new IllegalStateException("Driver location is not the same as the trip's starting location");
+        var route = scheduleLegBusAssignment.getScheduleLeg()
+                .getSchedule()
+                .getRoute();
 
-        var route = schedule.getRoute();
-        var trip = this.tripMapper.toEntity(busAssigment, route, schedule); //creating the trip
+        var trip = this.tripMapper.toEntity(busAssigment, route, scheduleLegBusAssignment); //creating the trip
         this.tripRepository.save(trip); //saving the trip
         var savedTrip = this.tripRepository.findByIdOrThrow(trip.getId());
 
+        Trip lastTrip = tripRepository.findLatestTripByBusAssignment(busAssigment);
         //if the last trip is complete, then assign the remaining users to the new trip
         if (lastTrip != null && lastTrip.getStatus() == TripStatus.COMPLETE)
-            this.assignLastTripUsersToNextTrip(lastTrip, savedTrip, TripUserStatus.CONTINUED_TO_NEXT);
-
+            this.assignLastTripUsersToNextTrip(lastTrip, savedTrip);
 
         //save trip to cache
         this.tripCacheManager.putInTripDemonstrationCache(savedTrip);
-        var driverName = formatName(driver);
-
-
-        var message = DriverCurrentLocationResponse.builder()
-                .tripId(savedTrip.getId())
-                .latitude(lat)
-                .longitude(lng)
-                .speed(0)
-                .route(trip.getRoute().getLabel())
-                .eta("Loading Passengers")
-                .busName(bus.getName())
-                .busId(bus.getId())
-                .driverName(driverName)
-                .build();
-        this.multiEvenPublisher.publish(()
-                -> new BusTrackingLocationDeliveryEvent(this, message)
-        );
-
+        this.busTrackingCoOrdinatesManager.addFirstLocation(lat, lng, savedTrip.getId());
         return savedTrip.getId();
     }
 
@@ -156,116 +132,96 @@ public class TripService extends BaseService implements ITripService {
 
         var lat = endTripRequest.latitude();
         var lng = endTripRequest.longitude();
-        var driverLocation = Destination.findDestinationByCoordinatesOrThrow(lat, lng);
 
         var trip = this.tripRepository.findByIdOrThrow(endTripRequest.tripId());
 
         if(trip.getStatus() != TripStatus.IN_PROGRESS)
             throw new IllegalStateException("Trip is not in progress");
 
-        var schedule = trip.getSchedule();
-        if(schedule == null)
-            throw new IllegalStateException("Trip has no schedule");
+        var scheduleAssignment = trip.getScheduleLegBusAssignment();
+        var scheduleLeg = scheduleAssignment.getScheduleLeg();
+
+        Destination.validateLocationByCoordinatesOrThrow(lat, lng,
+                scheduleLeg.getToDestination());
 
 
-        if(!schedule.getToDestination().equals(driverLocation))
-            throw new IllegalStateException("Driver location is not the same as the trip's starting location");
-
-        schedule.setCompleted(true); //mark the schedule as completed
         trip.setStatus(TripStatus.COMPLETE); //mark the trip as complete
+        trip.setActualArrivalTime(LocalDateTime.now()); //set the actual arrival time to now
         BusAssignment busAssignment = trip.getBusAssignment();
         Bus bus = busAssignment.getBus();
         bus.setActivityStatus(BusActivityStatus.STATIONERY);
         this.busRepository.save(bus);
 
         this.markNotTaggedUsersForNextTrip(trip);  //take not tagged users to the next trip
-
-        this.scheduleRepository.save(schedule); //save the schedule state
         this.tripRepository.save(trip);
 
+
+        this.busProximityStatus.remove(trip.getId());
+
+        var driver = getCurrentUser();
+        this.attendanceManager.trySignAttendanceForDriver(trip, driver);
+        this.busTrackingCoOrdinatesManager.removeTrip(trip.getId()); //removing from the tracking
         this.tripCacheManager.removeFromTripDemonstrationCache(trip); //remove the trip from cache
+        this.tripDriverScheduleManager.updateDriverCurrentSchedule(scheduleAssignment); // update the driver schedule
+
+
+
     }
 
 
-    @Transactional
     @Override
+    @Transactional
     public int handleNfcTap(UUID tripId, String nfcCode) {
         User user = this.userRepository.findByNfcCodeOrThrow(nfcCode);
         Trip trip = this.tripRepository.findByIdOrThrow(tripId);
         TripUser tripUser = this.tripUserRepository.findByTripAndUser(trip, user);
 
+        trip.incrementPassengerCount();
+        tripRepository.save(trip);
+
         if(tripUser == null) {
-            this.createEntrance(tripId, nfcCode, user, trip);
+            this.createEntrance(user, trip);
             return 0;
         }
         else if(tripUser.getStatus() == TripUserStatus.IN_BUS) {
-            this.exitBus(tripId, nfcCode, user, trip, tripUser);
+            this.exitBus(trip, tripUser);
             return 1;
         }
         else {
-            this.enterBus(tripId, nfcCode, user, trip, tripUser);
+            this.enterBus(tripUser);
             return 0;
         }
+
     }
 
 
-    private void createEntrance(UUID tripId, String nfcCode, User user, Trip trip) {
+
+    private void createEntrance(User user, Trip trip) {
         TripUser tripUser = TripUser.builder()
                 .user(user)
                 .trip(trip)
                 .build();
         this.tripUserRepository.save(tripUser);
 
-         var jwtToken = this.getUserJwtToken();
-        this.multiEvenPublisher.publish(()-> new TripUserOnTappedCardEvent(this, jwtToken, trip));
+        var jwtToken = this.getUserJwtToken();
+        this.multiEventPublisher.publish(()-> new TripUserOnTappedCardEvent(this, jwtToken, trip));
     }
 
-    private void enterBus(UUID tripId, String nfcCode, User user, Trip trip, TripUser tripUser) {
+    private void enterBus(TripUser tripUser) {
         tripUser.setStatus(TripUserStatus.IN_BUS);
         this.tripUserRepository.save(tripUser);
     }
 
-
-    private void exitBus(UUID tripId, String nfcCode, User user, Trip trip, TripUser tripUser) {
+    private void exitBus(Trip trip, TripUser tripUser) {
         tripUser.setStatus(TripUserStatus.EXITED);
         this.tripUserRepository.save(tripUser);
 
         var jwtToken = this.getUserJwtToken();
-        this.multiEvenPublisher.publish(()-> new TripUserOnTappedOutCardEvent(this, jwtToken, trip));
+        this.multiEventPublisher.publish(()-> new TripUserOnTappedOutCardEvent(this, jwtToken, trip));
     }
 
-
-    @Override
-    public List<ActiveTripResponse> getActiveTrips() {
-
-        LocalDate today = LocalDate.of(2026, 7, 23);
-        LocalTime noon = LocalTime.of(12, 0); // 12:00 AM
-        LocalTime morningThreshold = LocalTime.of(9, 30); // 9:30 AM
-
-
-
-        var allTrips = this.tripRepository.findByStatus(TripStatus.IN_PROGRESS)
-                .stream()
-                .filter(trip -> isTripToday(trip, today))
-                .filter(this::isWithinNoonAndMorning)
-                .map(this::mapToActiveTripResponse)
-                .toList();
-
-
-
-        return allTrips;
-    }
-
-
-    @Override
-    public ActiveTripResponse getActiveTrip(UUID tripId) {
-        var trip = this.tripRepository.findByIdOrThrow(tripId);
-        return this.tripMapper.toDTO(trip);
-    }
-
-
-    private void assignLastTripUsersToNextTrip(Trip lastTrip, Trip newTrip,TripUserStatus status) {
-        List<TripUser> remainingUsers = tripUserRepository.findAllByTripAndStatus(lastTrip, status);
+    private void assignLastTripUsersToNextTrip(Trip lastTrip, Trip newTrip) {
+        List<TripUser> remainingUsers = tripUserRepository.findAllByTripAndStatus(lastTrip, CONTINUED_TO_NEXT);
         var nextTripUsers = this.tripUserMapper.toNextTripEntities(remainingUsers, newTrip);
         this.tripUserRepository.saveAll(nextTripUsers);
 
@@ -274,70 +230,9 @@ public class TripService extends BaseService implements ITripService {
     private void markNotTaggedUsersForNextTrip(Trip trip) {
         List<TripUser> remainingUsers = tripUserRepository.findAllByTripAndStatus(trip, TripUserStatus.IN_BUS);
         remainingUsers.forEach(tripUser ->
-                tripUser.setStatus(TripUserStatus.CONTINUED_TO_NEXT)
+                tripUser.setStatus(CONTINUED_TO_NEXT)
         );
         tripUserRepository.saveAll(remainingUsers);
     }
 
-
-    private boolean isWithinNextHour(Trip trip) {
-        LocalDateTime departureTime = trip.getDepartureTime();
-        if (departureTime == null) {
-            return false;
-        }
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime oneHourFromNow = now.plusHours(1);
-        return !departureTime.isBefore(now) && departureTime.isBefore(oneHourFromNow);
-    }
-
-
-    private boolean isTripToday(Trip trip, LocalDate today) {
-        LocalDateTime departureTime = trip.getDepartureTime();
-        if (departureTime == null) {
-            return false;
-        }
-        LocalDate tripDate = departureTime.toLocalDate();
-        return tripDate.equals(today);
-    }
-
-    private boolean isTripMonday(Trip trip, LocalDate monday) {
-        LocalDateTime departureTime = trip.getDepartureTime();
-        if (departureTime == null) {
-            return false;
-        }
-        LocalDate tripDate = departureTime.toLocalDate();
-        return tripDate.equals(monday);
-    }
-
-    private boolean isTripYesterday(Trip trip, LocalDate today) {
-        var departureTime = trip.getDepartureTime();
-        LocalDate tripDate = departureTime.toLocalDate();
-        return tripDate.equals(today.minusDays(1));
-    }
-
-    private ActiveTripResponse mapToActiveTripResponse(Trip trip) {
-        return this.tripMapper.toDTO(trip);
-    }
-
-    private boolean isWithinHours(int hours, LocalDateTime departureTime) {
-        return departureTime.isAfter(LocalDateTime.now().minusHours(hours));
-    }
-
-    private String formatName(User user) {
-
-        var firstName = user.getFirstname();
-        var firstNameInitialCapitalized = Character.toUpperCase(firstName.charAt(0));
-        return firstNameInitialCapitalized + ". " + user.getLastname();
-    }
-
-
-    private boolean isWithinNoonAndMorning(Trip trip) {
-        var morning = LocalTime.of(10, 30);
-        return trip.getDepartureTime()
-                .toLocalTime()
-                .isAfter(morning) &&
-                trip.getDepartureTime()
-                        .toLocalTime()
-                        .isBefore(LocalTime.of(12, 0));
-    }
 }

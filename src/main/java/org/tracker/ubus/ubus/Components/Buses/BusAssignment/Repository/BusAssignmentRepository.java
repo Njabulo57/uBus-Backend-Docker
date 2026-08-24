@@ -10,6 +10,7 @@ import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Enum.DriverSchedule;
 import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Exceptions.Internal.BusAssignmentNotFoundException;
 import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -66,4 +67,11 @@ public interface BusAssignmentRepository  extends JpaRepository<BusAssignment, U
                 .orElseThrow(() -> new BusAssignmentNotFoundException("Driver not assigned to any bus"));
     }
 
+
+    @Query("""
+        SELECT ba FROM BusAssignment ba
+        left join fetch ba.bus b
+        WHERE b.name = :busName
+    """)
+    List<BusAssignment> findByBusName(@Param("busName") String selectedBusName);
 }

@@ -1,9 +1,29 @@
 package org.tracker.ubus.ubus.Components.Buses.BusPreference.DTO.Internal;
 
-import lombok.Builder;
+import jakarta.validation.constraints.NotBlank;
+import lombok.*;
 import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Response.DelayStatus;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Entity.Trip;
 
+@Getter
+@Setter
 @Builder
-public record ClosestTripInfo(String eta, String distance, double distanceInKM, String busName,DelayStatus delayStatus, Trip trip) {
+@NoArgsConstructor
+@AllArgsConstructor
+public class ClosestTripInfo {
+
+    private String eta;
+
+    private String distance;
+
+    private double distanceInKM;
+
+    private String busName;
+
+    private DelayStatus delayStatus;
+
+    private Trip trip;
+
+    private int progress;
+
 }

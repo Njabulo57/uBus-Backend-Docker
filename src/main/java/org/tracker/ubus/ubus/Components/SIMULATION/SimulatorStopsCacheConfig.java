@@ -28,7 +28,8 @@ public class SimulatorStopsCacheConfig {
     }
 
 
-    @Bean Map<Route, Map<SequencedCollection<Destination>, Integer>> routeDestinationMap() {
+    @Bean
+    public Map<Route, Map<SequencedCollection<Destination>, Integer>> routeDestinationMap() {
         return new HashMap<>();
     }
 }

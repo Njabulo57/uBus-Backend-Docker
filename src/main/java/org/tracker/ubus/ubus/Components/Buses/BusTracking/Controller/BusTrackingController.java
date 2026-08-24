@@ -6,7 +6,7 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
 import org.tracker.ubus.ubus.Components.Buses.BusTracking.DTO.Requests.DriverCurrentLocationMessage;
-import org.tracker.ubus.ubus.Components.Buses.BusTracking.Service.Interface.IBusLocationBatchService;
+import org.tracker.ubus.ubus.Components.Buses.BusTracking.Service.Interface.IBusLocationTrackingService;
 
 /**
  * The BusTrackingController class is responsible for handling real-time bus tracking operations
@@ -18,7 +18,7 @@ import org.tracker.ubus.ubus.Components.Buses.BusTracking.Service.Interface.IBus
 @RequiredArgsConstructor
 public class BusTrackingController {
 
-    private final IBusLocationBatchService busTrackingService;
+    private final IBusLocationTrackingService busTrackingService;
 
     @MessageMapping("/buses/getFromTripSimulationCache-new-route")
     public void busTracking(@Payload DriverCurrentLocationMessage location) {

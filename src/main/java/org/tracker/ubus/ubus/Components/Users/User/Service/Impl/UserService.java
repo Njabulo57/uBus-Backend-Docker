@@ -10,10 +10,10 @@ import org.tracker.ubus.ubus.Components.Auth.Events.OtpEmailVerificationEvent;
 import org.tracker.ubus.ubus.Components.Auth.Exception.External.InvalidCredentialsException;
 import org.tracker.ubus.ubus.Components.Auth.Service.Impl.AuthService;
 import org.tracker.ubus.ubus.Components.Buses.BusPreference.Repository.BusPreferenceRepository;
-import org.tracker.ubus.ubus.Components.Shared.EventHandler.Publisher.MultiEvenPublisher;
+import org.tracker.ubus.ubus.Components.Shared.Entities.BaseService;
+import org.tracker.ubus.ubus.Components.Shared.EventHandler.Publisher.MultiEventPublisher;
 import org.tracker.ubus.ubus.Components.OneTimePassword.DTOs.Internal.OtpInternalCarrier;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Service.Impl.OneTimePasswordService;
-import org.tracker.ubus.ubus.Components.Trips.Trip.Enum.TripStatus;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Repository.TripRepository;
 import org.tracker.ubus.ubus.Components.Trips.TripUser.Repository.TripUserRepository;
 import org.tracker.ubus.ubus.Components.Users.User.DTOs.Requests.EditUserDTO;
@@ -33,11 +33,11 @@ import static org.tracker.ubus.ubus.Components.Users.User.Enum.UserStatus.*;
 
 @Service
 @RequiredArgsConstructor
-public class UserService implements IUserService {
+public class UserService extends BaseService implements IUserService {
 
     private final UserMapper userMapper;
     private final AuthService authService;
-    public final MultiEvenPublisher publisher;
+    public final MultiEventPublisher publisher;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final OneTimePasswordService oneTimePasswordService;
@@ -46,11 +46,6 @@ public class UserService implements IUserService {
     private final TripRepository tripRepository;
 
 
-    private User getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        var userPrincipal = (UserPrincipal) authentication.getPrincipal();
-        return userPrincipal.getUser();
-    }
 
 
     @Override
@@ -160,6 +155,7 @@ public class UserService implements IUserService {
         }
     }
 
+
     @Override
     public void assignNfcCode(String nfcCode) {
         User currentUser = getCurrentUser();
@@ -174,6 +170,7 @@ public class UserService implements IUserService {
         }
     }
 
+
     @Override
     public void adminAssignNfc(String nfcCode, UUID userId) {
         User user = userRepository.findByIdOrThrow(userId);
@@ -181,11 +178,13 @@ public class UserService implements IUserService {
         userRepository.save(user);
     }
 
+
     @Override
     public String getNfcCode() {
         var user = getCurrentUser();
         return user.getNfcCode();
     }
+
 
     @Override
     public boolean hasTrip() {
