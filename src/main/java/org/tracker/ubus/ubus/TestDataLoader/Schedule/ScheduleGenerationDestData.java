@@ -52,211 +52,127 @@ public class ScheduleGenerationDestData implements CommandLineRunner {
     // ROUTE 1 WAVES — DFC-APK
     // ============================================
     private static final List<RouteWave> ROUTE1_WAVES = List.of(
-            new RouteWave(LocalTime.of(6, 20),
-                    List.of(
-                            new LegSegment(Destination.DFC, Destination.APB, 30),
-                            new LegSegment(Destination.APB, Destination.APK, 10),
-                            new LegSegment(Destination.APK, Destination.APB, 5),
-                            new LegSegment(Destination.APB, Destination.DFC, 10),
-                            new LegSegment(Destination.DFC, Destination.DFC, 30)
-                    )),
-            new RouteWave(LocalTime.of(7, 50),
-                    List.of(
-                            new LegSegment(Destination.DFC, Destination.APB, 30),
-                            new LegSegment(Destination.APB, Destination.APK, 15),
-                            new LegSegment(Destination.APK, Destination.APB, 5),
-                            new LegSegment(Destination.APB, Destination.DFC, 15),
-                            new LegSegment(Destination.DFC, Destination.DFC, 30)
-                    )),
-            new RouteWave(LocalTime.of(9, 0),
-                    List.of(
-                            new LegSegment(Destination.DFC, Destination.APB, 30),
-                            new LegSegment(Destination.APB, Destination.APK, 10),
-                            new LegSegment(Destination.APK, Destination.APB, 5),
-                            new LegSegment(Destination.APB, Destination.DFC, 10),
-                            new LegSegment(Destination.DFC, Destination.DFC, 30)
-                    )),
-            new RouteWave(LocalTime.of(10, 5),
-                    List.of(
-                            new LegSegment(Destination.DFC, Destination.APB, 30),
-                            new LegSegment(Destination.APB, Destination.APK, 15),
-                            new LegSegment(Destination.APK, Destination.APB, 5),
-                            new LegSegment(Destination.APB, Destination.DFC, 15),
-                            new LegSegment(Destination.DFC, Destination.DFC, 30)
-                    )),
-            new RouteWave(LocalTime.of(10, 45),
-                    List.of(
-                            new LegSegment(Destination.DFC, Destination.APB, 30),
-                            new LegSegment(Destination.APB, Destination.APK, 15),
-                            new LegSegment(Destination.APK, Destination.APB, 5),
-                            new LegSegment(Destination.APB, Destination.DFC, 15),
-                            new LegSegment(Destination.DFC, Destination.DFC, 30)
-                    )),
-            new RouteWave(LocalTime.of(11, 35),
-                    List.of(
-                            new LegSegment(Destination.DFC, Destination.APB, 30),
-                            new LegSegment(Destination.APB, Destination.APK, 15),
-                            new LegSegment(Destination.APK, Destination.APB, 5),
-                            new LegSegment(Destination.APB, Destination.DFC, 15),
-                            new LegSegment(Destination.DFC, Destination.DFC, 30)
-                    )),
-            new RouteWave(LocalTime.of(12, 30),
-                    List.of(
-                            new LegSegment(Destination.DFC, Destination.APB, 30),
-                            new LegSegment(Destination.APB, Destination.APK, 15),
-                            new LegSegment(Destination.APK, Destination.APB, 5),
-                            new LegSegment(Destination.APB, Destination.DFC, 15),
-                            new LegSegment(Destination.DFC, Destination.DFC, 30)
-                    )),
-            new RouteWave(LocalTime.of(13, 15),
-                    List.of(
-                            new LegSegment(Destination.DFC, Destination.APB, 30),
-                            new LegSegment(Destination.APB, Destination.APK, 15),
-                            new LegSegment(Destination.APK, Destination.APB, 5),
-                            new LegSegment(Destination.APB, Destination.DFC, 15),
-                            new LegSegment(Destination.DFC, Destination.DFC, 30)
-                    )),
-            new RouteWave(LocalTime.of(14, 10),
-                    List.of(
-                            new LegSegment(Destination.DFC, Destination.APB, 30),
-                            new LegSegment(Destination.APB, Destination.APK, 15),
-                            new LegSegment(Destination.APK, Destination.APB, 5),
-                            new LegSegment(Destination.APB, Destination.DFC, 15),
-                            new LegSegment(Destination.DFC, Destination.DFC, 30)
-                    )),
-            new RouteWave(LocalTime.of(15, 0),
-                    List.of(
-                            new LegSegment(Destination.DFC, Destination.APB, 30),
-                            new LegSegment(Destination.APB, Destination.APK, 15),
-                            new LegSegment(Destination.APK, Destination.APB, 5),
-                            new LegSegment(Destination.APB, Destination.DFC, 15),
-                            new LegSegment(Destination.DFC, Destination.DFC, 30)
-                    )),
-            new RouteWave(LocalTime.of(15, 50),
-                    List.of(
-                            new LegSegment(Destination.DFC, Destination.APB, 30),
-                            new LegSegment(Destination.APB, Destination.APK, 15),
-                            new LegSegment(Destination.APK, Destination.APB, 5),
-                            new LegSegment(Destination.APB, Destination.DFC, 15),
-                            new LegSegment(Destination.DFC, Destination.DFC, 30)
-                    )),
-            new RouteWave(LocalTime.of(16, 35),
-                    List.of(
-                            new LegSegment(Destination.DFC, Destination.APB, 30),
-                            new LegSegment(Destination.APB, Destination.APK, 15),
-                            new LegSegment(Destination.APK, Destination.APB, 5),
-                            new LegSegment(Destination.APB, Destination.DFC, 15),
-                            new LegSegment(Destination.DFC, Destination.DFC, 30)
-                    )),
-            new RouteWave(LocalTime.of(17, 30),
-                    List.of(
-                            new LegSegment(Destination.DFC, Destination.APB, 30),
-                            new LegSegment(Destination.APB, Destination.APK, 15),
-                            new LegSegment(Destination.APK, Destination.APB, 5),
-                            new LegSegment(Destination.APB, Destination.DFC, 15),
-                            new LegSegment(Destination.DFC, Destination.DFC, 30)
-                    )),
-            new RouteWave(LocalTime.of(19, 0),
-                    List.of(
-                            new LegSegment(Destination.DFC, Destination.APB, 30),
-                            new LegSegment(Destination.APB, Destination.APK, 10),
-                            new LegSegment(Destination.APK, Destination.APB, 5),
-                            new LegSegment(Destination.APB, Destination.DFC, 10),
-                            new LegSegment(Destination.DFC, Destination.DFC, 30)
-                    )),
-            new RouteWave(LocalTime.of(20, 30),
-                    List.of(
-                            new LegSegment(Destination.DFC, Destination.APB, 10),
-                            new LegSegment(Destination.APB, Destination.APK, 20),
-                            new LegSegment(Destination.APK, Destination.APB, 0),
-                            new LegSegment(Destination.APB, Destination.DFC, 10),
-                            new LegSegment(Destination.DFC, Destination.DFC, 20)
-                    ))
+            // ===== Morning =====
+            new RouteWave(LocalTime.of(6, 20), commonLegs()),
+            new RouteWave(LocalTime.of(6, 30), commonLegs()),
+            new RouteWave(LocalTime.of(6, 40), commonLegs()),
+            new RouteWave(LocalTime.of(6, 50), commonLegs()),
+            new RouteWave(LocalTime.of(7, 50), commonLegs()),
+            new RouteWave(LocalTime.of(8, 0),  commonLegs()),
+            new RouteWave(LocalTime.of(8, 20), commonLegs()),
+            new RouteWave(LocalTime.of(8, 40), commonLegs()),
+            new RouteWave(LocalTime.of(9, 0),  commonLegs()),
+            new RouteWave(LocalTime.of(9, 15), commonLegs()),
+            new RouteWave(LocalTime.of(9, 30), commonLegs()),
+            new RouteWave(LocalTime.of(10, 5), commonLegs()),
+            new RouteWave(LocalTime.of(10, 45), commonLegs()),
+            new RouteWave(LocalTime.of(11, 35), commonLegs()),
+            new RouteWave(LocalTime.of(11, 40), commonLegs()),
+            new RouteWave(LocalTime.of(11, 45), commonLegs()),
+            new RouteWave(LocalTime.of(11, 50), commonLegs()),
+            new RouteWave(LocalTime.of(12, 0),  commonLegs()),
+            new RouteWave(LocalTime.of(12, 10), commonLegs()),
+            new RouteWave(LocalTime.of(12, 20), commonLegs()),
+            new RouteWave(LocalTime.of(12, 30), commonLegs()),
+            new RouteWave(LocalTime.of(13, 15), commonLegs()),
+            new RouteWave(LocalTime.of(13, 20), commonLegs()),
+            new RouteWave(LocalTime.of(13, 25), commonLegs()),
+            new RouteWave(LocalTime.of(13, 35), commonLegs()),
+            new RouteWave(LocalTime.of(13, 40), commonLegs()),
+            new RouteWave(LocalTime.of(13, 50), commonLegs()),
+            new RouteWave(LocalTime.of(14, 10), commonLegs()),
+            new RouteWave(LocalTime.of(14, 30), commonLegs()),
+            new RouteWave(LocalTime.of(14, 55), commonLegs()),
+            new RouteWave(LocalTime.of(15, 0),  commonLegs()),
+            new RouteWave(LocalTime.of(15, 5),  commonLegs()),
+            new RouteWave(LocalTime.of(15, 15), commonLegs()),
+            new RouteWave(LocalTime.of(15, 30), commonLegs()),
+            new RouteWave(LocalTime.of(15, 50), commonLegs()),
+            new RouteWave(LocalTime.of(16, 35), commonLegs()),
+            new RouteWave(LocalTime.of(17, 5),  commonLegs()),
+            new RouteWave(LocalTime.of(17, 10), commonLegs()),
+            new RouteWave(LocalTime.of(17, 30), commonLegs()),
+            new RouteWave(LocalTime.of(18, 30), commonLegs()),
+            new RouteWave(LocalTime.of(19, 0),  commonLegs()),
+            new RouteWave(LocalTime.of(19, 30), commonLegs()),
+            new RouteWave(LocalTime.of(20, 0),  commonLegs()),
+            new RouteWave(LocalTime.of(20, 30), commonLegs()),
+            new RouteWave(LocalTime.of(21, 0),  commonLegs()),
+            new RouteWave(LocalTime.of(21, 30), commonLegs()),
+            new RouteWave(LocalTime.of(22, 10), commonLegs())
     );
 
-    private static final List<RouteWave> ROUTE1_WAVES_OFFSET = ROUTE1_WAVES.stream()
-            .map(wave -> new RouteWave(wave.startTime.plusMinutes(10), wave.segments))
-            .collect(Collectors.toList());
-
-    private static final List<RouteWave> ROUTE1_WAVES_OFFSET2 = ROUTE1_WAVES.stream()
-            .map(wave -> new RouteWave(wave.startTime.plusMinutes(20), wave.segments))
-            .collect(Collectors.toList());
+    private static List<LegSegment> commonLegs() {
+        return List.of(
+                new LegSegment(Destination.DFC, Destination.APB, 30),
+                new LegSegment(Destination.APB, Destination.APK, 10),
+                new LegSegment(Destination.APK, Destination.APK, 5),
+                new LegSegment(Destination.APK, Destination.APB, 10),
+                new LegSegment(Destination.APB, Destination.DFC, 30)
+        );
+    }
 
     // ============================================
     // ROUTE 2 WAVES — SWC-APK-APB
     // ============================================
     private static final List<RouteWave> ROUTE2_WAVES = List.of(
-            new RouteWave(LocalTime.of(6, 10),
-                    List.of(
-                            new LegSegment(Destination.SWC, Destination.APK, 40),
-                            new LegSegment(Destination.APK, Destination.APB, 5),
-                            new LegSegment(Destination.APB, Destination.SWC, 55)
-                    )),
-            new RouteWave(LocalTime.of(7, 40),
-                    List.of(
-                            new LegSegment(Destination.SWC, Destination.APK, 40),
-                            new LegSegment(Destination.APK, Destination.APB, 5),
-                            new LegSegment(Destination.APB, Destination.SWC, 55)
-                    )),
-            new RouteWave(LocalTime.of(9, 0),
-                    List.of(
-                            new LegSegment(Destination.SWC, Destination.APK, 40),
-                            new LegSegment(Destination.APK, Destination.APB, 5),
-                            new LegSegment(Destination.APB, Destination.SWC, 55)
-                    )),
-            new RouteWave(LocalTime.of(10, 30),
-                    List.of(
-                            new LegSegment(Destination.SWC, Destination.APK, 40),
-                            new LegSegment(Destination.APK, Destination.APB, 5),
-                            new LegSegment(Destination.APB, Destination.SWC, 55)
-                    )),
-            new RouteWave(LocalTime.of(12, 0),
-                    List.of(
-                            new LegSegment(Destination.SWC, Destination.APK, 40),
-                            new LegSegment(Destination.APK, Destination.APB, 5),
-                            new LegSegment(Destination.APB, Destination.SWC, 55)
-                    )),
-            new RouteWave(LocalTime.of(13, 30),
-                    List.of(
-                            new LegSegment(Destination.SWC, Destination.APK, 40),
-                            new LegSegment(Destination.APK, Destination.APB, 5),
-                            new LegSegment(Destination.APB, Destination.SWC, 55)
-                    )),
-            new RouteWave(LocalTime.of(15, 0),
-                    List.of(
-                            new LegSegment(Destination.SWC, Destination.APK, 40),
-                            new LegSegment(Destination.APK, Destination.APB, 5),
-                            new LegSegment(Destination.APB, Destination.SWC, 55)
-                    )),
-            new RouteWave(LocalTime.of(16, 30),
-                    List.of(
-                            new LegSegment(Destination.SWC, Destination.APK, 40),
-                            new LegSegment(Destination.APK, Destination.APB, 5),
-                            new LegSegment(Destination.APB, Destination.SWC, 55)
-                    )),
-            new RouteWave(LocalTime.of(18, 0),
-                    List.of(
-                            new LegSegment(Destination.SWC, Destination.APK, 40),
-                            new LegSegment(Destination.APK, Destination.APB, 5),
-                            new LegSegment(Destination.APB, Destination.SWC, 55)
-                    )),
-            new RouteWave(LocalTime.of(19, 30),
-                    List.of(
-                            new LegSegment(Destination.SWC, Destination.APK, 40),
-                            new LegSegment(Destination.APK, Destination.APB, 5),
-                            new LegSegment(Destination.APB, Destination.SWC, 55)
-                    )),
-            new RouteWave(LocalTime.of(21, 0),
-                    List.of(
-                            new LegSegment(Destination.SWC, Destination.APK, 30),
-                            new LegSegment(Destination.APK, Destination.APB, 10),
-                            new LegSegment(Destination.APB, Destination.SWC, 20)
-                    ))
+            new RouteWave(LocalTime.of(6, 10), route2Legs()),
+            new RouteWave(LocalTime.of(6, 30), route2Legs()),
+            new RouteWave(LocalTime.of(6, 50), route2Legs()),
+            new RouteWave(LocalTime.of(7, 10), route2Legs()),
+            new RouteWave(LocalTime.of(7, 30), route2Legs()),
+            new RouteWave(LocalTime.of(7, 40), route2Legs()),
+            new RouteWave(LocalTime.of(7, 50), route2Legs()),
+            new RouteWave(LocalTime.of(8, 0),  route2Legs()),
+            new RouteWave(LocalTime.of(8, 15), route2Legs()),
+            new RouteWave(LocalTime.of(8, 35), route2Legs()),
+            new RouteWave(LocalTime.of(8, 55), route2Legs()),
+            new RouteWave(LocalTime.of(9, 15), route2Legs()),
+            new RouteWave(LocalTime.of(9, 25), route2Legs()),
+            new RouteWave(LocalTime.of(9, 35), route2Legs()),
+            new RouteWave(LocalTime.of(9, 45), route2Legs()),
+            new RouteWave(LocalTime.of(10, 0), route2Legs()),
+            new RouteWave(LocalTime.of(10, 15), route2Legs()),
+            new RouteWave(LocalTime.of(10, 35), route2Legs()),
+            new RouteWave(LocalTime.of(11, 20), route2Legs()),
+            new RouteWave(LocalTime.of(11, 30), route2Legs()),
+            new RouteWave(LocalTime.of(11, 50), route2Legs()),
+            new RouteWave(LocalTime.of(12, 0), route2Legs()),
+            new RouteWave(LocalTime.of(12, 10), route2Legs()),
+            new RouteWave(LocalTime.of(12, 25), route2Legs()),
+            new RouteWave(LocalTime.of(12, 40), route2Legs()),
+            new RouteWave(LocalTime.of(13, 10), route2Legs()),
+            new RouteWave(LocalTime.of(13, 20), route2Legs()),
+            new RouteWave(LocalTime.of(13, 40), route2Legs()),
+            new RouteWave(LocalTime.of(13, 50), route2Legs()),
+            new RouteWave(LocalTime.of(14, 0), route2Legs()),
+            new RouteWave(LocalTime.of(14, 10), route2Legs()),
+            new RouteWave(LocalTime.of(14, 30), route2Legs()),
+            new RouteWave(LocalTime.of(15, 0), route2Legs()),
+            new RouteWave(LocalTime.of(15, 15), route2Legs()),
+            new RouteWave(LocalTime.of(15, 40), route2Legs()),
+            new RouteWave(LocalTime.of(16, 0), route2Legs()),
+            new RouteWave(LocalTime.of(16, 20), route2Legs()),
+            new RouteWave(LocalTime.of(16, 30), route2Legs()),
+            new RouteWave(LocalTime.of(17, 0), route2Legs()),
+            new RouteWave(LocalTime.of(17, 10), route2Legs()),
+            new RouteWave(LocalTime.of(17, 45), route2Legs()),
+            new RouteWave(LocalTime.of(18, 10), route2Legs()),
+            new RouteWave(LocalTime.of(18, 45), route2Legs()),
+            new RouteWave(LocalTime.of(20, 0), route2Legs()),
+            new RouteWave(LocalTime.of(20, 30), route2Legs()),
+            new RouteWave(LocalTime.of(21, 0), route2Legs()),
+            new RouteWave(LocalTime.of(21, 30), route2Legs())
     );
 
-    private static final List<RouteWave> ROUTE2_WAVES_OFFSET = ROUTE2_WAVES.stream()
-            .map(wave -> new RouteWave(wave.startTime.plusMinutes(10), wave.segments))
-            .collect(Collectors.toList());
+    private static List<LegSegment> route2Legs() {
+        return List.of(
+                new LegSegment(Destination.SWC, Destination.APK, 40),
+                new LegSegment(Destination.APK, Destination.APK, 5),
+                new LegSegment(Destination.APK, Destination.APB, 15),
+                new LegSegment(Destination.APB, Destination.SWC, 40)
+        );
+    }
 
     // ============================================
     // ROUTE 3 WAVES — SWC-DFC (Direct)
@@ -326,83 +242,42 @@ public class ScheduleGenerationDestData implements CommandLineRunner {
             new RouteWave(LocalTime.of(7, 0),
                     List.of(
                             new LegSegment(Destination.APK, Destination.APB, 10),
-                            new LegSegment(Destination.APB, Destination.JBS, 10),
-                            new LegSegment(Destination.JBS, Destination.APB, 40),
-                            new LegSegment(Destination.APB, Destination.APK, 10)
+                            new LegSegment(Destination.APB, Destination.JBS, 10)
                     )),
-            new RouteWave(LocalTime.of(8, 20),
+            new RouteWave(LocalTime.of(9, 0),
                     List.of(
                             new LegSegment(Destination.APK, Destination.APB, 10),
-                            new LegSegment(Destination.APB, Destination.JBS, 10),
-                            new LegSegment(Destination.JBS, Destination.APB, 10),
-                            new LegSegment(Destination.APB, Destination.APK, 10)
+                            new LegSegment(Destination.APB, Destination.JBS, 10)
                     )),
-            new RouteWave(LocalTime.of(11, 40),
+            new RouteWave(LocalTime.of(17, 0),
                     List.of(
                             new LegSegment(Destination.APK, Destination.APB, 10),
-                            new LegSegment(Destination.APB, Destination.JBS, 10),
-                            new LegSegment(Destination.JBS, Destination.APB, 40),
-                            new LegSegment(Destination.APB, Destination.APK, 10)
-                    )),
-            new RouteWave(LocalTime.of(15, 50),
-                    List.of(
-                            new LegSegment(Destination.APK, Destination.APB, 10),
-                            new LegSegment(Destination.APB, Destination.JBS, 20),
-                            new LegSegment(Destination.JBS, Destination.APB, 40),
-                            new LegSegment(Destination.APB, Destination.APK, 10)
+                            new LegSegment(Destination.APB, Destination.JBS, 10)
                     )),
             new RouteWave(LocalTime.of(19, 0),
                     List.of(
                             new LegSegment(Destination.APK, Destination.APB, 10),
-                            new LegSegment(Destination.APB, Destination.JBS, 10),
-                            new LegSegment(Destination.JBS, Destination.APB, 110),
+                            new LegSegment(Destination.APB, Destination.JBS, 10)
+                    )),
+            new RouteWave(LocalTime.of(21, 10),
+                    List.of(
+                            new LegSegment(Destination.JBS, Destination.APB, 10),
                             new LegSegment(Destination.APB, Destination.APK, 10)
                     ))
     );
 
     // ============================================
-    // SATURDAY WAVES (Limited)
+    // SATURDAY WAVES
     // ============================================
     private static final List<RouteWave> ROUTE1_SATURDAY_WAVES = List.of(
-            new RouteWave(LocalTime.of(7, 0),
-                    List.of(
-                            new LegSegment(Destination.DFC, Destination.APB, 30),
-                            new LegSegment(Destination.APB, Destination.APK, 15),
-                            new LegSegment(Destination.APK, Destination.APB, 15),
-                            new LegSegment(Destination.APB, Destination.DFC, 10),
-                            new LegSegment(Destination.DFC, Destination.DFC, 30)
-                    )),
-            new RouteWave(LocalTime.of(9, 0),
-                    List.of(
-                            new LegSegment(Destination.DFC, Destination.APB, 30),
-                            new LegSegment(Destination.APB, Destination.APK, 15),
-                            new LegSegment(Destination.APK, Destination.APB, 15),
-                            new LegSegment(Destination.APB, Destination.DFC, 10),
-                            new LegSegment(Destination.DFC, Destination.DFC, 30)
-                    )),
-            new RouteWave(LocalTime.of(11, 0),
-                    List.of(
-                            new LegSegment(Destination.DFC, Destination.APB, 30),
-                            new LegSegment(Destination.APB, Destination.APK, 15),
-                            new LegSegment(Destination.APK, Destination.APB, 15),
-                            new LegSegment(Destination.APB, Destination.DFC, 10),
-                            new LegSegment(Destination.DFC, Destination.DFC, 30)
-                    ))
+            new RouteWave(LocalTime.of(7, 0), commonLegs()),
+            new RouteWave(LocalTime.of(9, 0), commonLegs()),
+            new RouteWave(LocalTime.of(11, 0), commonLegs())
     );
 
     private static final List<RouteWave> ROUTE2_SATURDAY_WAVES = List.of(
-            new RouteWave(LocalTime.of(7, 0),
-                    List.of(
-                            new LegSegment(Destination.SWC, Destination.APK, 40),
-                            new LegSegment(Destination.APK, Destination.APB, 5),
-                            new LegSegment(Destination.APB, Destination.SWC, 55)
-                    )),
-            new RouteWave(LocalTime.of(9, 0),
-                    List.of(
-                            new LegSegment(Destination.SWC, Destination.APK, 40),
-                            new LegSegment(Destination.APK, Destination.APB, 5),
-                            new LegSegment(Destination.APB, Destination.SWC, 55)
-                    ))
+            new RouteWave(LocalTime.of(7, 0), route2Legs()),
+            new RouteWave(LocalTime.of(9, 0), route2Legs())
     );
 
     private static final List<RouteWave> ROUTE3_SATURDAY_WAVES = List.of(
@@ -423,14 +298,14 @@ public class ScheduleGenerationDestData implements CommandLineRunner {
                     List.of(
                             new LegSegment(Destination.APK, Destination.APB, 10),
                             new LegSegment(Destination.APB, Destination.JBS, 10),
-                            new LegSegment(Destination.JBS, Destination.APB, 40),
+                            new LegSegment(Destination.JBS, Destination.APB, 30),
                             new LegSegment(Destination.APB, Destination.APK, 10)
                     )),
             new RouteWave(LocalTime.of(12, 0),
                     List.of(
                             new LegSegment(Destination.APK, Destination.APB, 10),
                             new LegSegment(Destination.APB, Destination.JBS, 10),
-                            new LegSegment(Destination.JBS, Destination.APB, 40),
+                            new LegSegment(Destination.JBS, Destination.APB, 30),
                             new LegSegment(Destination.APB, Destination.APK, 10)
                     ))
     );
@@ -513,15 +388,11 @@ public class ScheduleGenerationDestData implements CommandLineRunner {
         var legs = new ArrayList<ScheduleLeg>();
 
         for (DayOfWeek dow : WEEKDAYS) {
-            legs.addAll(createLegsFromWaves(schedule, dfcBuses.get(0), ROUTE1_WAVES, dow));
-            legs.addAll(createLegsFromWaves(schedule, dfcBuses.get(1), ROUTE1_WAVES_OFFSET, dow));
-            legs.addAll(createLegsFromWaves(schedule, dfcBuses.get(2), ROUTE1_WAVES, dow));
-            legs.addAll(createLegsFromWaves(schedule, dfcBuses.get(3), ROUTE1_WAVES_OFFSET, dow));
-            legs.addAll(createLegsFromWaves(schedule, dfcBuses.get(4), ROUTE1_WAVES, dow));
-            legs.addAll(createLegsFromWaves(schedule, dfcBuses.get(5), ROUTE1_WAVES_OFFSET, dow));
-            legs.addAll(createLegsFromWaves(schedule, dfcBuses.get(6), ROUTE1_WAVES, dow));
+            for (int i = 0; i < ROUTE1_WAVES.size(); i++) {
+                Bus bus = dfcBuses.get(i % dfcBuses.size());
+                legs.addAll(createLegsFromWaves(schedule, bus, List.of(ROUTE1_WAVES.get(i)), dow));
+            }
         }
-
         return legs;
     }
 
@@ -529,6 +400,7 @@ public class ScheduleGenerationDestData implements CommandLineRunner {
         var legs = new ArrayList<ScheduleLeg>();
         var saturday = DayOfWeek.SATURDAY;
 
+        // Use first three buses for Saturday service (as per existing logic)
         legs.addAll(createLegsFromWaves(schedule, dfcBuses.get(0), ROUTE1_SATURDAY_WAVES, saturday));
         legs.addAll(createLegsFromWaves(schedule, dfcBuses.get(1), ROUTE1_SATURDAY_WAVES, saturday));
         legs.addAll(createLegsFromWaves(schedule, dfcBuses.get(2), ROUTE1_SATURDAY_WAVES, saturday));
@@ -570,13 +442,11 @@ public class ScheduleGenerationDestData implements CommandLineRunner {
         var legs = new ArrayList<ScheduleLeg>();
 
         for (DayOfWeek dow : WEEKDAYS) {
-            legs.addAll(createLegsFromWaves(schedule, swcBuses.get(0), ROUTE2_WAVES, dow));
-            legs.addAll(createLegsFromWaves(schedule, swcBuses.get(1), ROUTE2_WAVES_OFFSET, dow));
-            legs.addAll(createLegsFromWaves(schedule, swcBuses.get(2), ROUTE2_WAVES, dow));
-            legs.addAll(createLegsFromWaves(schedule, swcBuses.get(3), ROUTE2_WAVES_OFFSET, dow));
-            legs.addAll(createLegsFromWaves(schedule, swcBuses.get(4), ROUTE2_WAVES, dow));
+            for (int i = 0; i < ROUTE2_WAVES.size(); i++) {
+                Bus bus = swcBuses.get(i % swcBuses.size());
+                legs.addAll(createLegsFromWaves(schedule, bus, List.of(ROUTE2_WAVES.get(i)), dow));
+            }
         }
-
         return legs;
     }
 
@@ -628,7 +498,6 @@ public class ScheduleGenerationDestData implements CommandLineRunner {
             legs.addAll(createLegsFromWaves(schedule, dfcBuses.get(0), ROUTE3_WAVES, dow));
             legs.addAll(createLegsFromWaves(schedule, swcBuses.get(1), ROUTE3_WAVES, dow));
         }
-
         return legs;
     }
 
@@ -676,12 +545,13 @@ public class ScheduleGenerationDestData implements CommandLineRunner {
         var legs = new ArrayList<ScheduleLeg>();
 
         for (DayOfWeek dow : WEEKDAYS) {
+            // Bus 1 handles the first three outbound trips and the return
             legs.addAll(createLegsFromWaves(schedule, jbsBuses.get(0),
                     List.of(ROUTE_JBS_WAVES.get(0), ROUTE_JBS_WAVES.get(1), ROUTE_JBS_WAVES.get(4)), dow));
+            // Bus 2 handles the remaining two outbound trips
             legs.addAll(createLegsFromWaves(schedule, jbsBuses.get(1),
                     List.of(ROUTE_JBS_WAVES.get(2), ROUTE_JBS_WAVES.get(3)), dow));
         }
-
         return legs;
     }
 
@@ -723,16 +593,18 @@ public class ScheduleGenerationDestData implements CommandLineRunner {
                         .scheduleLeg(leg)
                         .build();
 
+                // Ensure the collection is not null
+                if (leg.getBusesAssigned() == null) {
+                    leg.setBusesAssigned(new ArrayList<>());
+                }
                 leg.getBusesAssigned().add(assignment);
                 legs.add(leg);
 
                 currentTime = arrivalTime;
             }
         }
-
         return legs;
     }
-
     // ============================================
     // SAVE LEGS HELPER
     // ============================================

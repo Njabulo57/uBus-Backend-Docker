@@ -52,7 +52,7 @@ public class BusAndTripSimulationController {
         }
         isInitialized = true;
 
-        var allTrips = this.simulatedTrips.getSimulationTrips();
+        var allTrips = new ArrayList<Trip>();
         var tripCacheValues = allTrips.stream()
                 .collect(Collectors.toMap(Trip::getId, trip -> trip));
 

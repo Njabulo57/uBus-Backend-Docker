@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.tracker.ubus.ubus.Components.Reports.DTO.Request.ReportsRequest;
-import org.tracker.ubus.ubus.Components.Reports.Service.interfece.INumTripReportsService;
+import org.tracker.ubus.ubus.Components.Reports.DTO.Response.NumTripsReports.NumTripsReportsResponse;
 import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Response.ReportsResponse;
 
 import java.util.List;
@@ -13,7 +13,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("/numTripReports")
 public class NumTripReportsController {
-    private final INumTripReportsService numTripReportsService;
+    private final org.tracker.ubus.ubus.Components.Reports.Service.interfece.INumTripReportsService numTripReportsService;
 
     /**
      * Gets the number of trips by status based on the provided time
@@ -97,6 +97,25 @@ public class NumTripReportsController {
     @GetMapping("/num-trips")
     public ReportsResponse getNumTrips(@RequestBody ReportsRequest reportsRequest) {
         return this.numTripReportsService.numTrips(reportsRequest.timeFrame());
+    }
+
+    /**
+     * Gets the data for number of trips based on the provided time
+     * HTTP Method: GET
+     * Endpoint: /Reports/num-trips
+     *
+     * @param reportsRequest DTO containing String that contains the timeFrame
+     *     DAY,
+     *     WEEK,
+     *     MONTH,
+     *     YEAR,
+     *     ALL_TIME
+     * @return NumTripsReportsResponse
+     */
+    @ResponseStatus(HttpStatus.OK)
+    @GetMapping("/num-trips-breakdown")
+    public NumTripsReportsResponse getNumTripsBreakdown(@RequestBody ReportsRequest reportsRequest) {
+        return this.numTripReportsService.numTripsBreakdownByCampus(reportsRequest.timeFrame());
     }
 
 }

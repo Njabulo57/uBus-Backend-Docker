@@ -66,6 +66,7 @@ public interface TripRepository extends JpaRepository<Trip, UUID> {
     // Check if any trips exist between two dates
     boolean existsByDepartureTimeBetween(LocalDateTime start, LocalDateTime end);
 
+    @Query("SELECT COUNT(t) FROM Trip t WHERE t.departureTime BETWEEN :start AND :end")
     long countByDepartureTimeBetween(LocalDateTime start, LocalDateTime end);
 
 
@@ -231,6 +232,31 @@ public interface TripRepository extends JpaRepository<Trip, UUID> {
     """)
     int countAllWithScheduleFetchedAndStatus(@Param("dateTime") LocalDateTime dateTime, @Param("status") TripStatus status);
 
+    @Query("""
+        SELECT COUNT(t) FROM Trip t
+        WHERE (CAST(:dateTime AS timestamp) IS NULL OR t.createdAt > :dateTime)
+        AND (t.actualArrivalTime - t.expectedArrivalTime) > 10
+    """)
+    int countAllWithScheduleFetchedAndDelayed(LocalDateTime dateTime);
+
+    @Query("""
+       SELECT COUNT(t) FROM Trip t
+       WHERE t.departureTime
+       BETWEEN :departureTimeAfter AND :departureTimeBefore
+       AND (t.actualArrivalTime - t.expectedArrivalTime) > 10
+    """)
+    int countByDepartureTimeBetweenAndDelayed(LocalDateTime departureTimeAfter, LocalDateTime departureTimeBefore);
+
+    @Query("""
+       SELECT COUNT(t) FROM Trip t
+       WHERE t.departureTime
+       BETWEEN :departureTimeAfter AND :departureTimeBefore
+       AND (t.actualArrivalTime - t.expectedArrivalTime) > 10
+       AND t.scheduleLegBusAssignment.scheduleLeg.fromDestination = :departedFrom
+    """)
+    int countByDepartureTimeBetweenAndDelayedAndDepartedFrom(@Param("departureTimeAfter") LocalDateTime departureTimeAfter,
+                                                             @Param("departureTimeBefore") LocalDateTime departureTimeBefore,
+                                                             @Param("departedFrom") Destination departedFrom);
 
     @Query("""
         SELECT COUNT(t)
@@ -271,4 +297,19 @@ public interface TripRepository extends JpaRepository<Trip, UUID> {
         AND t.route = :route
     """)
     int countAllWithScheduleFetchedAndStatusAndRoute(LocalDateTime dateTime, TripStatus status, Route route);
+
+
+    int countByDepartureTimeBetweenAndStatus(LocalDateTime departureTimeAfter, LocalDateTime departureTimeBefore, TripStatus status);
+
+    @Query("""
+       SELECT COUNT(t) FROM Trip t
+       WHERE t.departureTime
+       BETWEEN :departureTimeAfter AND :departureTimeBefore
+       AND t.status = :status
+       AND t.scheduleLegBusAssignment.scheduleLeg.fromDestination = :departedFrom
+    """)
+    int countByDepartureTimeBetweenAndStatusAndDepartedFrom(@Param("departureTimeAfter") LocalDateTime departureTimeAfter,
+                                                            @Param("departureTimeBefore") LocalDateTime departureTimeBefore,
+                                                            @Param("status") TripStatus status,
+                                                            @Param("departedFrom") Destination departedFrom);
 }

@@ -183,7 +183,7 @@ public class TripService extends BaseService implements ITripService {
             this.createEntrance(user, trip);
             return 0;
         }
-        else if(tripUser.getStatus() == TripUserStatus.IN_BUS) {
+        else if(tripUser.getStatus() !=null  && tripUser.getStatus().equals(TripUserStatus.IN_BUS)) {
             this.exitBus(trip, tripUser);
             return 1;
         }
@@ -200,6 +200,7 @@ public class TripService extends BaseService implements ITripService {
         TripUser tripUser = TripUser.builder()
                 .user(user)
                 .trip(trip)
+                .status(TripUserStatus.IN_BUS)
                 .build();
         this.tripUserRepository.save(tripUser);
 

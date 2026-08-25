@@ -1,5 +1,6 @@
 package org.tracker.ubus.ubus.Components.Reports.Service.interfece;
 
+import org.tracker.ubus.ubus.Components.Reports.DTO.Response.NumTripsReports.NumTripsReportsResponse;
 import org.tracker.ubus.ubus.Components.Reports.Enum.ReportsTime;
 import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Response.ReportsResponse;
 
@@ -11,4 +12,5 @@ public interface INumTripReportsService {
     public List<ReportsResponse> numTripsByTimeIntervals(ReportsTime reportsTime);
     public List<ReportsResponse> numTripsByRouteAndStatus(ReportsTime reportsTime);
 
+    public NumTripsReportsResponse numTripsBreakdownByCampus(ReportsTime reportsTime);
 }

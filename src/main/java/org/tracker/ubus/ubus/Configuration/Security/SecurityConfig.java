@@ -52,61 +52,53 @@ public class SecurityConfig {
 
 
                         .requestMatchers("/busPreferences/**")
-                            .hasAnyRole(STAFF.getLabel(), STUDENT.getLabel(), SUPER_ADMIN.getLabel())
+                            .permitAll()
 
                         .requestMatchers("/users/admin-register")
-                        .hasAnyRole(ADMIN.getLabel(), SUPER_ADMIN.getLabel())
+                        .permitAll()
 
                         .requestMatchers("/users/admin-assign-nfcCode")
-                        .hasAnyRole(ADMIN.getLabel(), SUPER_ADMIN.getLabel())
+                        .permitAll()
 
                         .requestMatchers("/users/**")
-                        .hasAnyRole(ADMIN.getLabel(), SUPER_ADMIN.getLabel(), DRIVER.getLabel(), STAFF.getLabel(),
-                                STUDENT.getLabel())
+                        .permitAll()
 
                         .requestMatchers("/busses/**")
-                            .hasAnyRole(ADMIN.getLabel(), SUPER_ADMIN.getLabel())
+                            .permitAll()
 
                         .requestMatchers("/trips/register-bus-trip")
-                            .hasRole(DRIVER.getLabel())
+                            .permitAll()
                         .requestMatchers("/trips/start-trip")
-                            .hasRole(DRIVER.getLabel())
+                            .permitAll()
                         .requestMatchers("/trips/end-trip")
-                            .hasRole(DRIVER.getLabel())
+                            .permitAll()
 
                         .requestMatchers("/trips/handle-tap")
-                            .hasAnyRole(STAFF.getLabel(), STUDENT.getLabel(), DRIVER.getLabel())
+                        .permitAll()
 
                         .requestMatchers("/trips/get-active-trips")
-                            .hasAnyRole(ADMIN.getLabel(), SUPER_ADMIN.getLabel())
+                            .permitAll()
 
                         .requestMatchers("/trips/get-trip/")
-                            .hasAnyRole(DRIVER.getLabel(), ADMIN.getLabel(), SUPER_ADMIN.getLabel())
-
+                            .permitAll()
                         .requestMatchers("/reports/**")
-                        .hasAnyRole(DRIVER.getLabel(), ADMIN.getLabel(), SUPER_ADMIN.getLabel())
-
+                        .permitAll()
                         .requestMatchers("/numTripReports/**")
-                        .hasAnyRole(ADMIN.getLabel(), SUPER_ADMIN.getLabel())
-
+                        .permitAll()
                         .requestMatchers("/web-socket/**").permitAll()
 
 
                         .requestMatchers("/admins/**")
-                        .hasAnyRole(ADMIN.getLabel(), SUPER_ADMIN.getLabel())
-
+                        .permitAll()
                         .requestMatchers("/tripLate/**")
-                        .hasRole(DRIVER.getLabel())
+                        .permitAll()
 
-//                        .requestMatchers("/schedules/**")
-//                            .hasAnyRole(DRIVER.getLabel(), ADMIN.getLabel(),
-//                                    SUPER_ADMIN.getLabel())
-
+                        .requestMatchers("/schedules/**")
+                            .permitAll()
 
                         .requestMatchers("/pending-admins/**")
-                            .hasRole(SUPER_ADMIN.getLabel())
-
-                        .anyRequest().authenticated()
+                            .permitAll()
+                        .anyRequest().permitAll()
         );
         return http;
     }
