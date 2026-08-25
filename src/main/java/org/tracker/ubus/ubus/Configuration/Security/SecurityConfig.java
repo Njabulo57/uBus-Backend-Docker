@@ -98,9 +98,9 @@ public class SecurityConfig {
                         .requestMatchers("/tripLate/**")
                         .hasRole(DRIVER.getLabel())
 
-                        .requestMatchers("/schedules/**")
-                            .hasAnyRole(DRIVER.getLabel(), ADMIN.getLabel(),
-                                    SUPER_ADMIN.getLabel())
+//                        .requestMatchers("/schedules/**")
+//                            .hasAnyRole(DRIVER.getLabel(), ADMIN.getLabel(),
+//                                    SUPER_ADMIN.getLabel())
 
 
                         .requestMatchers("/pending-admins/**")
