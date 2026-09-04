@@ -33,7 +33,7 @@ public class DemandPredictions {
     private DemandRandomForestTree demandRandomForestTree;
 
 
-    @PostConstruct
+//    @PostConstruct
     protected void init() {
         this.demandRandomForestTree = new DemandRandomForestTree(6, 80,
                 4,0.9);
