@@ -41,6 +41,7 @@ public interface TripRepository extends JpaRepository<Trip, UUID> {
     @Query("""
         SELECT trip FROM Trip trip
 
+            LEFT JOIN FETCH trip.tripUsers tu
             LEFT JOIN FETCH trip.busAssignment ba
             LEFT JOIN FETCH trip.scheduleLegBusAssignment slba
             LEFT JOIN FETCH slba.scheduleLeg sl
@@ -217,6 +218,15 @@ public interface TripRepository extends JpaRepository<Trip, UUID> {
     """)
     Trip findLatestTripByBusAssignment(@Param("busAssignment") BusAssignment busAssignment);
 
+    @Query("""
+        SELECT t
+        FROM Trip t
+        WHERE t.busAssignment.bus = :bus
+        ORDER BY t.createdAt DESC
+        LIMIT 1
+    """)
+    Trip findLatestTripByBus(@Param("bus") Bus bus);
+
 
     @Query("""
         SELECT COUNT(t) FROM Trip t
@@ -312,4 +322,6 @@ public interface TripRepository extends JpaRepository<Trip, UUID> {
                                                             @Param("departureTimeBefore") LocalDateTime departureTimeBefore,
                                                             @Param("status") TripStatus status,
                                                             @Param("departedFrom") Destination departedFrom);
+
+
 }

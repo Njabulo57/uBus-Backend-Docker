@@ -74,7 +74,6 @@ public class BusMapper {
 
         return views.stream()
                 .map(this::toDTO)
-                .sorted(Comparator.comparing(BusAdminViewResponse::busName))
                 .toList();
     }
 
@@ -97,6 +96,7 @@ public class BusMapper {
                 .model(bus.getModel())
                 .capacity(bus.getCapacity())
                 .type(type)
+                .eBusOperationalStatus(bus.getOperationalStatus())
                 .registrationNumber(bus.getRegistrationNumber())
                 .operationalStatus(operationalStatus)
                 .activityStatus(activityStatus)

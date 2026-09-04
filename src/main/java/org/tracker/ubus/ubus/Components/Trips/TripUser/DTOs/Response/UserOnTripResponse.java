@@ -7,6 +7,7 @@ import org.tracker.ubus.ubus.Components.Trips.Trip.Enum.Destination;
 
 @Builder
 public record UserOnTripResponse(Destination from, Destination to,
+                                 int progressBar, double distance, double speed,
                                  boolean isCompleted,
                                  String proximityMessage,
                                  DelayStatus delayStatus) {

@@ -5,6 +5,9 @@ import lombok.Builder;
 import java.time.LocalTime;
 
 @Builder
-public record DelayStatus(boolean isDelayed, long delayInMinutes, LocalTime eta, String arrivalTime) {
+public record DelayStatus(boolean isDelayed, long delayInMinutes, LocalTime eta,
+                          String arrivalTime, String reasonLate) {
+
+
 
 }

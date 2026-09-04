@@ -36,7 +36,7 @@ public class UserTestDataGenerator implements CommandLineRunner {
     @Value("${seed.users.students:15000}") private int defaultStudents;
     @Value("${seed.users.admins:5}")    private int defaultAdmins;
     @Value("${seed.users.staff:4500}")    private int defaultStaff;
-    @Value("${seed.users.drivers:100}")   private int defaultDrivers;
+    @Value("${seed.users.drivers:45}")   private int defaultDrivers;
     @Value("${seed.users.force:false}")  private boolean defaultForce;
     @Value("${seed.users.super-admin:2}")   private int defaultSuperAdmin;
 
@@ -65,10 +65,10 @@ public class UserTestDataGenerator implements CommandLineRunner {
         long t0 = System.currentTimeMillis();
 
         // Encode each password ONCE per role used
-        String studentPwd = c.students > 0 ? passwordEncoder.encode("student@123") : null;
-        String adminPwd   = c.admins   > 0 ? passwordEncoder.encode("admin@123")   : null;
-        String staffPwd   = c.staff    > 0 ? passwordEncoder.encode("staff@123")   : null;
-        String driverPwd  = c.drivers  > 0 ? passwordEncoder.encode("driver@2025") : null;
+        String studentPwd = c.students > 0 ? passwordEncoder.encode("Student@123") : null;
+        String adminPwd   = c.admins   > 0 ? passwordEncoder.encode("Admin@123")   : null;
+        String staffPwd   = c.staff    > 0 ? passwordEncoder.encode("Staff@123")   : null;
+        String driverPwd  = c.drivers  > 0 ? passwordEncoder.encode("Driver@2025") : null;
         String superAdminPwd = passwordEncoder.encode("super-admin@123");
 
         List<User> all = new ArrayList<>(c.total());

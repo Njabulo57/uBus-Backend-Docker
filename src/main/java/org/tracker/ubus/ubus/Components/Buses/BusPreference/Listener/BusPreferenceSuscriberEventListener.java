@@ -30,13 +30,13 @@ public class BusPreferenceSuscriberEventListener extends AbstractSocketListener<
                 .eta(nearestBusByPref.nearestTrip().getEta())
                 .distance(nearestBusByPref.nearestTrip().getDistance())
                 .distanceInKM(nearestBusByPref.nearestTrip().getDistanceInKM())
-                .busName(nearestBusByPref.nearestTrip().getBusName())
+                .busName(nearestBusByPref.nearestTrip().getRegistrationPlate())
                 .delayStatus(nearestBusByPref.nearestTrip().getDelayStatus())
                 .build();
 
         var response = UserPrefNearestBusResponse.builder()
                 .stops(nearestBusByPref.stops())
-                .from("From: " + nearestBusByPref.from() + "  currently from " + nearestBusByPref.from() )
+                .from("From: " + nearestBusByPref.from() + "  currently from " + nearestBusByPref.from())
                 .to("To: " + nearestBusByPref.to()  + " currently going to " + nearestBusByPref.to())
                 .isAtUserStop(nearestBusByPref.isAtUserStop())
                 .progress(nearestBusByPref.progress())

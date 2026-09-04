@@ -2,6 +2,7 @@ package org.tracker.ubus.ubus.Components.Buses.BusTracking.Service.Impl;
 
 
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.UUID;
@@ -18,12 +19,12 @@ import org.tracker.ubus.ubus.Components.Buses.BusTracking.DTO.Responses.DriverCu
 import org.tracker.ubus.ubus.Components.Buses.BusTracking.Mappers.BusTrackingMapper;
 import org.tracker.ubus.ubus.Components.Buses.BusTracking.Service.Interface.IBusLocationTrackingService;
 import org.tracker.ubus.ubus.Components.Shared.EventHandler.Publisher.MultiEventPublisher;
-import org.tracker.ubus.ubus.Components.Trips.Trip.CacheManager.TripCacheManager;
 import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Response.DelayStatus;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Entity.Trip;
-import org.tracker.ubus.ubus.Components.Trips.Trip.Enum.Destination;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Repository.TripRepository;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Util.EtaCalculator;
+import org.tracker.ubus.ubus.Components.Trips.TripTraffic.DTO.Internal.TrafficInfoCarrier;
+import org.tracker.ubus.ubus.Components.Trips.TripTraffic.TrafficLookUp.TrafficLookUp;
 
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentMap;
@@ -33,22 +34,21 @@ import java.util.concurrent.ConcurrentMap;
 @RequiredArgsConstructor
 public class BusLocationTrackingServiceService implements IBusLocationTrackingService {
 
-
     private final TripRepository tripRepository;
     private final BusTrackingMapper busTrackingMapper;
     private final MultiEventPublisher multiEventPublisher;
 
-    private static final long DEFAULT_ETA_SPEEDS = 10;
+    private static final long DEFAULT_ETA_SPEEDS = 5;
     private static final double DEFAULT_ETA_SPEED = 50;
     private static final long BUS_LOCATION_BATCH_SIZE = 50;
     private static final long ETA_UPDATE_INTERVAL_MS = 1_500;
 
 
     private final Cache<UUID, Trip> tripCache;
-    private final TripCacheManager tripCacheManager;
     private final Cache<UUID, DelayStatus> latestBusEtaCache;
 
 
+    private final TrafficLookUp trafficLookUp;
     private final BusDestinationProximityChecker busProximityChecker;
     private final DefaultRouteServiceCacheHandler defaultRouteServiceCacheHandler;
     private final ConcurrentMap<UUID, ConcurrentLinkedDeque<DriverCurrentLocationMessage>> busQueues;
@@ -81,6 +81,8 @@ public class BusLocationTrackingServiceService implements IBusLocationTrackingSe
                 .filter(queue -> queue.getValue().peekLast() != null)
                 .map(entry -> {
                     var trip = this.tripCache.getIfPresent(entry.getKey());
+                    if (trip == null)
+                        return null;
 
                     var queue = entry.getValue();
                     var lastMsg = queue.peekLast();
@@ -112,16 +114,23 @@ public class BusLocationTrackingServiceService implements IBusLocationTrackingSe
                 .getRemainingDistanceToDestination(route, from, to, currentPos);
 
 
-        var eta = this.getETA(msg.speed(), remainingDistance, trip);
-        var delayStatus = EtaCalculator.containsDelay(schedule.getArrivalTime(), eta);
+        LocalTime eta;
+        DelayStatus delayStatus;
+        delayStatus = this.trafficLookUp.getDelayStatusFromTrafficIfExists(trip);
+
+        if(delayStatus == null) {
+            eta = this.getETA(msg.speed(), remainingDistance, trip);
+            delayStatus = EtaCalculator.containsDelay(schedule.getArrivalTime(), eta);
+        }
+
 
         if (msg.isMadeIt())
             this.clearBusCachedState(trip);
 
+        this.latestBusEtaCache.put(trip.getId(), delayStatus);
         var progress = this.busProximityChecker.calculateJourneyProgress(trip);
         return this.busTrackingMapper.toDTO(trip, msg, delayStatus, progress);
     }
-
 
 
 
@@ -166,8 +175,9 @@ public class BusLocationTrackingServiceService implements IBusLocationTrackingSe
 
         int speedCount = (int) Math.min(locations.size(), DEFAULT_ETA_SPEEDS); //get the smallest one between que
 
+        int startIndex = locations.size() - speedCount;
         //calculate from the last locations going backwards to the speedCount
-        for (int i = speedCount - 1; i >= 0; i--)
+        for (int i = startIndex; i < locations.size(); i++)
             totalSpeed += locations.get(i)
                     .speed();
 

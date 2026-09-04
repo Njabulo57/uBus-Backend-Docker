@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Request.TripEndRequest;
 import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Request.TripRegisterCoordinates;
 import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Request.TripStartRequest;
+import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Request.TripTapRequest;
 import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Response.ActiveTripResponse;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Service.Interface.ITripService;
 
@@ -42,7 +43,7 @@ public class TripController {
 
     @ResponseStatus(HttpStatus.OK)
     @PostMapping("/handle-tap/{tripId}")
-    public int handleNfcTap(@PathVariable final UUID tripId, @RequestBody String nfcCode) {
-        return this.tripService.handleNfcTap(tripId, nfcCode);
+    public int handleNfcTap(@PathVariable final UUID tripId, @RequestBody TripTapRequest nfcCode) {
+        return this.tripService.handleNfcTap(tripId, nfcCode.nfcCode());
     }
 }

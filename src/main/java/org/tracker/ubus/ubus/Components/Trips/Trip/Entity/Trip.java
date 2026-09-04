@@ -31,8 +31,7 @@ import java.util.UUID;
 })
 public class Trip extends TimeAuditableEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @Id @GeneratedValue(strategy = GenerationType.UUID)
     @Column(nullable = false, updatable = false, unique = true)
     private UUID id;
 
@@ -72,7 +71,7 @@ public class Trip extends TimeAuditableEntity {
     private final Set<TripUser> tripUsers = new HashSet<>();
 
     public int countPassengers() {
-        return tripUsers.size();
+        return this.totalCount;
     }
 
     public void incrementPassengerCount() {

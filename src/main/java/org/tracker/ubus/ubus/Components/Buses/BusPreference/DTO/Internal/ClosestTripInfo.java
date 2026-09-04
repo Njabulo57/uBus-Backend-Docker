@@ -26,4 +26,5 @@ public class ClosestTripInfo {
 
     private int progress;
 
+    private String registrationPlate;
 }

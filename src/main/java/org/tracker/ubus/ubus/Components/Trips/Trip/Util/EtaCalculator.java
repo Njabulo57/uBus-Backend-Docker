@@ -62,8 +62,8 @@ public record EtaCalculator() {
         if(isDelayed)
             delayedMinutes = Duration.between(arrivalTime, eta).toMinutes();
 
-        var arrivalTimeStr = arrivalTime.format(DateTimeFormatter.ofPattern("HH:mm a"));
-        return new DelayStatus(isDelayed, delayedMinutes, eta, arrivalTimeStr);
+        var arrivalTimeStr = eta.format(DateTimeFormatter.ofPattern("HH:mm a"));
+        return new DelayStatus(isDelayed, delayedMinutes, eta, arrivalTimeStr, "");
     }
 
 

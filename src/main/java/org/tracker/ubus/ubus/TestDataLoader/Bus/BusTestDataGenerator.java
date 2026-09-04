@@ -45,33 +45,33 @@ public class BusTestDataGenerator implements CommandLineRunner {
             "Wright Eclipse", "Optare Solo", "Van Hool A330"
     };
 
+    // Common South African Province Codes
     private static final String[] PROVINCE_CODES = {
-            "CA", "CF", "CY", "CJ", "CL", "CN", "CP", "CR", "CT", "CV", "CW", "CX",
-            "EC", "EC1", "EC2", "EC3", "FS", "FS1", "FS2",
-            "GP", "GP1", "GP2", "GP3",
-            "KZN", "KZ", "KA", "KB", "KC", "KD", "KE", "KF", "KG", "KH", "KJ", "KK",
-            "KL", "KM", "KN", "KP", "KR", "KS", "KT", "KV", "KW", "KX",
-            "L", "LIM", "M", "MP",
-            "NC", "NC1", "NC2", "NW", "NW1", "NW2",
-            "N", "ND", "NE", "NF", "NG", "NH", "NJ", "NK", "NL", "NM", "NN", "NP",
-            "NR", "NS", "NT", "NV", "NW", "NX"
+            "GP",   // Gauteng
+            "KZN",  // KwaZulu-Natal
+            "WC",   // Western Cape
+            "EC",   // Eastern Cape
+            "FS",   // Free State
+            "MP",   // Mpumalanga
+            "NW",   // North West
+            "LIM",  // Limpopo
+            "NC"    // Northern Cape
     };
 
     @Override
     public void run(String... args) throws Exception {
         if (busRepository.count() == 0) {
             log.info("🚀 =============================================");
-            log.info("🚀 CREATING BUSES WITH ROUTES");
+            log.info("🚀 CREATING 20 BUSES WITH ROUTES");
             log.info("🚀 =============================================");
             long startTime = System.currentTimeMillis();
 
             List<BusDefinition> busDefinitions = new ArrayList<>();
 
             // ============================================
-            // ROUTE 1: DFC ↔ APB ↔ APK (7-10 buses)
+            // ROUTE 1: DFC ↔ APB ↔ APK (5 buses)
             // ============================================
-            int route1Count = 7 + secureRandom.nextInt(4); // 7-10
-            for (int i = 1; i <= route1Count; i++) {
+            for (int i = 1; i <= 5; i++) {
                 BusType type = (i % 2 == 0) ? BusType.ELECTRIC : BusType.COMBUSTION;
                 busDefinitions.add(new BusDefinition(
                         "DFC-APK " + i,
@@ -81,10 +81,9 @@ public class BusTestDataGenerator implements CommandLineRunner {
             }
 
             // ============================================
-            // ROUTE 2: SWC ↔ APK ↔ APB (7-10 buses)
+            // ROUTE 2: SWC ↔ APK ↔ APB (5 buses)
             // ============================================
-            int route2Count = 7 + secureRandom.nextInt(4); // 7-10
-            for (int i = 1; i <= route2Count; i++) {
+            for (int i = 1; i <= 5; i++) {
                 BusType type = (i % 2 == 0) ? BusType.ELECTRIC : BusType.COMBUSTION;
                 busDefinitions.add(new BusDefinition(
                         "SWC-APB " + i,
@@ -94,10 +93,9 @@ public class BusTestDataGenerator implements CommandLineRunner {
             }
 
             // ============================================
-            // ROUTE 3: SWC ↔ DFC (7-10 buses)
+            // ROUTE 3: SWC ↔ DFC (5 buses)
             // ============================================
-            int route3Count = 7 + secureRandom.nextInt(4); // 7-10
-            for (int i = 1; i <= route3Count; i++) {
+            for (int i = 1; i <= 5; i++) {
                 BusType type = (i % 2 == 0) ? BusType.ELECTRIC : BusType.COMBUSTION;
                 busDefinitions.add(new BusDefinition(
                         "SWC-DFC " + i,
@@ -107,10 +105,9 @@ public class BusTestDataGenerator implements CommandLineRunner {
             }
 
             // ============================================
-            // ROUTE JBS: APK ↔ APB ↔ JBS (7-10 buses)
+            // ROUTE JBS: APK ↔ APB ↔ JBS (5 buses)
             // ============================================
-            int routeJbsCount = 7 + secureRandom.nextInt(4); // 7-10
-            for (int i = 1; i <= routeJbsCount; i++) {
+            for (int i = 1; i <= 5; i++) {
                 BusType type = (i % 2 == 0) ? BusType.ELECTRIC : BusType.COMBUSTION;
                 busDefinitions.add(new BusDefinition(
                         "APK-JBS " + i,
@@ -120,10 +117,10 @@ public class BusTestDataGenerator implements CommandLineRunner {
             }
 
             log.info("📊 Total buses: {}", busDefinitions.size());
-            log.info("   🚌 ROUTE_1 (DFC-APK): {} buses", route1Count);
-            log.info("   🚌 ROUTE_2 (SWC-APB): {} buses", route2Count);
-            log.info("   🚌 ROUTE_3 (SWC-DFC): {} buses", route3Count);
-            log.info("   🚌 ROUTE_JBS (APK-JBS): {} buses", routeJbsCount);
+            log.info("   🚌 ROUTE_1 (DFC-APK): 5 buses");
+            log.info("   🚌 ROUTE_2 (SWC-APB): 5 buses");
+            log.info("   🚌 ROUTE_3 (SWC-DFC): 5 buses");
+            log.info("   🚌 ROUTE_JBS (APK-JBS): 5 buses");
 
             try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
                 List<CompletableFuture<Void>> futures = new ArrayList<>();
@@ -155,7 +152,7 @@ public class BusTestDataGenerator implements CommandLineRunner {
                     .capacity(30 + faker.random().nextInt(41))
                     .type(busType)
                     .route(primaryRoute)
-                    .operationalStatus(BusOperationalStatus.OPERATIONAL)  // ALL OPERATIONAL
+                    .operationalStatus(BusOperationalStatus.OPERATIONAL)
                     .activityStatus(getRandomActivityStatus())
                     .isActive(true)
                     .build();
@@ -163,21 +160,31 @@ public class BusTestDataGenerator implements CommandLineRunner {
             busRepository.save(bus);
             int saved = savedCount.incrementAndGet();
 
-            if (saved % 5 == 0 || saved == busRepository.count()) {
-                log.info("📊 Progress: {}/{} buses saved", saved, 28);
+            if (saved % 5 == 0 || saved == 20) {
+                log.info("📊 Progress: {}/20 buses saved", saved);
             }
         });
     }
 
+    /**
+     * Generate authentic South African registration plates
+     * Format: ABC 123 GP, XYZ 456 KZN, DEF 789 WC
+     * (3 letters, space, 3 digits, space, province code)
+     */
     private String generateSouthAfricanRegistration() {
-        String provinceCode = PROVINCE_CODES[secureRandom.nextInt(PROVINCE_CODES.length)];
-        int numberPart = 100 + secureRandom.nextInt(900);
+        // Generate 3 random letters (A-Z)
+        char letter1 = (char) ('A' + secureRandom.nextInt(26));
+        char letter2 = (char) ('A' + secureRandom.nextInt(26));
+        char letter3 = (char) ('A' + secureRandom.nextInt(26));
+        String letters = "" + letter1 + letter2 + letter3;
 
-        if (secureRandom.nextBoolean()) {
-            return String.format("%s %03d-%03d", provinceCode, numberPart, 100 + secureRandom.nextInt(900));
-        } else {
-            return String.format("%s %03d%03d", provinceCode, numberPart, 100 + secureRandom.nextInt(900));
-        }
+        // Generate 3 random digits (100-999)
+        int digits = 100 + secureRandom.nextInt(900);
+
+        // Random province code
+        String provinceCode = PROVINCE_CODES[secureRandom.nextInt(PROVINCE_CODES.length)];
+
+        return String.format("%s %03d %s", letters, digits, provinceCode);
     }
 
     private BusActivityStatus getRandomActivityStatus() {

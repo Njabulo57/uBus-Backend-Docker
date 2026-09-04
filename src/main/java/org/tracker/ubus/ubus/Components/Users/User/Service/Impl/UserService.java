@@ -185,6 +185,12 @@ public class UserService extends BaseService implements IUserService {
         return user.getNfcCode();
     }
 
+    @Override
+    public boolean isNfcCodeAssigned() {
+        var user = getCurrentUser();
+        return user.getNfcCode() != null && !user.getNfcCode().isBlank();
+    }
+
 
     @Override
     public boolean hasTrip() {

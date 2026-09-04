@@ -71,6 +71,7 @@ public class BusPreferenceService extends BaseService implements IBusPreferenceS
         this.users.addAll(allStudentsAndStaff);
     }
 
+
     @Override
     public void addPreference(List<BusPreferenceDTO> busPreferenceDTOs) {
 
@@ -120,7 +121,6 @@ public class BusPreferenceService extends BaseService implements IBusPreferenceS
         deletePreference(busPreferenceDTO);
         addPreference(List.of(busPreferenceDTO));
     }
-
 
 
     @Override
@@ -179,8 +179,6 @@ public class BusPreferenceService extends BaseService implements IBusPreferenceS
         if(this.users.isEmpty())
             return;
         this.showAllTrips();
-
-
     }
 
 
@@ -195,7 +193,7 @@ public class BusPreferenceService extends BaseService implements IBusPreferenceS
 
             var user = userPrefNearestBus.user();
             this.multiEventPublisher.publish(() ->
-                    new BusPreferenceSubscriberEvent(this, user, userPrefNearestBus, 0));
+                    new BusPreferenceSubscriberEvent(this, user, userPrefNearestBus ));
         }
 
     }

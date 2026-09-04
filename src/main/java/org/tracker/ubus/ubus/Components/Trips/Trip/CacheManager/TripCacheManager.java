@@ -124,7 +124,10 @@ public class TripCacheManager {
         var tripMap = this.tripsFromDemonstration.get(tripId);
         if (tripMap == null)
             return null;
-        return tripMap.values().stream().findFirst().orElse(null);
+        return tripMap.values()
+                .stream()
+                .findFirst()
+                .orElse(null);
     }
 
     public Set<Trip> getAllFromTripDemonstrationCacheAsSet() {

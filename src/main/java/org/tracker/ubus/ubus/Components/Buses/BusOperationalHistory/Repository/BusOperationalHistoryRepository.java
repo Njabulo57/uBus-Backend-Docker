@@ -1,5 +1,7 @@
 package org.tracker.ubus.ubus.Components.Buses.BusOperationalHistory.Repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -24,21 +26,6 @@ public interface BusOperationalHistoryRepository extends JpaRepository<BusOperat
     """)
     List<BusOperationalHistory> findByPriority(@Param("priority") Priority priority);
 
-    @Query("""
-        SELECT boh FROM BusOperationalHistory boh
-            LEFT JOIN FETCH  boh.bus
-        WHERE boh.maintenanceIssue =:issue
-    """)
-    List<BusOperationalHistory> findByMaintenanceIssue(@Param("issue") MaintenanceIssue issue);
-
-
-    List<BusOperationalHistory> findByMaintenanceIssueIn(List<MaintenanceIssue> issues);
-
-
-    List<BusOperationalHistory> findByBusAndMaintenanceIssueIn(Bus bus, List<MaintenanceIssue> issues);
-
-    List<BusOperationalHistory> findByBusAndPriorityAndDateOperated(Bus bus, Priority priority, LocalDate dateOperated);
-
 
     @Query("""
         SELECT boh FROM BusOperationalHistory boh
@@ -50,5 +37,36 @@ public interface BusOperationalHistoryRepository extends JpaRepository<BusOperat
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate
     );
+
+
+    @Query("""
+        SELECT boh FROM BusOperationalHistory boh
+            LEFT JOIN FETCH boh.bus
+        WHERE boh.dateOperated BETWEEN :startDate AND :endDate
+        AND boh.dateResolved IS NULL
+        ORDER BY boh.dateOperated DESC
+    """)
+    Page<BusOperationalHistory> findByDateOperatedBetweenNotResolved(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            Pageable pageable
+    );
+
+    @Query("""
+        SELECT boh FROM BusOperationalHistory boh
+            LEFT JOIN FETCH boh.bus
+        WHERE boh.dateOperated BETWEEN :startDate AND :endDate
+        AND boh.dateResolved IS NOT NULL
+        ORDER BY boh.dateOperated DESC
+    """)
+    Page<BusOperationalHistory> findByDateOperatedBetweenResolved(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            Pageable pageable);
+
+    default BusOperationalHistory findByIdOrThrow(UUID id) {
+        return this.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Bus Operational History not found"));
+    }
 
 }

@@ -22,13 +22,37 @@ public class BusOperationalHistoryGenerator implements CommandLineRunner {
 
     private final JdbcTemplate jdbcTemplate;
     private static final int BATCH_SIZE = 5000;
-    // Pre-calculated spike periods for realistic patterns
     private final Set<String> spikeDates = new HashSet<>();
+
+    // Bus reliability profiles - specific bus names to assign patterns
+    private static final Set<String> UNRELIABLE_BUSES = Set.of(
+            "DFC-APK 2",
+            "SWC-APB 3",
+            "SWC-DFC 4",
+            "APK-JBS 1"
+    );
+
+    private static final Set<String> RELIABLE_BUSES = Set.of(
+            "DFC-APK 1",
+            "SWC-APB 1",
+            "SWC-DFC 1",
+            "APK-JBS 2"
+    );
+
+    private static final Set<String> AVERAGE_BUSES = Set.of(
+            "DFC-APK 3", "SWC-APB 2", "SWC-APB 4",
+            "SWC-APB 5", "SWC-DFC 2", "SWC-DFC 3"
+    );
+
+    // Date range: 14 February 2026 to Today
+    private static final LocalDate YEAR_START = LocalDate.of(2026, 2, 14);
+    private static final LocalDate YEAR_END = LocalDate.now();
 
     @Override
     public void run(String... args) throws Exception {
         log.info("╔════════════════════════════════════════════════════════════╗");
-        log.info("║     BUS OPERATIONAL HISTORY GENERATOR - REALISTIC         ║");
+        log.info("║     BUS OPERATIONAL HISTORY GENERATOR                     ║");
+        log.info("║     Date Range: {} to {}                                  ║", YEAR_START, YEAR_END);
         log.info("╚════════════════════════════════════════════════════════════╝");
         // Uncomment to run:
         //fastDelete();
@@ -52,15 +76,16 @@ public class BusOperationalHistoryGenerator implements CommandLineRunner {
             return;
         }
 
-        // Get all active buses with their type
+        // Get all active buses
         List<BusInfo> allBuses = jdbcTemplate.query(
                 """
-                SELECT id, type 
+                SELECT id, name, type 
                 FROM bus 
                 WHERE is_active = true
                 """,
                 (rs, rowNum) -> new BusInfo(
                         rs.getObject("id", UUID.class),
+                        rs.getString("name"),
                         rs.getString("type")
                 )
         );
@@ -72,66 +97,61 @@ public class BusOperationalHistoryGenerator implements CommandLineRunner {
 
         log.info("📊 Found {} active buses", allBuses.size());
 
-        long electricCount = allBuses.stream().filter(b -> "ELECTRIC".equals(b.type)).count();
-        long combustionCount = allBuses.stream().filter(b -> "COMBUSTION".equals(b.type)).count();
-        log.info("   Electric: {}, Combustion: {}", electricCount, combustionCount);
+        // Assign consistent reliability profiles per bus
+        Map<UUID, BusProfile> busProfiles = new HashMap<>();
 
-        // Get all trip dates.
-        // NOTE: filter out NULL departure_time at the source — some trips
-        // (e.g. from the live/simulated-trips feature) can be inserted
-        // without a departure_time set. A NULL departure_time::date sorts
-        // LAST in Postgres' default ascending order, so without this filter
-        // it silently lands at the end of the list and blows up the very
-        // first date-based calculation downstream with an NPE.
-        List<LocalDate> tripDates = jdbcTemplate.queryForList(
-                """
-                SELECT DISTINCT departure_time::date
-                FROM trip
-                WHERE departure_time IS NOT NULL
-                ORDER BY departure_time::date
-                """,
-                LocalDate.class);
+        for (BusInfo bus : allBuses) {
+            String name = bus.name;
+            BusProfile profile;
 
-        // Defensive backstop in case a null ever slips through the query
-        // (e.g. a driver-level date function returning null on odd input).
-        int beforeFilter = tripDates.size();
-        tripDates.removeIf(Objects::isNull);
-        if (tripDates.size() != beforeFilter) {
-            log.warn("⚠️ Filtered out {} null trip date(s) that slipped past the SQL filter",
-                    beforeFilter - tripDates.size());
+            if (UNRELIABLE_BUSES.contains(name)) {
+                profile = new BusProfile(
+                        0.35 + ThreadLocalRandom.current().nextDouble(0.25),
+                        "UNRELIABLE",
+                        40 + ThreadLocalRandom.current().nextInt(25),
+                        true
+                );
+            } else if (RELIABLE_BUSES.contains(name)) {
+                profile = new BusProfile(
+                        0.82 + ThreadLocalRandom.current().nextDouble(0.13),
+                        "RELIABLE",
+                        5 + ThreadLocalRandom.current().nextInt(11),
+                        false
+                );
+            } else {
+                profile = new BusProfile(
+                        0.60 + ThreadLocalRandom.current().nextDouble(0.20),
+                        "AVERAGE",
+                        20 + ThreadLocalRandom.current().nextInt(16),
+                        ThreadLocalRandom.current().nextBoolean()
+                );
+            }
+
+            busProfiles.put(bus.id, profile);
         }
 
-        if (tripDates.isEmpty()) {
-            log.error("❌ No trips with a valid departure_time found!");
-            return;
+        log.info("📊 Reliability Distribution:");
+        log.info("   Unreliable buses (40-60% issue rate): {}", UNRELIABLE_BUSES);
+        log.info("   Reliable buses (5-15% issue rate): {}", RELIABLE_BUSES);
+        log.info("   Average buses (20-35% issue rate): {}", AVERAGE_BUSES);
+
+        // Generate all dates from YEAR_START to YEAR_END
+        List<LocalDate> allDates = new ArrayList<>();
+        LocalDate date = YEAR_START;
+        while (!date.isAfter(YEAR_END)) {
+            allDates.add(date);
+            date = date.plusDays(1);
         }
 
-        log.info("📊 Found {} dates with trips ({} to {})",
-                tripDates.size(), tripDates.get(0), tripDates.get(tripDates.size() - 1));
+        log.info("📊 Generating records for {} days ({} to {})",
+                allDates.size(), allDates.get(0), allDates.get(allDates.size() - 1));
 
-        // PRE-CALCULATE SPIKE PERIODS (contiguous blocks, not random days)
-        calculateSpikePeriods(tripDates);
+        calculateSpikePeriods(allDates);
         log.info("   Generated {} spike days", spikeDates.size());
-
-        // Get buses used on each date
-        Map<String, Set<UUID>> busesUsedByDate = new HashMap<>();
-        for (LocalDate date : tripDates) {
-            String dateStr = date.toString();
-            List<UUID> usedBusIds = jdbcTemplate.queryForList(
-                    """
-                    SELECT DISTINCT ba.bus_id
-                    FROM trip t
-                    JOIN bus_assignment ba ON t.bus_assignment_id = ba.id
-                    WHERE t.departure_time::date = ?
-                    """,
-                    UUID.class,
-                    date
-            );
-            busesUsedByDate.put(dateStr, new HashSet<>(usedBusIds));
-        }
 
         // Track issue frequency per bus
         Map<UUID, Integer> busIssueFrequency = new HashMap<>();
+        Map<UUID, Integer> busConsecutiveIssues = new HashMap<>();
         LocalDate today = LocalDate.now();
 
         List<Object[]> batch = new ArrayList<>(BATCH_SIZE);
@@ -140,59 +160,107 @@ public class BusOperationalHistoryGenerator implements CommandLineRunner {
         int maintenanceCount = 0;
         int outOfServiceCount = 0;
         int issueCount = 0;
+        int criticalCount = 0;
+        int majorCount = 0;
+        int minorCount = 0;
 
-        for (LocalDate date : tripDates) {
-            String dateStr = date.toString();
-            Set<UUID> usedBusesOnDate = busesUsedByDate.getOrDefault(dateStr, new HashSet<>());
-            boolean isWeekend = date.getDayOfWeek() == java.time.DayOfWeek.SATURDAY ||
-                    date.getDayOfWeek() == java.time.DayOfWeek.SUNDAY;
-
+        for (LocalDate currentDate : allDates) {
+            String dateStr = currentDate.toString();
+            boolean isWeekend = currentDate.getDayOfWeek() == java.time.DayOfWeek.SATURDAY ||
+                    currentDate.getDayOfWeek() == java.time.DayOfWeek.SUNDAY;
             boolean isSpikePeriod = spikeDates.contains(dateStr);
+            boolean isHoliday = isHoliday(currentDate);
+            boolean isSeasonal = isSeasonalIssue(currentDate);
+            boolean isPostHoliday = isPostHolidayPeriod(currentDate);
 
             for (BusInfo bus : allBuses) {
                 UUID busId = bus.id;
+                BusProfile profile = busProfiles.get(busId);
                 BusOperationalStatus status;
                 MaintenanceIssue issue = null;
                 Priority priority = null;
                 String description = null;
                 LocalDate dateResolved = null;
 
-                if (usedBusesOnDate.contains(busId)) {
-                    status = BusOperationalStatus.OPERATIONAL;
-                    operationalCount++;
-                } else {
-                    int previousIssues = busIssueFrequency.getOrDefault(busId, 0);
-                    status = getRealisticStatus(date, isWeekend, bus.type, previousIssues, isSpikePeriod);
+                int previousIssues = busIssueFrequency.getOrDefault(busId, 0);
+                int consecutiveIssues = busConsecutiveIssues.getOrDefault(busId, 0);
 
-                    if (status == BusOperationalStatus.MAINTENANCE ||
-                            status == BusOperationalStatus.OUT_OF_SERVICE) {
+                boolean isOffDay = isWeekend || isHoliday;
 
-                        issue = getRealisticIssue(date, bus.type);
+                if (isOffDay) {
+                    int offDayMaintenanceChance = profile.baseIssueRate / 2;
+
+                    if (ThreadLocalRandom.current().nextInt(100) < offDayMaintenanceChance) {
+                        status = BusOperationalStatus.MAINTENANCE;
+                        issue = getRealisticIssue(currentDate, bus.type);
                         priority = getRealisticPriority(issue, status, isSpikePeriod);
                         description = getRealisticDescription(issue, bus.type, status);
 
-                        // Resolution dates - OUT_OF_SERVICE takes longer
-                        if (status == BusOperationalStatus.OUT_OF_SERVICE) {
-                            int daysToResolve = ThreadLocalRandom.current().nextInt(3, 15);
-                            dateResolved = date.plusDays(daysToResolve);
-                            if (dateResolved.isAfter(today) || dateResolved.isAfter(tripDates.get(tripDates.size() - 1))) {
-                                dateResolved = null;
-                            }
-                        } else {
-                            int daysToResolve = ThreadLocalRandom.current().nextInt(1, 4);
-                            dateResolved = date.plusDays(daysToResolve);
-                            if (dateResolved.isAfter(today) || dateResolved.isAfter(tripDates.get(tripDates.size() - 1))) {
-                                dateResolved = null;
-                            }
-                        }
+                        int daysToResolve = ThreadLocalRandom.current().nextInt(1, 3);
+                        dateResolved = currentDate.plusDays(daysToResolve);
 
                         busIssueFrequency.merge(busId, 1, Integer::sum);
+                        busConsecutiveIssues.merge(busId, 1, Integer::sum);
                         issueCount++;
-                    }
+                        maintenanceCount++;
 
-                    if (status == BusOperationalStatus.OPERATIONAL) operationalCount++;
-                    else if (status == BusOperationalStatus.MAINTENANCE) maintenanceCount++;
-                    else outOfServiceCount++;
+                        if (priority == Priority.CRITICAL) criticalCount++;
+                        else if (priority == Priority.MAJOR) majorCount++;
+                        else minorCount++;
+                    } else {
+                        status = BusOperationalStatus.OPERATIONAL;
+                        operationalCount++;
+                        busConsecutiveIssues.put(busId, 0);
+                    }
+                } else {
+                    int issueRate = profile.baseIssueRate;
+
+                    if (isSpikePeriod) issueRate += 15;
+                    if (isSeasonal) {
+                        if ("ELECTRIC".equals(bus.type)) issueRate += 10;
+                        else issueRate += 5;
+                    }
+                    if (isPostHoliday) issueRate += 5;
+                    if (consecutiveIssues > 3) issueRate += 10;
+                    else if (consecutiveIssues > 1) issueRate += 5;
+
+                    issueRate = Math.min(issueRate, 85);
+
+                    int rand = ThreadLocalRandom.current().nextInt(100);
+
+                    if (rand < issueRate) {
+                        if (profile.proneToSevereIssues && ThreadLocalRandom.current().nextDouble() < 0.3) {
+                            status = BusOperationalStatus.OUT_OF_SERVICE;
+                            int daysToResolve = ThreadLocalRandom.current().nextInt(3, 15);
+                            dateResolved = currentDate.plusDays(daysToResolve);
+                        } else {
+                            status = BusOperationalStatus.MAINTENANCE;
+                            int daysToResolve = ThreadLocalRandom.current().nextInt(1, 4);
+                            dateResolved = currentDate.plusDays(daysToResolve);
+                        }
+
+                        issue = getRealisticIssue(currentDate, bus.type);
+                        priority = getRealisticPriority(issue, status, isSpikePeriod);
+                        description = getRealisticDescription(issue, bus.type, status);
+
+                        busIssueFrequency.merge(busId, 1, Integer::sum);
+                        busConsecutiveIssues.merge(busId, 1, Integer::sum);
+                        issueCount++;
+
+                        if (priority == Priority.CRITICAL) criticalCount++;
+                        else if (priority == Priority.MAJOR) majorCount++;
+                        else minorCount++;
+
+                        if (status == BusOperationalStatus.OUT_OF_SERVICE) {
+                            outOfServiceCount++;
+                        } else {
+                            maintenanceCount++;
+                        }
+                    } else {
+                        status = BusOperationalStatus.OPERATIONAL;
+                        operationalCount++;
+                        busConsecutiveIssues.put(busId, 0);
+                    }
                 }
 
                 batch.add(new Object[]{
@@ -203,7 +271,7 @@ public class BusOperationalHistoryGenerator implements CommandLineRunner {
                         priority != null ? priority.name() : null,
                         description,
                         dateResolved,
-                        date
+                        currentDate
                 });
                 count++;
 
@@ -239,6 +307,9 @@ public class BusOperationalHistoryGenerator implements CommandLineRunner {
         long endTime = System.currentTimeMillis();
         log.info("");
         log.info("📊 Summary Statistics:");
+        log.info("   Date Range: {} to {}", YEAR_START, YEAR_END);
+        log.info("   Total days: {}", allDates.size());
+        log.info("   Total buses: {}", allBuses.size());
         log.info("   Total records inserted: {}", count);
         log.info("   Operational: {} ({}%)", operationalCount,
                 String.format("%.1f", (double) operationalCount / count * 100));
@@ -247,13 +318,50 @@ public class BusOperationalHistoryGenerator implements CommandLineRunner {
         log.info("   Out of Service: {} ({}%)", outOfServiceCount,
                 String.format("%.1f", (double) outOfServiceCount / count * 100));
         log.info("   Issues recorded: {}", issueCount);
+        log.info("   Priority Distribution:");
+        log.info("      CRITICAL: {} ({}%)", criticalCount,
+                String.format("%.1f", issueCount > 0 ? (double) criticalCount / issueCount * 100 : 0));
+        log.info("      MAJOR: {} ({}%)", majorCount,
+                String.format("%.1f", issueCount > 0 ? (double) majorCount / issueCount * 100 : 0));
+        log.info("      MINOR: {} ({}%)", minorCount,
+                String.format("%.1f", issueCount > 0 ? (double) minorCount / issueCount * 100 : 0));
         log.info("   Records per bus: {}", count / allBuses.size());
         log.info("✅ Inserted in {} seconds", (endTime - startTime) / 1000);
+
+
     }
 
-    /**
-     * Pre-calculate realistic contiguous spike periods
-     */
+    private boolean isHoliday(LocalDate date) {
+        int month = date.getMonthValue();
+        int day = date.getDayOfMonth();
+
+        return (month == 3 && day == 21) ||
+                (month == 4 && day == 6) ||
+                (month == 4 && day == 27) ||
+                (month == 5 && day == 1) ||
+                (month == 5 && day == 25) ||
+                (month == 6 && day == 16) ||
+                (month == 9 && day == 24) ||
+                (month == 12 && day == 16) ||
+                (month == 12 && day == 25) ||
+                (month == 12 && day == 26);
+    }
+
+    private boolean isSeasonalIssue(LocalDate date) {
+        int month = date.getMonthValue();
+        return month == 6 || month == 7 || month == 8;
+    }
+
+    private boolean isPostHolidayPeriod(LocalDate date) {
+        int month = date.getMonthValue();
+        int day = date.getDayOfMonth();
+
+        if (month == 1 && day >= 6 && day <= 20) return true;
+        if (month == 4 && day >= 15 && day <= 25) return true;
+        if (month == 9 && day >= 1 && day <= 15) return true;
+        return false;
+    }
+
     private void calculateSpikePeriods(List<LocalDate> allDates) {
         ThreadLocalRandom random = ThreadLocalRandom.current();
         spikeDates.clear();
@@ -262,16 +370,20 @@ public class BusOperationalHistoryGenerator implements CommandLineRunner {
             int month = date.getMonthValue();
             int day = date.getDayOfMonth();
 
-            // RAINY SEASON: Entire June-July period is problematic
             if (month == 6 || month == 7) {
-                // 60% of rainy season days are bad
                 if (random.nextDouble() < 0.6) {
                     spikeDates.add(date.toString());
                 }
                 continue;
             }
 
-            // HEAT WAVE: Mid-Jan to mid-Feb
+            if (month == 8) {
+                if (random.nextDouble() < 0.25) {
+                    spikeDates.add(date.toString());
+                }
+                continue;
+            }
+
             if (month == 1 && day > 10 && day < 25) {
                 if (random.nextDouble() < 0.5) {
                     spikeDates.add(date.toString());
@@ -285,7 +397,6 @@ public class BusOperationalHistoryGenerator implements CommandLineRunner {
                 continue;
             }
 
-            // POST-HOLIDAY: Jan 6-20 (after New Year)
             if (month == 1 && day >= 6 && day <= 20) {
                 if (random.nextDouble() < 0.5) {
                     spikeDates.add(date.toString());
@@ -293,7 +404,6 @@ public class BusOperationalHistoryGenerator implements CommandLineRunner {
                 continue;
             }
 
-            // POST-EASTER: April 15-25
             if (month == 4 && day >= 15 && day <= 25) {
                 if (random.nextDouble() < 0.5) {
                     spikeDates.add(date.toString());
@@ -301,7 +411,6 @@ public class BusOperationalHistoryGenerator implements CommandLineRunner {
                 continue;
             }
 
-            // POST-SUMMER BREAK: September 1-15
             if (month == 9 && day >= 1 && day <= 15) {
                 if (random.nextDouble() < 0.5) {
                     spikeDates.add(date.toString());
@@ -309,15 +418,6 @@ public class BusOperationalHistoryGenerator implements CommandLineRunner {
                 continue;
             }
 
-            // WINTER COLD: July-August (cold start issues)
-            if (month == 7 || month == 8) {
-                if (random.nextDouble() < 0.2) {
-                    spikeDates.add(date.toString());
-                }
-                continue;
-            }
-
-            // Random mini-spikes (5% of remaining days)
             if (random.nextDouble() < 0.05) {
                 spikeDates.add(date.toString());
             }
@@ -328,77 +428,87 @@ public class BusOperationalHistoryGenerator implements CommandLineRunner {
                 String.format("%.1f", (double) spikeDates.size() / allDates.size() * 100));
     }
 
-    private BusOperationalStatus getRealisticStatus(
-            LocalDate date,
-            boolean isWeekend,
-            String busType,
-            int previousIssues,
-            boolean isSpikePeriod) {
-
+    private Priority getRealisticPriority(MaintenanceIssue issue, BusOperationalStatus status, boolean isSpikePeriod) {
         ThreadLocalRandom random = ThreadLocalRandom.current();
 
-        // Electric buses are more reliable
-        double baseReliability = "ELECTRIC".equals(busType) ? 0.88 : 0.75;
-
-        // Problem bus penalty (escalating)
-        if (previousIssues > 8) {
-            baseReliability -= 0.25; // Chronic problem bus
-        } else if (previousIssues > 5) {
-            baseReliability -= 0.18;
-        } else if (previousIssues > 3) {
-            baseReliability -= 0.10;
-        } else if (previousIssues > 1) {
-            baseReliability -= 0.05;
+        if (status == BusOperationalStatus.OUT_OF_SERVICE) {
+            // Out of service = CRITICAL or MAJOR, never MINOR
+            return random.nextDouble() < 0.6 ? Priority.CRITICAL : Priority.MAJOR;
         }
 
-        // Weekend = more maintenance scheduled
-        if (isWeekend) {
-            baseReliability -= 0.10;
+        // For MAINTENANCE status - MINOR issues should be very common
+        // Target: 70% MINOR, 25% MAJOR, 5% CRITICAL
+
+        // ENGINE issues - more serious
+        if (issue == MaintenanceIssue.ENGINE) {
+            if (random.nextDouble() < 0.10) return Priority.CRITICAL;
+            else if (random.nextDouble() < 0.40) return Priority.MAJOR;
+            else return Priority.MINOR;
         }
 
-        // Spike period = more breakdowns
+        // ELECTRICAL issues - usually minor
+        if (issue == MaintenanceIssue.ELECTRICAL) {
+            if (random.nextDouble() < 0.05) return Priority.CRITICAL;
+            else if (random.nextDouble() < 0.25) return Priority.MAJOR;
+            else return Priority.MINOR;
+        }
+
+        // BODY issues - mostly minor
+        if (issue == MaintenanceIssue.BODY) {
+            if (random.nextDouble() < 0.03) return Priority.CRITICAL;
+            else if (random.nextDouble() < 0.15) return Priority.MAJOR;
+            else return Priority.MINOR;
+        }
+
+        // TIRES - mostly minor
+        if (issue == MaintenanceIssue.TIRES) {
+            if (random.nextDouble() < 0.02) return Priority.CRITICAL;
+            else if (random.nextDouble() < 0.15) return Priority.MAJOR;
+            else return Priority.MINOR;
+        }
+
+        // OTHER - mostly minor
+        if (issue == MaintenanceIssue.OTHER) {
+            if (random.nextDouble() < 0.03) return Priority.CRITICAL;
+            else if (random.nextDouble() < 0.20) return Priority.MAJOR;
+            else return Priority.MINOR;
+        }
+
+        // Spike period = slightly more serious issues
         if (isSpikePeriod) {
-            baseReliability -= 0.18; // Increased from 0.15 for more impact
+            if (random.nextDouble() < 0.10) return Priority.CRITICAL;
+            else if (random.nextDouble() < 0.35) return Priority.MAJOR;
+            else return Priority.MINOR;
         }
 
-        // Random variation
-        baseReliability += (random.nextDouble() - 0.5) * 0.08;
-        baseReliability = Math.max(0.25, Math.min(0.95, baseReliability));
-
+        // Default: 5% CRITICAL, 25% MAJOR, 70% MINOR
         int rand = random.nextInt(100);
-        int threshold = (int) (baseReliability * 100);
-
-        if (rand < threshold) {
-            return BusOperationalStatus.OPERATIONAL;
-        } else if (rand < threshold + 12) {
-            return BusOperationalStatus.MAINTENANCE;
-        } else {
-            return BusOperationalStatus.OUT_OF_SERVICE;
-        }
+        if (rand < 5) return Priority.CRITICAL;
+        else if (rand < 30) return Priority.MAJOR;
+        else return Priority.MINOR;
     }
 
     private MaintenanceIssue getRealisticIssue(LocalDate date, String busType) {
         ThreadLocalRandom random = ThreadLocalRandom.current();
         int rand = random.nextInt(100);
 
-        boolean isRainy = date.getMonthValue() == 6 || date.getMonthValue() == 7;
+        boolean isRainy = date.getMonthValue() == 6 || date.getMonthValue() == 7 || date.getMonthValue() == 8;
         boolean isHot = date.getMonthValue() == 1 || date.getMonthValue() == 2;
 
-        // Electric buses have different issue profiles
         if ("ELECTRIC".equals(busType)) {
             if (isRainy) {
+                if (rand < 55) return MaintenanceIssue.ELECTRICAL;
+                else if (rand < 80) return MaintenanceIssue.TIRES;
+                else if (rand < 95) return MaintenanceIssue.BODY;
+                else return MaintenanceIssue.OTHER;
+            } else if (isHot) {
                 if (rand < 50) return MaintenanceIssue.ELECTRICAL;
                 else if (rand < 75) return MaintenanceIssue.TIRES;
                 else if (rand < 90) return MaintenanceIssue.BODY;
                 else return MaintenanceIssue.OTHER;
-            } else if (isHot) {
+            } else {
                 if (rand < 45) return MaintenanceIssue.ELECTRICAL;
                 else if (rand < 70) return MaintenanceIssue.TIRES;
-                else if (rand < 85) return MaintenanceIssue.BODY;
-                else return MaintenanceIssue.OTHER;
-            } else {
-                if (rand < 40) return MaintenanceIssue.ELECTRICAL;
-                else if (rand < 65) return MaintenanceIssue.TIRES;
                 else if (rand < 85) return MaintenanceIssue.BODY;
                 else return MaintenanceIssue.OTHER;
             }
@@ -426,37 +536,6 @@ public class BusOperationalHistoryGenerator implements CommandLineRunner {
         }
     }
 
-    private Priority getRealisticPriority(MaintenanceIssue issue, BusOperationalStatus status, boolean isSpikePeriod) {
-        ThreadLocalRandom random = ThreadLocalRandom.current();
-
-        if (status == BusOperationalStatus.OUT_OF_SERVICE) {
-            return random.nextDouble() < 0.7 ? Priority.CRITICAL : Priority.MAJOR;
-        }
-
-        if (issue == MaintenanceIssue.ENGINE) {
-            if (random.nextDouble() < 0.5) return Priority.CRITICAL;
-            else if (random.nextDouble() < 0.8) return Priority.MAJOR;
-            else return Priority.MINOR;
-        }
-
-        if (issue == MaintenanceIssue.ELECTRICAL) {
-            if (random.nextDouble() < 0.3) return Priority.CRITICAL;
-            else if (random.nextDouble() < 0.6) return Priority.MAJOR;
-            else return Priority.MINOR;
-        }
-
-        if (isSpikePeriod) {
-            if (random.nextDouble() < 0.4) return Priority.CRITICAL;
-            else if (random.nextDouble() < 0.7) return Priority.MAJOR;
-            else return Priority.MINOR;
-        }
-
-        int rand = random.nextInt(100);
-        if (rand < 20) return Priority.CRITICAL;
-        else if (rand < 50) return Priority.MAJOR;
-        else return Priority.MINOR;
-    }
-
     private String getRealisticDescription(MaintenanceIssue issue, String busType, BusOperationalStatus status) {
         List<String> descriptions = new ArrayList<>();
 
@@ -464,84 +543,111 @@ public class BusOperationalHistoryGenerator implements CommandLineRunner {
             case ENGINE -> {
                 if ("ELECTRIC".equals(busType)) {
                     descriptions.addAll(Arrays.asList(
-                            "Motor is hotter than a summer sidewalk - needs ice pack",
-                            "Battery cooling system is on strike - refuses to work",
-                            "Inverter threw a tantrum - power loss detected",
-                            "Regenerative brakes decided to take a day off",
-                            "Motor controller needs therapy - recalibration required"
+                            "Motor running hotter than a summer sidewalk - needs cooling system check",
+                            "Battery cooling system malfunction - temperature regulation failed",
+                            "Inverter communication error - power loss detected",
+                            "Regenerative braking system fault - efficiency reduced",
+                            "Motor controller requires recalibration - erratic power delivery",
+                            "High voltage battery pack showing imbalance - cell balancing required",
+                            "Electric motor making grinding noises - bearing failure imminent",
+                            "Coolant pump failure - battery overheating",
+                            "Motor insulation resistance low - short circuit risk",
+                            "Drive unit vibrating excessively - mounting bolts loose"
                     ));
                 } else {
                     descriptions.addAll(Arrays.asList(
-                            "Engine overheating - it's having a fever dream",
-                            "Engine making noises like a dying whale - please investigate",
-                            "Engine said 'nope' and refused to start this morning",
-                            "Oil leak - bus is marking its territory like a dog",
-                            "Engine misfiring - it's having an identity crisis",
-                            "Check engine light is having a rave party on my dashboard",
-                            "Engine lost its mojo - fuel system issue",
-                            "Timing belt is older than my grandpa - needs replacement"
+                            "Engine overheating - cooling system failure",
+                            "Engine knocking - fuel injection issue",
+                            "Engine starting failure - starter motor or fuel system",
+                            "Oil pressure warning - oil leak detected",
+                            "Engine misfiring - ignition system fault",
+                            "Check engine light active - diagnostic code P0300",
+                            "Timing belt showing wear - replacement recommended",
+                            "Fuel system contamination - injectors need cleaning",
+                            "Engine burning oil - piston rings worn",
+                            "Turbocharger whistling - bearings failing"
                     ));
                 }
             }
             case ELECTRICAL -> {
                 if ("ELECTRIC".equals(busType)) {
                     descriptions.addAll(Arrays.asList(
-                            "Battery pack is moody - cell balancing needed",
-                            "Charging system is slower than a snail on vacation",
-                            "HV battery warning light is bullying me",
-                            "Battery management system needs a pep talk - error detected",
-                            "Range dropped faster than my motivation on Monday morning"
+                            "Battery pack voltage imbalance - cell balancing required",
+                            "Charging system fault - reduced charging rate",
+                            "High voltage battery warning - range degradation detected",
+                            "Battery management system error - communication failure",
+                            "Range dropped significantly - battery health concern",
+                            "Thermal management system fault - battery temperature high",
+                            "DC-DC converter failure - aux battery not charging",
+                            "Battery discharging rapidly - parasitic drain",
+                            "High voltage contactor stuck - bus won't power on",
+                            "Cell voltage critically low - cell failure"
                     ));
                 } else {
                     descriptions.addAll(Arrays.asList(
-                            "Battery dies faster than my phone battery",
-                            "Alternator gave up on life - bus died mid-route",
-                            "Lights have performance anxiety - keep flickering",
-                            "Dashboard looks like a Christmas tree - too many lights",
-                            "Starter motor said 'not today' - won't crank",
-                            "Electrical short - bus is trying to become a fireworks display",
-                            "Wiring harness is having a bad hair day"
+                            "Battery discharging rapidly - alternator issue",
+                            "Alternator failure - running on battery only",
+                            "Headlights flickering - voltage regulator problem",
+                            "Dashboard warning lights - multiple electrical faults",
+                            "Starter motor failure - no crank condition",
+                            "Electrical short detected - wiring harness inspection needed",
+                            "Fuse box corrosion - multiple circuits affected",
+                            "Battery terminals corroded - poor connection",
+                            "Wiring harness chafing - bare wires touching metal",
+                            "Instrument cluster failure - no gauges"
                     ));
                 }
             }
             case BODY -> descriptions.addAll(Arrays.asList(
-                    "Door jammed - passengers staging a rebellion",
-                    "Windshield cracked - looks like a spiderweb art project",
-                    "Side mirror is hanging on for dear life",
-                    "Seat has more cracks than my phone screen",
-                    "Floorpan is rustier than my high school locker",
-                    "Roof panel dented - someone didn't check the height clearance",
-                    "Door latch is on strike - refuses to close properly"
+                    "Passenger door stuck - handle mechanism failure",
+                    "Windshield cracked - needs replacement",
+                    "Side mirror damaged - visibility compromised",
+                    "Seat cushion torn - passenger comfort issue",
+                    "Floorpan corrosion - structural integrity concern",
+                    "Roof panel dented - body repair needed",
+                    "Door alignment issue - closing properly affected",
+                    "Window regulator failure - window stuck open",
+                    "Emergency exit handle broken - safety concern",
+                    "Rust spreading - body panels need attention"
             ));
             case TIRES -> descriptions.addAll(Arrays.asList(
-                    "Tire went flat - it's tired of working",
-                    "Tread is balder than my uncle - needs replacement",
-                    "Tire had a blowout - dramatic exit from service",
-                    "Tire wear is uneven - alignment has commitment issues",
-                    "Valve stem leaking - it's a slow-motion disaster",
-                    "TPMS is screaming at me - something's wrong"
+                    "Flat tire - puncture repair or replacement needed",
+                    "Tread depth below legal limit - replacement required",
+                    "Tire blowout - sidewall damage",
+                    "Uneven tire wear - alignment needed",
+                    "Valve stem leaking - slow leak detected",
+                    "TPMS warning - tire pressure sensor failure",
+                    "Tire age deterioration - dry rot visible",
+                    "Tire has bulge - sidewall about to blow",
+                    "Wheel bent - causing vibration",
+                    "Lug nuts loose - wheel about to fall off"
             ));
             default -> descriptions.addAll(Arrays.asList(
-                    "Suspension feels like riding a roller coaster - but not the fun kind",
-                    "Brake pads are wearing thin - praying to stop in time",
-                    "Transmission is slipping - gear changes are a surprise",
-                    "Steering wheel shaking - bus wants to dance",
-                    "Exhaust sounds like a dying lawnmower",
-                    "AC is on strike - passengers are melting",
-                    "Fuel gauge is lying to me - says I'm empty when I'm not",
-                    "GPS is lost - probably looking for itself"
+                    "Suspension worn - rough ride quality",
+                    "Brake pads worn - reduced stopping power",
+                    "Transmission slipping - gear engagement issues",
+                    "Steering wheel vibration - alignment or balance issue",
+                    "Exhaust system leak - emissions concern",
+                    "Air conditioning failure - no cooling",
+                    "Fuel gauge inaccurate - sending unit failure",
+                    "GPS tracking system offline - location data missing",
+                    "Wiper motor failure - reduced visibility in rain",
+                    "Mirror adjustment motor failed - limited visibility"
             ));
         }
 
         String base = descriptions.get(ThreadLocalRandom.current().nextInt(descriptions.size()));
 
         if (status == BusOperationalStatus.OUT_OF_SERVICE) {
-            return base + " - BUS SAID 'I QUIT'";
+            return base + " - CRITICAL: Bus out of service until repaired";
         } else if (status == BusOperationalStatus.MAINTENANCE) {
-            return base + " - Bus needs a spa day";
+            return base + " - scheduled maintenance required";
         }
         return base;
     }
 
-    private record BusInfo(UUID id, String type) {}
+
+    private record BusProfile(double reliability, String label, int baseIssueRate, boolean proneToSevereIssues) {}
+
+    private record BusInfo(UUID id, String name, String type) {}
 }

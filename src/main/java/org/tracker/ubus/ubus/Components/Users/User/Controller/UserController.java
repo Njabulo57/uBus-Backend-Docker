@@ -25,7 +25,7 @@ class UserController {
 
     /**
      * Retrieves the current user's profile information.
-     *
+
      * HTTP Method: GET
      * Endpoint: /users/view-profile
      *
@@ -46,7 +46,6 @@ class UserController {
 
     /**
      * Updates the current user's profile information.
-     *
      * HTTP Method: PUT
      * Endpoint: /users/edit-profile
      *
@@ -67,7 +66,7 @@ class UserController {
 
     /**
      * Initiates a forgot password request by sending an OTP to the user's email.
-     *
+
      * HTTP Method: POST
      * Endpoint: /users/forgot-password
      *
@@ -83,7 +82,6 @@ class UserController {
 
     /**
      * Validates the OTP and changes the user's password.
-     *
      * HTTP Method: PUT
      * Endpoint: /users/valid-forgot-password
      *
@@ -133,5 +131,12 @@ class UserController {
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/hasTrip")
     public boolean hasTrip(){return userService.hasTrip();}
+
+
+    @ResponseStatus(HttpStatus.OK)
+    @GetMapping("/has-registered-NFC")
+    public boolean hasRegisteredNFC() {
+        return this.userService.isNfcCodeAssigned();
+    }
 
 }

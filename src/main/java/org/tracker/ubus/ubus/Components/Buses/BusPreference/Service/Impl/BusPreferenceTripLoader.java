@@ -6,15 +6,17 @@ import org.springframework.stereotype.Component;
 import org.tracker.ubus.ubus.Components.Buses.BusPreference.DTO.Internal.ClosestTripInfo;
 import org.tracker.ubus.ubus.Components.Buses.BusPreference.DTO.Response.UserPreferenceNearestBus;
 import org.tracker.ubus.ubus.Components.Buses.BusPreference.Entity.BusPreference;
-import org.tracker.ubus.ubus.Components.Buses.BusTracking.BusJourneyTracker.BusJourneyTracker;
+import org.tracker.ubus.ubus.Components.Buses.BusTracking.BusJourneyTracker.Impl.BusJourneyTracker;
 import org.tracker.ubus.ubus.Components.Buses.BusTracking.DTO.Internal.LatLon;
 import org.tracker.ubus.ubus.Components.Buses.BusTracking.Handlers.DefaultRouteServiceCacheHandler;
 import org.tracker.ubus.ubus.Components.Trips.Trip.CacheManager.TripCacheManager;
+import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Response.DelayStatus;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Entity.Trip;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Enum.Destination;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Util.EtaCalculator;
-import org.tracker.ubus.ubus.Components.Users.User.Entity.User;
+import org.tracker.ubus.ubus.Components.Trips.TripTraffic.TrafficLookUp.TrafficLookUp;
 import org.tracker.ubus.ubus.Components.Users.User.Enum.Route;
+import org.tracker.ubus.ubus.Util.MathUtil;
 
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -28,47 +30,24 @@ public class BusPreferenceTripLoader extends BusJourneyTracker {
 
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm a");
     private final DefaultRouteServiceCacheHandler defaultRouteServiceCacheHandler;
+    private final TrafficLookUp trafficLookUp;
     private final TripCacheManager manager;
 
     public Collection<Trip> getCurrentTrips() {
         return manager.getAll();
     }
 
-
-
-
-    public UserPreferenceNearestBus getNearestBusForRouteAndDestination(Map<Route, Map<Destination, ClosestTripInfo>> allNearestTripsMap,
-                                                                        Route route,
-                                                                        Destination userToDest, Destination userFromDest) {
-        var destinationMap = allNearestTripsMap.get(route);
-        if(destinationMap == null)
-            return null;
-
-        var userToDestInfo = destinationMap.get(userToDest);
-        if(userToDestInfo == null)
-            return null;
-
-
-        var trip = userToDestInfo.getTrip();
-        var schedule = trip.getScheduleLegBusAssignment()
-                .getScheduleLeg();
-        int stopsToUser = this.calculateStopsToUser(route, schedule.getFromDestination(), userToDest);
-        int progress = this.calculateJourneyProgress(trip);
-        boolean isUserAtStop = stopsToUser == 0;
-
-        // Use the OLD method to calculate total stops
-        int totalStopsForJourney = this.calculateJourneyStopsBetweenDestinations(route, userFromDest, userToDest);
-
-        return UserPreferenceNearestBus.builder()
-                .stops(stopsToUser)
-                .from(userFromDest)
-                .to(userToDest)
-                .progress(progress)
-                .isAtUserStop(isUserAtStop)
-                .totalStopsForJourney(totalStopsForJourney)
-                .nearestTrip(userToDestInfo)
-                .build();
-
+    /**
+     * Calculates how many stops remain between the bus's current location and the
+     * user's boarding stop, on the given route.
+     * <p>
+     * Handles routes that revisit the same {@link Destination} on both the outbound
+     * and return leg (e.g. a loop route like [DFC, APB, APK, APB, DFC]) by trying
+     * every occurrence of both endpoints and taking the shortest valid path, rather
+     * than assuming the first occurrence in the list is the correct one.
+     */
+    public int calculateStopsToUser(Route route, Destination busCurrentLocation, Destination userBoardingStop) {
+        return minCyclicStops(route.getDestinations(), busCurrentLocation, userBoardingStop);
     }
 
 
@@ -106,15 +85,19 @@ public class BusPreferenceTripLoader extends BusJourneyTracker {
 
                     // Calculate distance from bus's current location to user's 'to'
                     var distanceToDestination = this.calculateDistanceToDestination(trip, to);
+                    distanceToDestination = distanceToDestination / 1000;
 
-                    var speed = this.getCurrentLocationSpeed(trip);
-                    var kmEta = roundOff2Decimals(distanceToDestination / 1000);
+                    var kmEta = MathUtil.round(distanceToDestination, 2);
                     var strKM = kmEta + " km";
 
+                    var speed = this.getCurrentLocationSpeed(trip);
                     var eta = EtaCalculator.calculateETA(distanceToDestination, speed);
                     var formattedEta = eta.format(formatter);
 
-                    var delayStatus = EtaCalculator.containsDelay(legTrip.getArrivalTime(), eta);
+                    DelayStatus delayStatus = this.trafficLookUp.getDelayStatusFromTrafficIfExists(trip);
+                    if(delayStatus == null)
+                        delayStatus = EtaCalculator.containsDelay(legTrip.getArrivalTime(), eta);
+
                     var bus = trip.getBusAssignment().getBus();
                     var progress = this.calculateJourneyProgress(trip);
 
@@ -123,6 +106,7 @@ public class BusPreferenceTripLoader extends BusJourneyTracker {
                             .distance(strKM)
                             .distanceInKM(kmEta)
                             .busName(bus.getName())
+                            .registrationPlate(bus.getRegistrationNumber())
                             .delayStatus(delayStatus)
                             .progress(progress)
                             .trip(trip)
@@ -161,7 +145,7 @@ public class BusPreferenceTripLoader extends BusJourneyTracker {
 
 
     private double calculateDistanceToDestination(Trip trip, Destination targetDestination) {
-        var currentLocation = this.getCurrentLocation(trip);
+        var currentLocation = this.getCurrentLocationMessage(trip);
         if (currentLocation == null) {
             return 0;
         }
@@ -193,11 +177,11 @@ public class BusPreferenceTripLoader extends BusJourneyTracker {
                 (nextIdx == 0 && currentIdx == uniqueStops.size() - 1);
 
         // If the target is behind the bus, return 0 (bus is not heading toward it)
-        if (!isHeadingTowardDestination(route, busCurrentLocation, busNextStop, targetDestination)) {
+        if (!isHeadingTowardDestination(route, busCurrentLocation, busNextStop, targetDestination))
             return 0;
-        }
 
-        // Step 1: Distance from current position to the next stop
+
+        // Distance from current position to the next stop
         double distanceToNextStop = this.defaultRouteServiceCacheHandler.getRemainingDistanceToDestination(
                 route,
                 busCurrentLocation,
@@ -205,25 +189,22 @@ public class BusPreferenceTripLoader extends BusJourneyTracker {
                 currentLocationAtLatLon
         );
 
-        // Step 2: Build the list of stops from the next stop to the target
-        List<Destination> stopsAfterNext = new ArrayList<>();
+        // Build the list of stops from the next stop to the target
         List<Destination> stopsToTarget = new ArrayList<>();
 
         if (isMovingForward) {
             // Moving forward: collect stops from nextIdx to targetIdx (cyclic)
             for (int i = (nextIdx + 1) % uniqueStops.size(); i != currentIdx; i = (i + 1) % uniqueStops.size()) {
                 stopsToTarget.add(uniqueStops.get(i));
-                if (uniqueStops.get(i) == targetDestination) {
+                if (uniqueStops.get(i) == targetDestination)
                     break;
-                }
             }
         } else {
             // Moving backward: collect stops from nextIdx to targetIdx (reverse cyclic)
             for (int i = (nextIdx - 1 + uniqueStops.size()) % uniqueStops.size(); i != currentIdx; i = (i - 1 + uniqueStops.size()) % uniqueStops.size()) {
                 stopsToTarget.add(uniqueStops.get(i));
-                if (uniqueStops.get(i) == targetDestination) {
+                if (uniqueStops.get(i) == targetDestination)
                     break;
-                }
             }
         }
 
@@ -232,7 +213,7 @@ public class BusPreferenceTripLoader extends BusJourneyTracker {
             return 0;
         }
 
-        // Step 3: Calculate distance for all remaining segments
+        // Calculate distance for all remaining segments
         double remainingSegmentDistance = 0.0;
 
         for (int i = 0; i < stopsToTarget.size() - 1; i++) {
@@ -295,20 +276,6 @@ public class BusPreferenceTripLoader extends BusJourneyTracker {
 
 
     /**
-     * Calculates how many stops remain between the bus's current location and the
-     * user's boarding stop, on the given route.
-     * <p>
-     * Handles routes that revisit the same {@link Destination} on both the outbound
-     * and return leg (e.g. a loop route like [DFC, APB, APK, APB, DFC]) by trying
-     * every occurrence of both endpoints and taking the shortest valid path, rather
-     * than assuming the first occurrence in the list is the correct one.
-     */
-    public int calculateStopsToUser(Route route, Destination busCurrentLocation, Destination userBoardingStop) {
-        return minCyclicStops(route.getDestinations(), busCurrentLocation, userBoardingStop);
-    }
-
-
-    /**
      * Calculates the total number of stops for a user's journey between two
      * destinations on the given route. See {@link #calculateStopsToUser} for
      * notes on how duplicate/loop stops are handled.
@@ -325,19 +292,21 @@ public class BusPreferenceTripLoader extends BusJourneyTracker {
         for (var trip : allTrips) {
             var route = trip.getRoute();
             var distanceToDestination = this.calculateDistance(trip);
-
-            var speed = this.getCurrentLocationSpeed(trip);
-            var kmEta = roundOff2Decimals(distanceToDestination / 1000);
+            distanceToDestination = distanceToDestination / 1000;
+            var kmEta = MathUtil.round(distanceToDestination, 2);
             var strKM = kmEta + " km";
 
+            var speed = this.getCurrentLocationSpeed(trip);
             var eta = EtaCalculator.calculateETA(distanceToDestination, speed);
 
             var leg = trip.getScheduleLegBusAssignment()
                     .getScheduleLeg();
 
-            var delayStatus = EtaCalculator.containsDelay(leg.getArrivalTime(), eta);
-            var formattedEta = eta.format(formatter);
+            DelayStatus delayStatus = this.trafficLookUp.getDelayStatusFromTrafficIfExists(trip);
+            if(delayStatus == null)
+                delayStatus = EtaCalculator.containsDelay(leg.getArrivalTime(), eta);
 
+            var formattedEta = eta.format(formatter);
             var bus = trip.getBusAssignment().getBus();
 
             var progress = this.calculateJourneyProgress(trip);
@@ -446,7 +415,7 @@ public class BusPreferenceTripLoader extends BusJourneyTracker {
     }
 
     private double calculateDistance(Trip trip) {
-        var currentLocation = this.getCurrentLocation(trip);
+        var currentLocation = this.getCurrentLocationMessage(trip);
         if(currentLocation == null)
             return 0;
 
@@ -472,14 +441,11 @@ public class BusPreferenceTripLoader extends BusJourneyTracker {
     }
 
     private double getCurrentLocationSpeed(Trip trip) {
-        var currentPosition = getCurrentLocation(trip);
+        var currentPosition = getCurrentLocationMessage(trip);
         if(currentPosition == null)
             return 0.0;
         return currentPosition.speed();
     }
 
-    private double roundOff2Decimals(double value) {
-        double scale = Math.pow(10, 2);
-        return Math.round(value * scale) / scale;
-    }
+
 }

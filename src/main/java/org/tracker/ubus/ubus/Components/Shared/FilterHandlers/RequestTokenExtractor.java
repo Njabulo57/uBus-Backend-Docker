@@ -11,7 +11,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
-import org.tracker.ubus.ubus.Components.Jwt.JwtService.JwtService;
+import org.tracker.ubus.ubus.Components.Encryption.Jwt.Serivce.JwtService;
 import org.tracker.ubus.ubus.Configuration.Security.UserPrincipal;
 
 /**

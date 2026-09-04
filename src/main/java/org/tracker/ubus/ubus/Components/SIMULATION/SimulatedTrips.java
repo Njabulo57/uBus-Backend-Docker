@@ -25,6 +25,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static org.tracker.ubus.ubus.Components.Buses.Bus.Enum.BusOperationalStatus.OPERATIONAL;
@@ -71,8 +72,12 @@ public class SimulatedTrips {
         // Store assignments by route
         Map<Route, List<BusAssignment>> routeBusAssignments = new HashMap<>();
 
+
+        var counter = new AtomicInteger(0);
         busesByRoute.forEach((route, busNames) -> {
-            String busName = busNames.iterator().next();
+            String busName = busNames.iterator()
+                    .next();
+
             var bus = createSimulationBus(busName, route);
             var morningDriver = morningDrivers.get(random.nextInt(morningDrivers.size()));
             var morningAssignment = createSimulationBusAssignment(bus, morningDriver, DriverSchedule.MORNING_AFTERNOON);
@@ -94,7 +99,7 @@ public class SimulatedTrips {
                     .filter(leg -> leg.getFromDestination().equals(leg.getToDestination()))
                     .toList();
             if (!invalidLegs.isEmpty()) {
-                log.error("❌ Found invalid legs with same from/to: {}", invalidLegs);
+                log.error("Found invalid legs with same from/to: {}", invalidLegs);
                 // Remove invalid legs
                 legs.removeAll(invalidLegs);
             }
@@ -105,8 +110,8 @@ public class SimulatedTrips {
             var assignments = createBusAssignmentsForLegs(legs, morningAssignment, afternoonAssignment);
             routeAssignmentsMap.put(route, assignments);
 
-            // Generate trips from legs - FIXED: Pass the BusAssignments
-            var trips = generateTripsFromLegs(assignments, route, List.of(morningAssignment, afternoonAssignment));
+            var shifts = List.of(morningAssignment, afternoonAssignment);
+            var trips = generateTripsFromLegs(assignments, route, shifts);
             simulationTrips.addAll(trips);
         });
 
@@ -294,6 +299,7 @@ public class SimulatedTrips {
 
     private Map<Route, Collection<String>> getBusNamesGroupedByRoute(Collection<Route> validRoutes) {
         var map = new HashMap<Route, Collection<String>>();
+        var prefixCounter = new HashMap<String, Integer>();
 
         for (String namePrefix : NAME_PREFIXES) {
             var routeContained = validRoutes.stream()
@@ -303,10 +309,15 @@ public class SimulatedTrips {
 
             if (routeContained != null) {
                 var busNames = map.computeIfAbsent(routeContained, k -> new ArrayList<>());
-                var nameToAdd = String.format("%s-01", namePrefix);
+                var counter = prefixCounter.getOrDefault(namePrefix, 1);
+
+                var nameToAdd = String.format("%s-%02d", namePrefix, counter);
+                prefixCounter.put(namePrefix, counter + 1);
                 busNames.add(nameToAdd);
             }
         }
+
+        System.err.println(map);
         return map;
     }
 
@@ -372,6 +383,12 @@ public class SimulatedTrips {
     }
 
 
+    private String generateRandomLetters() {
+        return null;
+    }
+
+
+
     public Collection<Trip> getSimulationTrips(LocalTime startTime, LocalTime endTime) {
         return simulationTrips.stream()
                 .filter(trip -> {
@@ -433,5 +450,30 @@ public class SimulatedTrips {
                 })
                 .toList();
 
+    }
+
+    public List<Trip> getUniqueTrips() {
+
+        return simulationTrips.stream()
+                .collect(Collectors.groupingBy( trip -> trip.getBusAssignment().
+                        getBus().getName())
+                )
+                .values()
+                .stream()
+                .map(SequencedCollection::getFirst)
+                .toList()
+                .stream()
+                .filter(trip -> {
+                    var to = trip.getScheduleLegBusAssignment()
+                            .getScheduleLeg()
+                            .getToDestination();
+
+                    var from = trip.getScheduleLegBusAssignment()
+                            .getScheduleLeg()
+                            .getFromDestination();
+
+                    return !to.equals(from);
+                })
+                .toList();
     }
 }

@@ -75,4 +75,7 @@ public interface TripUserRepository extends JpaRepository<TripUser, UUID> {
 
 
     boolean existsByUserAndTrip(User user, Trip trip);
+
+    List<TripUser> findAllByUserAndStatus(User user, TripUserStatus tripUserStatus);
+
 }

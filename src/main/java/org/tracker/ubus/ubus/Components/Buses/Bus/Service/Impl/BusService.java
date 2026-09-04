@@ -18,6 +18,7 @@ import org.tracker.ubus.ubus.Components.Buses.Bus.Exceptions.DuplicateDriverAssi
 import org.tracker.ubus.ubus.Components.Buses.Bus.Mapper.BusMapper;
 import org.tracker.ubus.ubus.Components.Buses.Bus.Repository.DatabaseAccessLayer.BusRepository;
 import org.tracker.ubus.ubus.Components.Buses.Bus.Service.Interface.IBusService;
+import org.tracker.ubus.ubus.Components.Buses.Bus.Util.BusSorting;
 import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Entity.BusAssignment;
 import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Enum.DriverSchedule;
 import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Mappers.BusAssignmentMapper;
@@ -102,7 +103,8 @@ public class BusService extends BaseService implements IBusService {
     @Override
     public List<BusAdminViewResponse> viewBuses() {
         var busesAssignedAndNot = this.busRepository.findAllBusesWithAssignment();
-        return this.busMapper.toDTOs(busesAssignedAndNot);
+        var result = this.busMapper.toDTOs(busesAssignedAndNot);
+        return BusSorting.sort(result);
     }
 
 

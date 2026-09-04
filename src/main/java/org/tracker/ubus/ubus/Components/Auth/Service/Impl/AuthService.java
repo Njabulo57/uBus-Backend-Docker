@@ -19,7 +19,7 @@ import org.tracker.ubus.ubus.Components.Auth.Exception.Internal.AccountLockedExc
 import org.tracker.ubus.ubus.Components.Auth.Mapper.AuthMapper;
 import org.tracker.ubus.ubus.Components.Auth.Service.Interface.IAuthService;
 import org.tracker.ubus.ubus.Components.Auth.VerificationDispatcher.VerificationDispatcher;
-import org.tracker.ubus.ubus.Components.Jwt.JwtService.JwtService;
+import org.tracker.ubus.ubus.Components.Encryption.Jwt.Serivce.JwtService;
 import org.tracker.ubus.ubus.Components.OneTimePassword.Reposirtory.OneTimePasswordRepository;
 import org.tracker.ubus.ubus.Components.Shared.Entities.BaseService;
 import org.tracker.ubus.ubus.Components.TokenBlacklist.Service.Impl.BlacklistedTokenService;

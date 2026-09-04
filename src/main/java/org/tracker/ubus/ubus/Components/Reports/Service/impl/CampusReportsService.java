@@ -15,6 +15,7 @@ import org.tracker.ubus.ubus.Components.Trips.Trip.Enum.TripStatus;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Repository.TripRepository;
 import org.tracker.ubus.ubus.Components.Trips.TripsSchedule.Entity.ScheduleLegBusAssignment;
 import org.tracker.ubus.ubus.Components.Trips.TripsSchedule.Repository.ScheduleLegAssignmentRepository;
+
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -26,8 +27,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CampusReportsService extends AbstractReportService implements ICampusService {
 
-    private static final int MAX_PEAK_WINDOWS = 6;
-    private static final double PEEK_HOURS_THRESHOLD = 0.85;
+    private static final int MAX_PEAK_WINDOWS = 10;
+    private static final double PEEK_HOURS_THRESHOLD = 0.95;
     private static final int PEEK_TIME_MINUTES_THRESHOLD = 20;
 
 
@@ -168,6 +169,13 @@ public class CampusReportsService extends AbstractReportService implements ICamp
     }
 
 
+    private double calculatePeakUtilization(Trip trip) {
+        var busAssignment = trip.getBusAssignment();
+        var bus = busAssignment.getBus();
+        return ((double) trip.getTotalCount() / bus.getCapacity()) * 100;
+    }
+
+
     private double calculateAverageUtilization(List<Trip> trips) {
 
         return trips.stream()
@@ -182,6 +190,7 @@ public class CampusReportsService extends AbstractReportService implements ICamp
                 .orElse(0.0) * 100;
     }
 
+
     private int getAvailableBusesForDestination(Destination origin) {
         var assignments = this.scheduleLegAssignmentRepository.findAvailableAssignedBusesForDestination(origin);
 
@@ -190,6 +199,7 @@ public class CampusReportsService extends AbstractReportService implements ICamp
                 .distinct()
                 .count();
     }
+
 
     private LocalTime getPeakTime(Trip trip, boolean isPeakStart) {
 
@@ -201,11 +211,6 @@ public class CampusReportsService extends AbstractReportService implements ICamp
         return exactTime.plusMinutes(PEEK_TIME_MINUTES_THRESHOLD);
     }
 
-    private double calculatePeakUtilization(Trip trip) {
-        var busAssignment = trip.getBusAssignment();
-        var bus = busAssignment.getBus();
-        return ((double) trip.getTotalCount() / bus.getCapacity()) * 100;
-    }
 
     private List<Trip> getPeakTrips(List<Trip> trips) {
 

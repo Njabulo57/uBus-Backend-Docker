@@ -108,7 +108,7 @@ public enum Route {
                                 .map(to -> new BusPrefView(from, to))
                         )
                 )
-                .collect(Collectors.toList());
+                .collect(Collectors.toUnmodifiableSet());
     }
 
 

@@ -25,5 +25,7 @@ public interface IUserService {
 
     String getNfcCode();
 
+    boolean isNfcCodeAssigned();
+
     boolean hasTrip();
 }

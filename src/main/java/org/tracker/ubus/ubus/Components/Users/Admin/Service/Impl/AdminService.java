@@ -15,15 +15,14 @@ import org.tracker.ubus.ubus.Components.Users.Admin.Events.DriverApprovedEmailEv
 import org.tracker.ubus.ubus.Components.Users.Admin.Mapper.AdminMapper;
 import org.tracker.ubus.ubus.Components.Users.Admin.Service.Interface.IAdminService;
 import org.tracker.ubus.ubus.Components.Shared.EventHandler.Publisher.MultiEventPublisher;
+import org.tracker.ubus.ubus.Components.Users.Admin.Util.SortDrivers;
 import org.tracker.ubus.ubus.Components.Users.User.Repository.UserRepository;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole.DRIVER;
+import static org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole.fromLabel;
 import static org.tracker.ubus.ubus.Components.Users.User.Enum.UserStatus.ACTIVE;
 import static org.tracker.ubus.ubus.Components.Users.User.Enum.UserStatus.ADMIN_APPROVAL_PENDING;
 
@@ -56,7 +55,9 @@ public class AdminService extends BaseService implements IAdminService {
     public Collection<DriverActiveResponseDTO> getActiveDrivers() {
 
         var activeDriversWithOrWithoutBus = this.busRepository.findAssignedBusesOrDefault();
-        return this.adminMapper.toDTOs(activeDriversWithOrWithoutBus);
+        var mappedDrivers = this.adminMapper.toDTOs(activeDriversWithOrWithoutBus);
+
+        return SortDrivers.sort(mappedDrivers);
     }
 
 

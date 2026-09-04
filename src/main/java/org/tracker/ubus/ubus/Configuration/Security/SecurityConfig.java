@@ -9,8 +9,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
-import org.tracker.ubus.ubus.Components.Jwt.Filter.JwtFilter;
-import static org.tracker.ubus.ubus.Components.Users.User.Enum.UserRole.*;
+import org.tracker.ubus.ubus.Components.Encryption.Jwt.Filter.JwtFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -109,7 +108,7 @@ public class SecurityConfig {
         return http;
     }
 
-    private HttpSecurity configureSessionManagement(HttpSecurity http) throws Exception{
+    private HttpSecurity configureSessionManagement(HttpSecurity http) throws Exception {
         http.sessionManagement(sessionManagement ->
             sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         );

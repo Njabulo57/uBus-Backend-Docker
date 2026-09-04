@@ -12,8 +12,8 @@ public class BusPreferenceSubscriberEvent extends BusSubscriptionEvent {
     private final UserPreferenceNearestBus nearestBusByPref;
 
     public BusPreferenceSubscriberEvent(Object source, User user,
-                                        UserPreferenceNearestBus nearestBusByPref, int progress) {
-        super(source, progress);
+                                        UserPreferenceNearestBus nearestBusByPref) {
+        super(source, nearestBusByPref.progress());
         this.user = user;
         this.nearestBusByPref = nearestBusByPref;
     }

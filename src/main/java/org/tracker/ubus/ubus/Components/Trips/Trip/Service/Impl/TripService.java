@@ -10,6 +10,7 @@ import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Entity.BusAssignment
 import org.tracker.ubus.ubus.Components.Buses.BusAssignment.Repository.BusAssignmentRepository;
 import org.tracker.ubus.ubus.Components.Buses.Bus.Repository.DatabaseAccessLayer.BusRepository;
 import org.tracker.ubus.ubus.Components.Buses.BusTracking.BusTrackingTripManager.BusTrackingCoOrdinatesManager;
+import org.tracker.ubus.ubus.Components.Encryption.Jwt.Serivce.JwtService;
 import org.tracker.ubus.ubus.Components.Shared.EventHandler.Publisher.MultiEventPublisher;
 import org.tracker.ubus.ubus.Components.Shared.Entities.BaseService;
 import org.tracker.ubus.ubus.Components.Trips.Trip.CacheManager.TripCacheManager;
@@ -63,6 +64,8 @@ public class TripService extends BaseService implements ITripService {
     private final TripUserRepository tripUserRepository;
     private final BusAssignmentRepository busAssignmentRepository;
 
+    private final JwtService jwtService;
+
 
 
     @Transactional
@@ -114,7 +117,7 @@ public class TripService extends BaseService implements ITripService {
         this.tripRepository.save(trip); //saving the trip
         var savedTrip = this.tripRepository.findByIdOrThrow(trip.getId());
 
-        Trip lastTrip = tripRepository.findLatestTripByBusAssignment(busAssigment);
+        Trip lastTrip = tripRepository.findLatestTripByBus(busAssigment.getBus());
         //if the last trip is complete, then assign the remaining users to the new trip
         if (lastTrip != null && lastTrip.getStatus() == TripStatus.COMPLETE)
             this.assignLastTripUsersToNextTrip(lastTrip, savedTrip);
@@ -172,7 +175,16 @@ public class TripService extends BaseService implements ITripService {
     @Override
     @Transactional
     public int handleNfcTap(UUID tripId, String nfcCode) {
-        User user = this.userRepository.findByNfcCodeOrThrow(nfcCode);
+
+        Optional<User> fromNfc= this.userRepository.findByNfcCode(nfcCode);
+        User user;
+        if(fromNfc.isEmpty()) {
+            user = userRepository.findByEmailOrThrow(jwtService.extractUsername(nfcCode));
+        }
+        else {
+            user = fromNfc.get();
+        }
+
         Trip trip = this.tripRepository.findByIdOrThrow(tripId);
         TripUser tripUser = this.tripUserRepository.findByTripAndUser(trip, user);
 
@@ -180,17 +192,23 @@ public class TripService extends BaseService implements ITripService {
         tripRepository.save(trip);
 
         if(tripUser == null) {
+            exitAllTrips(user);
             this.createEntrance(user, trip);
+            var updatedTrip = this.tripRepository.findByIdOrThrow(tripId);
+            this.tripCacheManager.putInTripDemonstrationCache(updatedTrip);
             return 0;
         }
         else if(tripUser.getStatus() !=null  && tripUser.getStatus().equals(TripUserStatus.IN_BUS)) {
             this.exitBus(trip, tripUser);
+            exitAllTrips(user);
             return 1;
         }
         else {
+            exitAllTrips(user);
             this.enterBus(tripUser);
             return 0;
         }
+
 
     }
 
@@ -219,6 +237,15 @@ public class TripService extends BaseService implements ITripService {
 
         var jwtToken = this.getUserJwtToken();
         this.multiEventPublisher.publish(()-> new TripUserOnTappedOutCardEvent(this, jwtToken, trip));
+    }
+
+    private void exitAllTrips(User User)
+    {
+        List<TripUser> tripUserList = tripUserRepository.findAllByUserAndStatus(User, TripUserStatus.IN_BUS);
+        tripUserList.forEach(tripUser -> {
+            tripUser.setStatus(TripUserStatus.EXITED);
+            this.tripUserRepository.save(tripUser);
+        });
     }
 
     private void assignLastTripUsersToNextTrip(Trip lastTrip, Trip newTrip) {

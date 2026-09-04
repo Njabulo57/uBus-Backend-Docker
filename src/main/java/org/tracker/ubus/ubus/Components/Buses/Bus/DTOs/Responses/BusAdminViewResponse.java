@@ -1,6 +1,7 @@
 package org.tracker.ubus.ubus.Components.Buses.Bus.DTOs.Responses;
 
 import lombok.Builder;
+import org.tracker.ubus.ubus.Components.Buses.Bus.Enum.BusOperationalStatus;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -15,6 +16,7 @@ public record BusAdminViewResponse(
         String type,
         String registrationNumber,
         String operationalStatus,
+        BusOperationalStatus eBusOperationalStatus,
         String activityStatus,
         String currentDriver,
         double mileage,

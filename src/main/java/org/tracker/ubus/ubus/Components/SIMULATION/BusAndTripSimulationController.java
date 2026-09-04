@@ -14,9 +14,6 @@ import org.tracker.ubus.ubus.Components.Buses.BusTracking.Service.Interface.IBus
 import org.tracker.ubus.ubus.Components.Trips.Trip.CacheManager.TripCacheManager;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Entity.Trip;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Enum.Destination;
-import org.tracker.ubus.ubus.Components.Users.User.Enum.Route;
-
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -35,44 +32,29 @@ public class BusAndTripSimulationController {
     private final DefaultRouteServiceCacheHandler defaultRouteServiceCacheHandler;
 
     private static final Random random = new Random();
-    private static final long SIMULATION_INTERVAL_MS = 800;
-
+    private static final long SIMULATION_INTERVAL_MS = 1_500;
 
     private BusOperationalHistoryRepository busOperationalHistoryRepository;
     private final TripCacheManager tripCacheManager;
     private final Map<UUID, BusSimulationState> busStates = new ConcurrentHashMap<>();
     private final Set<UUID> loadingPassengersSent = ConcurrentHashMap.newKeySet();
 
-    private boolean isInitialized = false;
 
     @PostConstruct
     protected void init() {
-        if (isInitialized) {
-            return;
-        }
-        isInitialized = true;
 
-        var allTrips = new ArrayList<Trip>();
-        var tripCacheValues = allTrips.stream()
-                .collect(Collectors.toMap(Trip::getId, trip -> trip));
 
-        this.tripCacheManager.putAllInTripSimulationCache(tripCacheValues);
+//        var allTrips = this.simulatedTrips.getUniqueTrips();
+//
+//        System.err.println(allTrips.size() + " trips found for simulation");
+//        var tripCacheValues = allTrips.stream()
+//                .collect(Collectors.toMap(Trip::getId, trip -> trip));
+//
+//        this.tripCacheManager.putAllInTripSimulationCache(tripCacheValues);
+//
+//        if (this.tripCacheManager.estimatedTripSimulationCacheSize() == 0)
+//            log.warn("No trips found for today");
 
-        if (this.tripCacheManager.estimatedTripSimulationCacheSize() == 0) {
-            log.warn("No trips found for today");
-        } else {
-            log.info("Initialized {} trips for simulation", tripCacheManager.estimatedTripSimulationCacheSize());
-
-            allTrips.forEach(trip -> {
-                var bus = trip.getBusAssignment().getBus();
-
-                if (bus.getActivityStatus() == LOADING_PASSENGERS ||
-                        bus.getActivityStatus() == STATIONERY) {
-                    sendLoadingPassengerLocation(trip);
-                    loadingPassengersSent.add(trip.getId());
-                }
-            });
-        }
     }
 
     @Scheduled(fixedRate = SIMULATION_INTERVAL_MS)
@@ -83,9 +65,9 @@ public class BusAndTripSimulationController {
 
             var allTrips = this.tripCacheManager.getAll();
 
-            for (Trip trip : allTrips) {
+            for (var trip : allTrips) {
                 try {
-                    UUID tripId = trip.getId();
+                    var tripId = trip.getId();
 
                     var bus = trip.getBusAssignment().getBus();
 
@@ -95,19 +77,6 @@ public class BusAndTripSimulationController {
                         this.sendStationaryLocation(trip);
                         continue;
                     }
-
-                    //var today = LocalDate.now();
-//                    var operations = this.busOperationalHistoryRepository.findByBusAndPriorityAndDateOperated(bus,
-//                            Priority.CRITICAL, today);
-
-
-//                    for(var operation : operations)
-//                        if(operation.getBus().equals(bus))
-//                            this.sendStationaryLocation(trip);
-
-
-
-
 
                     var state = busStates.computeIfAbsent(tripId,
                             id -> new BusSimulationState());
@@ -126,63 +95,50 @@ public class BusAndTripSimulationController {
         }
     }
 
-    private void sendLoadingPassengerLocation(Trip trip) {
-        var schedule = trip.getScheduleLegBusAssignment()
-                .getScheduleLeg();
-        var from = schedule.getFromDestination();
-        var route = trip.getRoute().getLabel();
-
-        var locationMessage = DriverCurrentLocationMessage.builder()
-                .tripId(trip.getId())
-                .latitude(from.getLat())
-                .longitude(from.getLng())
-                .speed(0)
-                .timePosted(LocalDateTime.now())
-                .route(route)
-                .busName(trip.getBusAssignment() != null && trip.getBusAssignment().getBus() != null
-                        ? trip.getBusAssignment().getBus().getName()
-                        : "Unknown")
-                .isSimulated(trip.isFromSimulation())
-                .build();
-
-        busLocationBatchService.enqueue(locationMessage);
-    }
 
     private void simulateBusMovement(Trip trip, BusSimulationState state) {
         var schedule = trip.getScheduleLegBusAssignment()
                 .getScheduleLeg();
         var route = trip.getRoute();
 
-
         // Check if bus should be stopped
         if (shouldBusStop(state)) {
-            sendLocationUpdate(trip, state.lastLat, state.lastLng, 0,
-                    false);
+            sendLocationUpdate(trip, state.lastLat, state.lastLng, 0, false);
             state.stoppedFrames++;
             return;
         }
 
-        List<Destination> destinations = route.getUniqueStops();
+        List<Destination> destinations = route.getDestinations();
         if (destinations.isEmpty()) {
             log.warn("No destinations found for route: {}", route.getLabel());
             return;
         }
 
+        // Initialize state if needed
         if (!state.isInitialized) {
             Destination from = schedule.getFromDestination();
             state.currentDestIndex = destinations.indexOf(from);
 
-            if (state.currentDestIndex == -1)
-                throw new IllegalStateException("From destination not found in route destinations");
-
+            if (state.currentDestIndex == -1) {
+                for (int i = 0; i < destinations.size(); i++) {
+                    if (destinations.get(i).equals(from)) {
+                        state.currentDestIndex = i;
+                        break;
+                    }
+                }
+                if (state.currentDestIndex == -1) {
+                    throw new IllegalStateException("From destination not found in route destinations");
+                }
+            }
 
             state.isInitialized = true;
             state.lastLat = from.getLat();
             state.lastLng = from.getLng();
         }
 
-        var from = schedule.getFromDestination();
-        var nextDest = schedule.getToDestination();
+        // Get current and next destinations based on current index
+        Destination from = destinations.get(state.currentDestIndex);
+        Destination nextDest = destinations.get((state.currentDestIndex + 1) % destinations.size());
 
         // Get coordinates for the segment
         List<LatLon> segmentCoordinates = null;
@@ -199,35 +155,58 @@ public class BusAndTripSimulationController {
             }
 
             // Move to next destination
-            int currentIndex = destinations.indexOf(nextDest);
+            int currentIndex = state.currentDestIndex;
             int nextIndex = (currentIndex + 1) % destinations.size();
 
-            while (destinations.get(nextIndex).equals(nextDest)) {
+            while (destinations.get(nextIndex).equals(destinations.get(currentIndex)))
                 nextIndex = (nextIndex + 1) % destinations.size();
-            }
 
-            from = nextDest;
+            from = destinations.get(currentIndex);
             nextDest = destinations.get(nextIndex);
-            schedule.setFromDestination(from);
-            schedule.setToDestination(nextDest);
+            state.currentDestIndex = nextIndex;
+
+            // ✅ ONLY UPDATE SCHEDULE FOR SIMULATED TRIPS
+            if (trip.isFromSimulation()) {
+                schedule.setFromDestination(from);
+                schedule.setToDestination(nextDest);
+            }
         }
 
-        double speed = random.nextDouble() * 10 + 20;
+        // Speed calculation: mostly 12-18 km/h with occasional spikes
+        double speed;
+        double randomFactor = random.nextDouble();
 
+        if (randomFactor < 0.7) {
+            speed = 12 + random.nextDouble() * 6;
+        } else if (randomFactor < 0.9) {
+            speed = 18 + random.nextDouble() * 7;
+        } else if (randomFactor < 0.97) {
+            speed = 25 + random.nextDouble() * 10;
+        } else {
+            speed = 35 + random.nextDouble() * 15;
+        }
 
-        if (state.currentIndex >= segmentCoordinates.size() - 1) {
+        speed = speed * (0.9 + random.nextDouble() * 0.2);
+
+        var currentCoIndx = state.currentIndex;
+        var legDestIndx = segmentCoordinates.size() - 1;
+
+        if (SimulationUtil.isAtEndOfLeg(currentCoIndx, legDestIndx)) {
 
             if(!trip.isFromSimulation())
                 return;
 
+            int nextDestIndex = (state.currentDestIndex + 1) % destinations.size();
             Destination currentDest = destinations.get(state.currentDestIndex);
-            var nextDestToGo = this.getNextDestination(destinations, state.currentDestIndex);
+            Destination nextDestToGo = destinations.get(nextDestIndex);
 
-            // Update schedule with new destinations
-            schedule.setFromDestination(currentDest);
-            schedule.setToDestination(nextDestToGo);
 
-            state.currentDestIndex = destinations.indexOf(nextDestToGo);
+            if (trip.isFromSimulation()) {
+                schedule.setFromDestination(currentDest);
+                schedule.setToDestination(nextDestToGo);
+            }
+
+            state.currentDestIndex = nextDestIndex;
             state.currentIndex = 0;
             state.stoppedFrames = 0;
             state.lastLat = currentDest.getLat();
@@ -237,14 +216,15 @@ public class BusAndTripSimulationController {
             return;
         }
 
-        // Move to next coordinate
-        state.currentIndex++;
+        int stepsToMove = 3;
+        int newIndex = Math.min(state.currentIndex + stepsToMove, segmentCoordinates.size() - 1);
+        state.currentIndex = newIndex;
+
         LatLon nextPoint = segmentCoordinates.get(state.currentIndex);
         state.lastLat = nextPoint.lat();
         state.lastLng = nextPoint.lon();
 
-        double actualSpeed = speed * (0.7 + random.nextDouble() * 0.6);
-        sendLocationUpdate(trip, nextPoint.lat(), nextPoint.lon(), actualSpeed, false);
+        sendLocationUpdate(trip, nextPoint.lat(), nextPoint.lon(), speed, false);
     }
 
     private boolean shouldBusStop(BusSimulationState state) {
@@ -283,9 +263,7 @@ public class BusAndTripSimulationController {
                 .isSimulated(trip.isFromSimulation());
 
         if (trip.isFromSimulation())
-            locationBuilder
-                    .isMadeIt(isMadeIt);
-
+            locationBuilder.isMadeIt(isMadeIt);
 
         var locationMessage = locationBuilder.build();
         busLocationBatchService.enqueue(locationMessage);
@@ -309,16 +287,6 @@ public class BusAndTripSimulationController {
         double lastLat = 0;
         double lastLng = 0;
     }
-
-
-    private Destination getNextDestination(List<Destination> destinations, int currentIndex) {
-
-        if (currentIndex >= destinations.size() - 1)
-            return destinations.getFirst();
-        else
-            return destinations.get(currentIndex + 1);
-    }
-
 
     private void sendStationaryLocation(Trip trip) {
         var schedule = trip.getScheduleLegBusAssignment()

@@ -6,18 +6,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import org.tracker.ubus.ubus.Components.Buses.BusTracking.BusJourneyTracker.BusJourneyTracker;
-import org.tracker.ubus.ubus.Components.Buses.BusTracking.BusPromixityChecker.DTO.BusJourneyTripProgression;
-import org.tracker.ubus.ubus.Components.Buses.BusTracking.BusPromixityChecker.Event.BusJourneyProgressionEvent;
+import org.tracker.ubus.ubus.Components.Buses.BusTracking.BusJourneyTracker.Impl.BusJourneyTracker;
 import org.tracker.ubus.ubus.Components.Shared.EventHandler.Publisher.MultiEventPublisher;
 import org.tracker.ubus.ubus.Components.Trips.Trip.CacheManager.TripCacheManager;
 import org.tracker.ubus.ubus.Components.Trips.Trip.DTO.Response.DelayStatus;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Entity.Trip;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Enum.Destination;
 import org.tracker.ubus.ubus.Components.Trips.Trip.Util.TripMathUtil;
-import org.tracker.ubus.ubus.Components.Trips.TripUser.Event.UserOnTappedTripEvent;
+import org.tracker.ubus.ubus.Components.Trips.TripUser.Event.UserOnTripEvent;
 
 import java.util.*;
+
+import static org.springframework.data.geo.Metrics.KILOMETERS;
 
 @Slf4j
 @Component
@@ -28,15 +28,16 @@ public class BusDestinationProximityChecker extends BusJourneyTracker {
     private final String slowPingMessage = "Getting There.Sit Back and Relax";
 
 
-    private static final long FAST_PING_INTERVAL_MS = 3000; // 3 seconds
-    private static final long SLOW_PING_INTERVAL_MS = 6000; // 10 seconds
-    private static final long DISTANCE_THRESHOLD_METERS = 300;
+    private static final long FAST_PING_INTERVAL_MS = 2_000; // 3 seconds
+    private static final long SLOW_PING_INTERVAL_MS = 6_000; // 10 seconds
+    private static final long DISTANCE_THRESHOLD_METERS = 300; // 300 meters
 
     private final MultiEventPublisher publisher;
     private final Set<UUID> busProximityStatus;
     private final TripCacheManager tripCacheManager;
 
     private final Cache<UUID, DelayStatus> busDelayStatusCache;
+
 
 
 
@@ -57,13 +58,18 @@ public class BusDestinationProximityChecker extends BusJourneyTracker {
 
             }else {
 
-                var to = this.getDestination(trip, true);
-                var from = this.getDestination(trip, false);
+
                 var delayStatus = this.busDelayStatusCache.getIfPresent(trip.getId());
 
                 if(delayStatus != null) {
-                    var usersTappedIn = new UserOnTappedTripEvent(this, slowPingMessage, false,
-                            trip, to, from, delayStatus, trip.getDepartureTime().toLocalTime());
+
+                    var speed = this.getSpeedOfBus(trip);
+                    var distance = this.getDistanceLeft(trip, KILOMETERS);
+                    var progress = this.calculateJourneyProgress(trip);
+
+                    var usersTappedIn = new UserOnTripEvent(this, slowPingMessage, false,
+                            trip, delayStatus,
+                            speed, progress, distance);
                     this.publisher.publish(usersTappedIn);
                 }
             }
@@ -84,8 +90,6 @@ public class BusDestinationProximityChecker extends BusJourneyTracker {
                         return;
 
                     var progress = this.calculateJourneyProgress(trip);
-                    var to = this.getDestination(trip, true);
-                    var from = this.getDestination(trip, false);
 
                     String messageWithLocation = this.formatArrivalMessage(trip);
                     // if the bus is close to destination or has arrived
@@ -95,11 +99,16 @@ public class BusDestinationProximityChecker extends BusJourneyTracker {
                     if(delayStatus != null) {
                         boolean isCompleted = progress >= 95;
 
-                        var usersTappedIn = new UserOnTappedTripEvent(this, messageToUse, isCompleted,
-                                trip, to, from, delayStatus, trip.getDepartureTime().toLocalTime());
+                        if(isCompleted)
+                            progress = 100;
 
+                        var speed = this.getSpeedOfBus(trip);
+                        var distance = this.getDistanceLeft(trip, KILOMETERS);
 
-                        this.publisher.publish(usersTappedIn);
+                        var usersTappedIn = new UserOnTripEvent(this, messageToUse, isCompleted,
+                                trip, delayStatus, speed, progress, distance);
+
+                        this.publisher.publish(() -> usersTappedIn);
                     }
                 });
     }
@@ -126,20 +135,10 @@ public class BusDestinationProximityChecker extends BusJourneyTracker {
         return distanceToDestination < BusDestinationProximityChecker.DISTANCE_THRESHOLD_METERS;
     }
 
-
     private String formatArrivalMessage(Trip trip) {
         var schedule = trip.getScheduleLegBusAssignment()
                 .getScheduleLeg();
         var destination = schedule.getToDestination();
-        return "Arrived At " + destination.getLabel() + ".Don't forget to tap out if the bus";
+        return "Arrived At " + destination.getLabel() + ".Don't forget to tap out of the bus";
     }
-
-    private Destination getDestination(Trip trip, boolean isGettingTo) {
-        var schedule = trip.getScheduleLegBusAssignment()
-                .getScheduleLeg();
-        if(isGettingTo)
-            return schedule.getToDestination();
-        return schedule.getFromDestination();
-    }
-
 }
